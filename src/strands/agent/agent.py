@@ -19,6 +19,8 @@ from typing import Any, AsyncGenerator, AsyncIterator, Callable, Mapping, Option
 from opentelemetry import trace as trace_api
 from pydantic import BaseModel
 
+from strands.tools.decorator import tool
+
 from ..event_loop.event_loop import event_loop_cycle, run_tool
 from ..handlers.callback_handler import PrintingCallbackHandler, null_callback_handler
 from ..hooks import (
@@ -425,6 +427,18 @@ class Agent:
             future = executor.submit(execute)
             return future.result()
 
+    def _register_structured_output_tool(self, output_model: type[BaseModel]):
+        @tool
+        def _structured_output(input: output_model) -> output_model:
+            """If this tool is present it MUST be used to return structured data for the user."""
+            return input
+
+        return _structured_output
+
+    def _get_structured_output_tool(self, output_model: Type[T]):
+        """Get or create the structured output tool for the given model."""
+        return self._register_structured_output_tool(output_model)
+
     async def structured_output_async(
         self, output_model: Type[T], prompt: Optional[Union[str, list[ContentBlock]]] = None
     ) -> T:
@@ -445,48 +459,129 @@ class Agent:
             ValueError: If no conversation history or prompt is provided.
         """
         self.hooks.invoke_callbacks(BeforeInvocationEvent(agent=self))
-        with self.tracer.tracer.start_as_current_span(
-            "execute_structured_output", kind=trace_api.SpanKind.CLIENT
-        ) as structured_output_span:
-            try:
-                if not self.messages and not prompt:
-                    raise ValueError("No conversation history or prompt provided")
-                # Create temporary messages array if prompt is provided
-                if prompt:
-                    content: list[ContentBlock] = [{"text": prompt}] if isinstance(prompt, str) else prompt
-                    temp_messages = self.messages + [{"role": "user", "content": content}]
-                else:
-                    temp_messages = self.messages
 
-                structured_output_span.set_attributes(
-                    {
-                        "gen_ai.system": "strands-agents",
-                        "gen_ai.agent.name": self.name,
-                        "gen_ai.agent.id": self.agent_id,
-                        "gen_ai.operation.name": "execute_structured_output",
+        # Save original state for restoration BEFORE making any changes
+        import copy
+
+        original_hooks_callbacks = copy.deepcopy(self.hooks._registered_callbacks)
+        original_tool_registry = copy.deepcopy(self.tool_registry.registry)
+        original_dynamic_tools = copy.deepcopy(self.tool_registry.dynamic_tools)
+
+        # Create and add the structured output tool
+        structured_output_tool = self._register_structured_output_tool(output_model)
+        self.tool_registry.register_tool(structured_output_tool)
+
+        # Variable to capture the structured result
+        captured_result = None
+
+        # Import here to avoid circular imports
+        from ..experimental.hooks import AfterToolInvocationEvent
+
+        # Hook to capture structured output tool invocation
+        def capture_structured_output_hook(event: AfterToolInvocationEvent) -> AfterToolInvocationEvent:
+            nonlocal captured_result
+
+            if (
+                event.selected_tool
+                and hasattr(event.selected_tool, "tool_name")
+                and event.selected_tool.tool_name == "_structured_output"
+                and event.result
+                and event.result.get("status") == "success"
+            ):
+                # Parse the validated Pydantic model from the tool result
+                try:
+                    content = event.result.get("content", [])
+                    if content and isinstance(content[0], dict) and "text" in content[0]:
+                        # The tool returns the model instance as string, but we need the actual instance
+                        # Since our tool returns the input directly, we can reconstruct it
+                        tool_input = event.tool_use.get("input", {}).get("input")
+                        if tool_input:
+                            captured_result = output_model(**tool_input)
+                except Exception:
+                    # Fallback: the tool should have returned the validated model
+                    pass
+
+            return event
+
+        # Add the callback temporarily (use add_callback, not add_hook)
+        self.hooks.add_callback(AfterToolInvocationEvent, capture_structured_output_hook)
+
+        try:
+            with self.tracer.tracer.start_as_current_span(
+                "execute_structured_output", kind=trace_api.SpanKind.CLIENT
+            ) as structured_output_span:
+                try:
+                    if not self.messages and not prompt:
+                        raise ValueError("No conversation history or prompt provided")
+
+                    # Create temporary messages array if prompt is provided
+                    if prompt:
+                        content: list[ContentBlock] = [{"text": prompt}] if isinstance(prompt, str) else prompt
+                        message = {"role": "user", "content": content}
+                    else:
+                        # Use existing conversation history
+                        message = {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "text": "Please provide the information from our conversation in the requested structured format."
+                                }
+                            ],
+                        }
+
+                    structured_output_span.set_attributes(
+                        {
+                            "gen_ai.system": "strands-agents",
+                            "gen_ai.agent.name": self.name,
+                            "gen_ai.agent.id": self.agent_id,
+                            "gen_ai.operation.name": "execute_structured_output",
+                        }
+                    )
+
+                    # Add tracing for messages
+                    messages_to_trace = self.messages if not prompt else self.messages + [message]
+                    for msg in messages_to_trace:
+                        structured_output_span.add_event(
+                            f"gen_ai.{msg['role']}.message",
+                            attributes={"role": msg["role"], "content": serialize(msg["content"])},
+                        )
+
+                    if self.system_prompt:
+                        structured_output_span.add_event(
+                            "gen_ai.system.message",
+                            attributes={"role": "system", "content": serialize([{"text": self.system_prompt}])},
+                        )
+
+                    invocation_state = {
+                        "structured_output_mode": True,
+                        "structured_output_model": output_model,
                     }
-                )
-                for message in temp_messages:
-                    structured_output_span.add_event(
-                        f"gen_ai.{message['role']}.message",
-                        attributes={"role": message["role"], "content": serialize(message["content"])},
-                    )
-                if self.system_prompt:
-                    structured_output_span.add_event(
-                        "gen_ai.system.message",
-                        attributes={"role": "system", "content": serialize([{"text": self.system_prompt}])},
-                    )
-                events = self.model.structured_output(output_model, temp_messages, system_prompt=self.system_prompt)
-                async for event in events:
-                    if "callback" in event:
-                        self.callback_handler(**cast(dict, event["callback"]))
-                structured_output_span.add_event(
-                    "gen_ai.choice", attributes={"message": serialize(event["output"].model_dump())}
-                )
-                return event["output"]
 
-            finally:
-                self.hooks.invoke_callbacks(AfterInvocationEvent(agent=self))
+                    # Run the event loop
+                    async for event in self._run_loop(message=message, invocation_state=invocation_state):
+                        if "stop" in event:
+                            break
+
+                    # Return the captured structured result
+                    if captured_result:
+                        structured_output_span.add_event(
+                            "gen_ai.choice", attributes={"message": serialize(captured_result.model_dump())}
+                        )
+                        return captured_result
+                    else:
+                        raise ValueError("Failed to capture structured output from agent")
+
+                except Exception as e:
+                    structured_output_span.record_exception(e)
+                    raise
+
+        finally:
+            # Restore original state
+            self.hooks._registered_callbacks = original_hooks_callbacks
+            self.tool_registry.registry = original_tool_registry
+            self.tool_registry.dynamic_tools = original_dynamic_tools
+
+            self.hooks.invoke_callbacks(AfterInvocationEvent(agent=self))
 
     async def stream_async(self, prompt: Union[str, list[ContentBlock]], **kwargs: Any) -> AsyncIterator[Any]:
         """Process a natural language prompt and yield events as an async iterator.
