@@ -12,9 +12,12 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Type
+
+from pydantic import BaseModel, Field, create_model
 
 from idp_common import bedrock, image, metrics, s3, utils
+from idp_common.extraction.agentic_idp import structured_output
 from idp_common.models import Document
 from idp_common.utils import extract_json_from_text
 
@@ -69,6 +72,81 @@ class ExtractionService:
         attributes = class_config.get("attributes", [])
         return attributes if attributes is not None else []
 
+    def _create_pydantic_model_from_attributes(
+        self, class_label: str, attributes: List[Dict[str, Any]]
+    ) -> Type[BaseModel]:
+        """
+        Dynamically create a Pydantic model from configuration attributes.
+
+        Args:
+            class_label: The document class name
+            attributes: List of attribute configurations
+
+        Returns:
+            Dynamically created Pydantic model class
+        """
+        if not attributes:
+            # Return a minimal model for empty attributes
+            return create_model(f"{class_label}Model", __base__=BaseModel)
+
+        fields = {}
+
+        for attr in attributes:
+            attr_name = attr.get("name", "")
+            attr_description = attr.get("description", "")
+            attr_type = attr.get("attributeType", "simple")
+
+            if not attr_name:
+                continue
+
+            # Determine field type and default
+            if attr_type == "group":
+                # For group attributes, create nested model
+                group_attributes = attr.get("groupAttributes", [])
+                if group_attributes:
+                    nested_model = self._create_pydantic_model_from_attributes(
+                        f"{class_label}_{attr_name}", group_attributes
+                    )
+                    fields[attr_name] = (
+                        Optional[nested_model],
+                        Field(None, description=attr_description),
+                    )
+                else:
+                    fields[attr_name] = (
+                        Optional[str],
+                        Field(None, description=attr_description),
+                    )
+
+            elif attr_type == "list":
+                # For list attributes, create list of items
+                list_template = attr.get("listItemTemplate", {})
+                item_attributes = list_template.get("itemAttributes", [])
+
+                if item_attributes:
+                    item_model = self._create_pydantic_model_from_attributes(
+                        f"{class_label}_{attr_name}_Item", item_attributes
+                    )
+                    fields[attr_name] = (
+                        Optional[List[item_model]],
+                        Field(None, description=attr_description),
+                    )
+                else:
+                    fields[attr_name] = (
+                        Optional[List[str]],
+                        Field(None, description=attr_description),
+                    )
+
+            else:
+                # Simple attribute - default to optional string
+                fields[attr_name] = (
+                    Optional[str],
+                    Field(None, description=attr_description),
+                )
+
+        # Create the model with proper name
+        model_name = f"{class_label.replace(' ', '').replace('-', '_')}ExtractionModel"
+        return create_model(model_name, **fields, __base__=BaseModel)
+
     def _format_attribute_descriptions(self, attributes: List[Dict[str, Any]]) -> str:
         """
         Format attribute descriptions for the prompt, supporting nested structures.
@@ -118,6 +196,140 @@ class ExtractionService:
                 formatted_lines.append(f"{attr_name}  \t[ {attr_description} ]")
 
         return "\n".join(formatted_lines)
+
+    def _create_dynamic_model_from_attributes(
+        self, attributes: List[Dict[str, Any]], class_label: str
+    ) -> Type[BaseModel]:
+        """
+        Create a dynamic Pydantic model from configuration attributes.
+
+        Args:
+            attributes: List of attribute configurations from the class config
+            class_label: The document class name (for model naming)
+
+        Returns:
+            Dynamically created Pydantic model class
+        """
+        if not attributes:
+            # Create a simple model with just a raw_output field if no attributes defined
+            return create_model(
+                f"{class_label}ExtractionModel",
+                raw_output=(
+                    Optional[str],
+                    Field(None, description="Raw extraction output"),
+                ),
+            )
+
+        model_fields = {}
+
+        for attr in attributes:
+            attr_name = attr.get("name", "").replace(" ", "_").replace("-", "_")
+            if not attr_name:
+                continue
+
+            attr_description = attr.get("description", "")
+            attr_type = attr.get("attributeType", "simple")
+
+            if attr_type == "group":
+                # Handle group attributes - create nested model
+                group_fields = {}
+                group_attributes = attr.get("groupAttributes", [])
+
+                for group_attr in group_attributes:
+                    group_name = (
+                        group_attr.get("name", "").replace(" ", "_").replace("-", "_")
+                    )
+                    if group_name:
+                        group_desc = group_attr.get("description", "")
+                        group_fields[group_name] = (
+                            Optional[str],
+                            Field(None, description=group_desc),
+                        )
+
+                if group_fields:
+                    # Create nested model for the group
+                    nested_model = create_model(
+                        f"{attr_name.title()}Group", **group_fields
+                    )
+                    model_fields[attr_name] = (
+                        Optional[nested_model],
+                        Field(None, description=attr_description),
+                    )
+                else:
+                    # Fallback to optional string if no group attributes
+                    model_fields[attr_name] = (
+                        Optional[str],
+                        Field(None, description=attr_description),
+                    )
+
+            elif attr_type == "list":
+                # Handle list attributes - create list of nested items
+                list_template = attr.get("listItemTemplate", {})
+                item_attributes = list_template.get("itemAttributes", [])
+
+                if item_attributes:
+                    # Create model for list items
+                    item_fields = {}
+                    for item_attr in item_attributes:
+                        item_name = (
+                            item_attr.get("name", "")
+                            .replace(" ", "_")
+                            .replace("-", "_")
+                        )
+                        if item_name:
+                            item_desc = item_attr.get("description", "")
+                            item_fields[item_name] = (
+                                Optional[str],
+                                Field(None, description=item_desc),
+                            )
+
+                    if item_fields:
+                        # Create nested model for list items
+                        item_model = create_model(
+                            f"{attr_name.title()}Item", **item_fields
+                        )
+                        model_fields[attr_name] = (
+                            Optional[List[item_model]],
+                            Field(None, description=attr_description),
+                        )
+                    else:
+                        # Fallback to list of strings
+                        model_fields[attr_name] = (
+                            Optional[List[str]],
+                            Field(None, description=attr_description),
+                        )
+                else:
+                    # Simple list of strings
+                    model_fields[attr_name] = (
+                        Optional[List[str]],
+                        Field(None, description=attr_description),
+                    )
+
+            else:
+                # Handle simple attributes (default case)
+                model_fields[attr_name] = (
+                    Optional[str],
+                    Field(None, description=attr_description),
+                )
+
+        # Add a fallback field for any additional data
+        model_fields["additional_data"] = (
+            Optional[Dict[str, Any]],
+            Field(
+                None,
+                description="Any additional extracted data not covered by specific fields",
+            ),
+        )
+
+        # Create the dynamic model
+        model_name = f"{class_label.replace(' ', '').replace('-', '')}ExtractionModel"
+        dynamic_model = create_model(model_name, **model_fields)
+
+        logger.info(
+            f"Created dynamic Pydantic model '{model_name}' with {len(model_fields)} fields"
+        )
+
+        return dynamic_model
 
     def _prepare_prompt_from_template(
         self,
@@ -709,7 +921,9 @@ class ExtractionService:
             logger.error(error_msg)
             raise Exception(error_msg)
 
-    def process_document_section(self, document: Document, section_id: str) -> Document:
+    def process_document_section(
+        self, document: Document, section_id: str, agentic: bool = False
+    ) -> Document:
         """
         Process a single section from a Document object.
 
@@ -1092,40 +1306,71 @@ class ExtractionService:
             # Time the model invocation
             request_start_time = time.time()
 
-            # Invoke Bedrock with the common library
-            response_with_metering = bedrock.invoke_model(
-                model_id=model_id,
-                system_prompt=system_prompt,
-                content=content,
-                temperature=temperature,
-                top_k=top_k,
-                top_p=top_p,
-                max_tokens=max_tokens,
-                context="Extraction",
-            )
+            if agentic:
+                # Create dynamic Pydantic model from configuration attributes
+                dynamic_model = self._create_pydantic_model_from_attributes(
+                    class_label, attributes
+                )
+
+                # Use agentic extraction with the dynamic model
+                structured_data, response_with_metering = structured_output(
+                    model=model_id,
+                    data_format=dynamic_model,
+                    prompt=content,  # Use the full content including images
+                    reprompt_cycles=3,
+                    enable_image_tools=True,
+                )
+
+                # Extract the structured data as dict for compatibility with existing code
+                extracted_fields = structured_data.model_dump()
+                # Extract metering from BedrockInvokeModelResponse
+                metering = response_with_metering["metering"]
+
+            else:
+                # Invoke Bedrock with the common library
+                response_with_metering = bedrock.invoke_model(
+                    model_id=model_id,
+                    system_prompt=system_prompt,
+                    content=content,
+                    temperature=temperature,
+                    top_k=top_k,
+                    top_p=top_p,
+                    max_tokens=max_tokens,
+                    context="Extraction",
+                )
 
             total_duration = time.time() - request_start_time
             logger.info(f"Time taken for extraction: {total_duration:.2f} seconds")
 
-            # Extract text from response
-            extracted_text = bedrock.extract_text_from_response(response_with_metering)
-            metering = response_with_metering.get("metering", {})
-
-            # Parse response into JSON
-            extracted_fields = {}
-            parsing_succeeded = True  # Flag to track if parsing was successful
-
-            try:
-                # Try to parse the extracted text as JSON
-                extracted_fields = json.loads(extract_json_from_text(extracted_text))
-            except Exception as e:
-                # Handle parsing error
-                logger.error(
-                    f"Error parsing LLM output - invalid JSON?: {extracted_text} - {e}"
+            # Handle response differently based on extraction method
+            if not agentic:
+                # For non-agentic approach, response_with_metering is BedrockInvokeModelResponse
+                # Extract text from response for non-agentic approach
+                extracted_text = bedrock.extract_text_from_response(
+                    dict(response_with_metering)
                 )
-                logger.info("Using unparsed LLM output.")
-                extracted_fields = {"raw_output": extracted_text}
-                parsing_succeeded = False  # Mark that parsing failed
+                metering = response_with_metering["metering"]
+
+                # Parse response into JSON
+                extracted_fields = {}
+                parsing_succeeded = True  # Flag to track if parsing was successful
+
+                try:
+                    # Try to parse the extracted text as JSON
+                    extracted_fields = json.loads(
+                        extract_json_from_text(extracted_text)
+                    )
+                except Exception as e:
+                    # Handle parsing error
+                    logger.error(
+                        f"Error parsing LLM output - invalid JSON?: {extracted_text} - {e}"
+                    )
+                    logger.info("Using unparsed LLM output.")
+                    extracted_fields = {"raw_output": extracted_text}
+                    parsing_succeeded = False  # Mark that parsing failed
+            else:
+                # For agentic approach, we already have extracted_fields and metering from above
+                parsing_succeeded = True  # Agentic approach always succeeds in parsing since it returns structured data
 
             # Write to S3
             output = {

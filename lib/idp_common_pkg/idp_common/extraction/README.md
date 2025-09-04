@@ -5,6 +5,36 @@ SPDX-License-Identifier: MIT-0
 
 This module provides functionality for extracting structured information from document sections using LLMs with support for few-shot example prompting to improve accuracy.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Components](#components)
+- [Usage](#usage)
+  - [Lambda Function Pattern](#lambda-function-pattern)
+- [Configuration](#configuration)
+- [Few Shot Example Feature](#few-shot-example-feature)
+  - [Overview](#overview-1)
+  - [Key Differences from Classification](#key-differences-from-classification)
+  - [Configuration](#configuration-1)
+  - [Configuration Parameters](#configuration-parameters)
+  - [Task Prompt Integration](#task-prompt-integration)
+  - [Benefits](#benefits)
+  - [Best Practices](#best-practices)
+  - [Class-Specific Example Filtering](#class-specific-example-filtering)
+  - [Usage with Extraction Service](#usage-with-extraction-service)
+  - [Example Configuration Structure](#example-configuration-structure)
+  - [Testing Few-Shot Examples](#testing-few-shot-examples)
+  - [Troubleshooting](#troubleshooting)
+- [Agentic Extraction](#agentic-extraction)
+  - [Using Structured Output Outside Extraction Service](#using-structured-output-outside-extraction-service)
+  - [Using Structured Output Within Extraction Service](#using-structured-output-within-extraction-service)
+- [Error Handling](#error-handling)
+- [Performance Optimization](#performance-optimization)
+  - [Extraction Results Storage](#extraction-results-storage)
+- [Multimodal Extraction](#multimodal-extraction)
+- [Thread Safety](#thread-safety)
+- [Future Enhancements](#future-enhancements)
+
 ## Overview
 
 The extraction module is designed to process document sections, extract key information based on configured attributes, and return structured results. It supports multimodal extraction using both text and images, and can leverage concrete examples to improve extraction accuracy and consistency.
@@ -507,6 +537,486 @@ Common issues and solutions:
    - Improve example quality and accuracy
    - Ensure examples demonstrate proper null handling
 
+## Agentic Extraction
+
+The extraction module now provides advanced agentic extraction capabilities using Strands agents for more reliable and structured data extraction. This includes both direct structured output functionality and integration within the extraction service.
+
+### Overview
+
+Agentic extraction uses AI agents with specialized tools to extract structured data directly as Pydantic models, eliminating JSON parsing errors and providing better accuracy through:
+
+- **Tool-based extraction**: Specialized extraction tools that validate data against Pydantic schemas
+- **Dynamic model generation**: Automatically creates Pydantic models from configuration attributes
+- **Built-in retry logic**: Agents can self-correct and retry failed extractions
+- **Image enhancement**: Optional tools to improve image quality for better OCR
+- **Type safety**: Returns properly typed data structures instead of raw text
+
+### Agentic vs Traditional Extraction
+
+**Traditional Approach:**
+```
+Text Input → LLM → Text Response → JSON Parsing → Extracted Data (prone to parsing errors)
+```
+
+**Agentic Approach:**
+```
+Text/Image Input → Agent with Tools → Validated Pydantic Model → Extracted Data (guaranteed structure)
+```
+
+### Integration with Extraction Service
+
+The extraction service now supports an `agentic=True` parameter that enables agent-based extraction:
+
+```python
+from idp_common import get_config
+from idp_common.extraction.service import ExtractionService
+from idp_common.models import Document
+
+# Initialize the service with configuration
+config = get_config()
+extraction_service = ExtractionService(config=config)
+
+# Load your document
+document = Document(...)  # Document with sections already classified
+
+# Process a section using agentic extraction
+updated_document = extraction_service.process_document_section(
+    document=document,
+    section_id="section-123",
+    agentic=True  # Enable agentic extraction
+)
+```
+
+### Dynamic Pydantic Model Generation
+
+The service automatically converts configuration attributes to Pydantic models:
+
+```python
+# Configuration attributes
+attributes = [
+    {
+        "name": "invoice_number",
+        "description": "The invoice number or ID",
+        "attributeType": "simple"
+    },
+    {
+        "name": "line_items",
+        "description": "List of invoice line items",
+        "attributeType": "list",
+        "listItemTemplate": {
+            "itemAttributes": [
+                {"name": "description", "description": "Item description"},
+                {"name": "amount", "description": "Item amount"}
+            ]
+        }
+    }
+]
+
+# Automatically generates equivalent to:
+class InvoiceExtractionModel(BaseModel):
+    invoice_number: Optional[str] = Field(None, description="The invoice number or ID")
+    line_items: Optional[List[LineItemModel]] = Field(None, description="List of invoice line items")
+
+class LineItemModel(BaseModel):
+    description: Optional[str] = Field(None, description="Item description")
+    amount: Optional[str] = Field(None, description="Item amount")
+```
+
+### Key Benefits
+
+1. **No Parsing Errors**: Returns validated Pydantic models instead of text that needs JSON parsing
+2. **Better Accuracy**: Tools and agents provide more precise extraction
+3. **Self-Correction**: Agents can retry and fix validation errors
+4. **Type Safety**: Proper typing throughout the extraction pipeline
+5. **Configuration Driven**: Uses existing attribute configuration, no code changes needed
+6. **Backward Compatible**: Falls back to traditional extraction when `agentic=False`
+
+### Using Structured Output Outside Extraction Service
+
+For applications that want to leverage the agentic structured output capabilities without using the full extraction service pipeline, you can directly use the standalone structured output functions.
+
+#### Direct Structured Output with Pydantic Models
+
+```python
+from idp_common.extraction.agentic_idp import structured_output, structured_output_async
+from pydantic import BaseModel, Field
+from typing import Optional, List
+
+# Define your data structure
+class InvoiceData(BaseModel):
+    invoice_number: str = Field(..., description="The invoice number")
+    invoice_date: Optional[str] = Field(None, description="The invoice date")
+    vendor_name: Optional[str] = Field(None, description="The vendor company name")
+    total_amount: Optional[str] = Field(None, description="The total amount due")
+    line_items: Optional[List[str]] = Field(None, description="List of items on the invoice")
+
+# Prepare your content (text or multimodal)
+document_text = """
+Invoice #INV-2024-001
+Date: January 15, 2024
+From: ACME Corporation
+To: Tech Solutions Inc
+Total: $1,250.00
+
+Line Items:
+- Software License: $1,000.00
+- Support Fee: $250.00
+"""
+
+# Use synchronous extraction
+model_id = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+extracted_data, response_metadata = structured_output(
+    model=model_id,
+    data_format=InvoiceData,
+    prompt=document_text,
+    reprompt_cycles=3,
+    enable_image_tools=False
+)
+
+print(f"Invoice Number: {extracted_data.invoice_number}")
+print(f"Total Amount: {extracted_data.total_amount}")
+print(f"Line Items: {extracted_data.line_items}")
+
+# Or use asynchronous extraction
+import asyncio
+
+async def extract_async():
+    extracted_data, response_metadata = await structured_output_async(
+        model=model_id,
+        data_format=InvoiceData,
+        prompt=document_text,
+        reprompt_cycles=3
+    )
+    return extracted_data
+
+# Get the result
+result = asyncio.run(extract_async())
+```
+
+#### Multimodal Extraction with Images
+
+```python
+from PIL import Image
+from idp_common.extraction.agentic_idp import structured_output
+
+# Load an image
+invoice_image = Image.open("path/to/invoice.jpg")
+
+# Extract from image directly
+extracted_data, response_metadata = structured_output(
+    model="us.anthropic.claude-sonnet-4-20250514-v1:0",
+    data_format=InvoiceData,
+    prompt=invoice_image,  # Pass image directly
+    reprompt_cycles=3,
+    enable_image_tools=True  # Enable image enhancement if needed
+)
+
+print(f"Extracted from image: {extracted_data.vendor_name}")
+```
+
+#### Using with Mixed Content (Text + Images)
+
+```python
+from strands.types.content import ContentBlock, Message
+
+# Create mixed content
+mixed_content = Message(
+    role="user",
+    content=[
+        ContentBlock(text="Extract data from this invoice document:"),
+        ContentBlock(
+            image=ImageContent(
+                format="jpeg",
+                source=ImageSource(bytes=image_bytes)
+            )
+        ),
+        ContentBlock(text="Focus on the header information and line items.")
+    ]
+)
+
+extracted_data, response_metadata = structured_output(
+    model="us.anthropic.claude-sonnet-4-20250514-v1:0",
+    data_format=InvoiceData,
+    prompt=mixed_content,
+    reprompt_cycles=3
+)
+```
+
+#### Response Metadata and Token Usage
+
+The structured output functions return both the extracted data and response metadata:
+
+```python
+extracted_data, response_metadata = structured_output(...)
+
+# Access token usage information
+token_usage = response_metadata["metering"]
+for model_context, usage in token_usage.items():
+    print(f"Model: {model_context}")
+    print(f"Input Tokens: {usage['inputTokens']}")
+    print(f"Output Tokens: {usage['outputTokens']}")
+    print(f"Total Tokens: {usage['totalTokens']}")
+    if usage.get('cacheReadInputTokens'):
+        print(f"Cache Read Tokens: {usage['cacheReadInputTokens']}")
+```
+
+#### Legacy Extraction Service Integration
+
+For existing applications using the extraction service pattern, you can still leverage these functions:
+
+```python
+from idp_common import get_config
+from idp_common.extraction.service import ExtractionService
+from idp_common.bedrock_client import get_bedrock_client
+
+# Initialize configuration and client
+config = get_config()
+bedrock_client = get_bedrock_client(region="us-east-1")
+
+# Create extraction service instance
+extraction_service = ExtractionService(config=config)
+
+# Prepare your document content
+document_text = """
+Invoice #12345
+Date: 2024-01-15
+Bill To: ACME Corp
+Amount: $1,250.00
+"""
+
+# Define attributes to extract
+attributes = [
+    {"name": "invoice_number", "description": "The invoice number or ID"},
+    {"name": "invoice_date", "description": "The invoice date"},
+    {"name": "customer_name", "description": "The customer or company name"},
+    {"name": "total_amount", "description": "The total amount due"}
+]
+
+# Build attribute descriptions
+attribute_descriptions = "\n".join([
+    f"{attr['name']}\t[{attr['description']}]" 
+    for attr in attributes
+])
+
+# Create structured output content with few-shot examples
+content = extraction_service._build_content_with_few_shot_examples(
+    task_prompt_template=config['extraction']['task_prompt'],
+    document_text=document_text,
+    class_label="invoice",  # Document class for example filtering
+    attribute_descriptions=attribute_descriptions
+)
+
+# Call Bedrock directly with structured output
+from idp_common.bedrock_client import call_bedrock_structured_output
+
+extraction_config = config.get('extraction', {})
+structured_response = call_bedrock_structured_output(
+    bedrock_client=bedrock_client,
+    model_id=extraction_config.get('model', 'anthropic.claude-3-sonnet-20240229-v1:0'),
+    content=content,
+    attributes=attributes,
+    temperature=extraction_config.get('temperature', 0.0),
+    top_k=extraction_config.get('top_k', 5),
+    system_prompt=extraction_config.get('system_prompt', '')
+)
+
+# Access extracted attributes
+extracted_data = structured_response.get('attributes', {})
+print(f"Invoice Number: {extracted_data.get('invoice_number')}")
+print(f"Customer: {extracted_data.get('customer_name')}")
+print(f"Amount: {extracted_data.get('total_amount')}")
+```
+
+### Using Structured Output Within Extraction Service
+
+For custom extraction workflows that need to extend or modify the extraction service behavior, you can access the structured output functionality internally:
+
+```python
+from idp_common import get_config
+from idp_common.extraction.service import ExtractionService
+from idp_common.models import Document, Section, Page
+import json
+
+class CustomExtractionService(ExtractionService):
+    
+    def custom_extract_with_validation(self, document, section_id, validation_rules=None):
+        """
+        Custom extraction method with additional validation rules
+        """
+        # Get the section and document class
+        section = next((s for s in document.sections if s.section_id == section_id), None)
+        if not section:
+            raise ValueError(f"Section {section_id} not found")
+        
+        document_class = section.classification_result.get('class_label', 'unknown')
+        
+        # Get class configuration and attributes
+        class_config = self._get_class_config(document_class)
+        attributes = class_config.get('attributes', [])
+        
+        # Build document text from pages
+        document_text = self._build_document_text(document, section)
+        
+        # Create attribute descriptions
+        attribute_descriptions = self._build_attribute_descriptions(attributes)
+        
+        # Build content with few-shot examples
+        content = self._build_content_with_few_shot_examples(
+            task_prompt_template=self.config['extraction']['task_prompt'],
+            document_text=document_text,
+            class_label=document_class,
+            attribute_descriptions=attribute_descriptions
+        )
+        
+        # Perform structured extraction
+        from idp_common.bedrock_client import call_bedrock_structured_output
+        
+        extraction_config = self.config.get('extraction', {})
+        structured_response = call_bedrock_structured_output(
+            bedrock_client=self.bedrock_client,
+            model_id=extraction_config.get('model'),
+            content=content,
+            attributes=attributes,
+            temperature=extraction_config.get('temperature', 0.0),
+            top_k=extraction_config.get('top_k', 5),
+            system_prompt=extraction_config.get('system_prompt', '')
+        )
+        
+        extracted_attributes = structured_response.get('attributes', {})
+        
+        # Apply custom validation rules
+        if validation_rules:
+            extracted_attributes = self._apply_validation_rules(
+                extracted_attributes, validation_rules
+            )
+        
+        # Store results and update document
+        result_uri = self._store_extraction_results(
+            document.document_id, section_id, extracted_attributes
+        )
+        
+        # Update section with results
+        section.extraction_result_uri = result_uri
+        section.extraction_status = 'completed'
+        
+        return document
+    
+    def _apply_validation_rules(self, attributes, validation_rules):
+        """Apply custom validation rules to extracted attributes"""
+        validated_attributes = attributes.copy()
+        
+        for field, rules in validation_rules.items():
+            if field in validated_attributes:
+                value = validated_attributes[field]
+                
+                # Example validation rules
+                if 'required' in rules and not value:
+                    validated_attributes[field] = f"VALIDATION_ERROR: {field} is required"
+                
+                if 'format' in rules and value:
+                    import re
+                    if not re.match(rules['format'], str(value)):
+                        validated_attributes[field] = f"VALIDATION_ERROR: {field} format invalid"
+        
+        return validated_attributes
+
+# Usage example
+config = get_config()
+custom_service = CustomExtractionService(config=config)
+
+# Define validation rules
+validation_rules = {
+    'invoice_number': {'required': True, 'format': r'^[A-Z]{3}-\d{4}$'},
+    'total_amount': {'required': True, 'format': r'^\$[\d,]+\.\d{2}$'},
+    'invoice_date': {'required': True}
+}
+
+# Process document with custom validation
+document = Document(...)  # Your document
+processed_document = custom_service.custom_extract_with_validation(
+    document=document,
+    section_id="section-123",
+    validation_rules=validation_rules
+)
+```
+
+#### Advanced Agentic Patterns
+
+For more sophisticated agentic extraction workflows, you can combine structured output with iterative refinement:
+
+```python
+class AgenticExtractionService(ExtractionService):
+    
+    def iterative_extract_with_confidence(self, document, section_id, confidence_threshold=0.8):
+        """
+        Performs extraction with confidence scoring and iterative refinement
+        """
+        max_iterations = 3
+        iteration = 0
+        
+        while iteration < max_iterations:
+            # Perform initial extraction
+            extracted_data = self._extract_with_confidence_scoring(document, section_id)
+            
+            # Check confidence scores
+            low_confidence_fields = [
+                field for field, data in extracted_data.items() 
+                if data.get('confidence', 0) < confidence_threshold
+            ]
+            
+            if not low_confidence_fields:
+                # All fields meet confidence threshold
+                break
+            
+            # Refine extraction for low-confidence fields
+            refined_data = self._refine_extraction(
+                document, section_id, low_confidence_fields, extracted_data
+            )
+            
+            # Merge refined data
+            for field in low_confidence_fields:
+                if field in refined_data:
+                    extracted_data[field] = refined_data[field]
+            
+            iteration += 1
+        
+        # Final processing and storage
+        final_attributes = {
+            k: v.get('value') if isinstance(v, dict) else v 
+            for k, v in extracted_data.items()
+        }
+        
+        return self._finalize_extraction_results(document, section_id, final_attributes)
+    
+    def _extract_with_confidence_scoring(self, document, section_id):
+        """Extract attributes with confidence scoring"""
+        # Implementation would use structured output with confidence prompting
+        # This is a simplified example
+        pass
+    
+    def _refine_extraction(self, document, section_id, fields_to_refine, previous_data):
+        """Refine extraction for specific fields using focused prompts"""
+        # Implementation would create targeted prompts for specific fields
+        # This is a simplified example
+        pass
+
+# Usage
+agentic_service = AgenticExtractionService(config=config)
+high_confidence_document = agentic_service.iterative_extract_with_confidence(
+    document=document,
+    section_id="section-123",
+    confidence_threshold=0.9
+)
+```
+
+These agentic patterns enable:
+
+1. **Direct Access**: Use structured output capabilities outside the standard extraction pipeline
+2. **Custom Validation**: Apply business rules and validation logic to extracted data
+3. **Iterative Refinement**: Improve extraction accuracy through multiple passes
+4. **Confidence Scoring**: Make decisions based on extraction confidence levels
+5. **Specialized Workflows**: Create domain-specific extraction behaviors
+
 ## Error Handling
 
 The ExtractionService has built-in error handling:
@@ -553,7 +1063,14 @@ The extraction service is designed to be thread-safe, supporting concurrent proc
 - ✅ Class-specific example filtering for targeted extraction guidance
 - ✅ Multimodal example support with document images
 - ✅ Enhanced imagePath support for multiple images from directories and S3 prefixes
+- ✅ **Agentic extraction with Strands agents** for structured output without JSON parsing errors
+- ✅ **Dynamic Pydantic model generation** from configuration attributes
+- ✅ **Tool-based extraction** with specialized agents for better accuracy
+- ✅ **Image enhancement tools** for improved OCR quality
+- ✅ **Built-in retry logic** and self-correction capabilities
 - 🔲 Dynamic few-shot example selection based on document similarity
 - 🔲 Confidence scoring for extracted attributes
 - 🔲 Support for additional extraction backends (custom models)
 - 🔲 Automatic example quality assessment and recommendations
+- 🔲 Agent-based iterative refinement for complex documents
+- 🔲 Multi-agent collaboration for different document sections
