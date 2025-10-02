@@ -3,20 +3,34 @@ SPDX-License-Identifier: MIT-0
 
 # IDP Extraction Module
 
-This module provides functionality for extracting structured information from document sections using LLMs with support for few-shot example prompting to improve accuracy.
+This module provides functionality for extracting structured information from
+document sections using LLMs with support for few-shot example prompting to
+improve accuracy.
+
+<<<<<<< HEAD
 
 ## Overview
 
-The extraction module is designed to process document sections, extract key information based on configured attributes, and return structured results. It supports multimodal extraction using both text and images, and can leverage concrete examples to improve extraction accuracy and consistency.
+======= This directory contains example scripts demonstrating the differences
+between agentic and regular extraction approaches in the IDP system.
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
+
+The extraction module is designed to process document sections, extract key
+information based on configured attributes, and return structured results. It
+supports multimodal extraction using both text and images, and can leverage
+concrete examples to improve extraction accuracy and consistency.
 
 ## Components
 
-- **ExtractionService**: Main service class for performing extractions with few-shot example support
+- **ExtractionService**: Main service class for performing extractions with
+  few-shot example support
 - **Models**: Data classes for extraction results
 
 ## Usage
 
-The ExtractionService uses a Document-based approach which simplifies integration with the entire IDP pipeline:
+The ExtractionService uses a Document-based approach which simplifies
+integration with the entire IDP pipeline:
 
 ```python
 from idp_common import get_config
@@ -48,7 +62,8 @@ print(f"Extraction results stored at: {result_uri}")
 
 ### Lambda Function Pattern
 
-For AWS Lambda functions, we recommend using a focused document with only the relevant section:
+For AWS Lambda functions, we recommend using a focused document with only the
+relevant section:
 
 ```python
 # Get document and section from event
@@ -113,37 +128,49 @@ The extraction service uses the following configuration structure:
 
 ## Few Shot Example Feature
 
-The extraction service supports few-shot learning through example-based prompting. This feature allows you to provide concrete examples of documents with their expected attribute extractions, significantly improving model accuracy, consistency, and reducing hallucination.
+The extraction service supports few-shot learning through example-based
+prompting. This feature allows you to provide concrete examples of documents
+with their expected attribute extractions, significantly improving model
+accuracy, consistency, and reducing hallucination.
 
 ### Overview
 
-Few-shot examples work by including reference documents with known expected attribute values in the prompts sent to the AI model. Unlike classification which uses examples from all document classes, extraction uses examples only from the specific class being processed to provide targeted guidance for attribute extraction.
+Few-shot examples work by including reference documents with known expected
+attribute values in the prompts sent to the AI model. Unlike classification
+which uses examples from all document classes, extraction uses examples only
+from the specific class being processed to provide targeted guidance for
+attribute extraction.
 
 ### Key Differences from Classification
 
-- **Example Scope**: Extraction uses examples ONLY from the specific document class being processed (e.g., only "letter" examples when extracting from a "letter" document)
-- **Prompt Field**: Uses `attributesPrompt` instead of `classPrompt` from examples
-- **Purpose**: Shows expected attribute extraction format and values rather than distinguishing between document types
+- **Example Scope**: Extraction uses examples ONLY from the specific document
+  class being processed (e.g., only "letter" examples when extracting from a
+  "letter" document)
+- **Prompt Field**: Uses `attributesPrompt` instead of `classPrompt` from
+  examples
+- **Purpose**: Shows expected attribute extraction format and values rather than
+  distinguishing between document types
 
 ### Configuration
 
-Few-shot examples are configured in the document class definitions within your configuration file:
+Few-shot examples are configured in the document class definitions within your
+configuration file:
 
 ```yaml
 classes:
   - name: letter
-    description: "A formal written correspondence..."
+    description: 'A formal written correspondence...'
     attributes:
       - name: sender_name
-        description: "The name of the person who wrote the letter..."
+        description: 'The name of the person who wrote the letter...'
       - name: sender_address
-        description: "The physical address of the sender..."
+        description: 'The physical address of the sender...'
       - name: recipient_name
-        description: "The name of the person receiving the letter..."
+        description: 'The name of the person receiving the letter...'
       # ... other attributes
     examples:
       - classPrompt: "This is an example of the class 'letter'"
-        name: "Letter1"
+        name: 'Letter1'
         attributesPrompt: |
           expected attributes are:
               "sender_name": "Will E. Clark",
@@ -156,9 +183,9 @@ classes:
               "signature": "Will E. Clark",
               "cc": null,
               "reference_number": "TNJB 0008497"
-        imagePath: "config_library/pattern-2/few_shot_example/example-images/letter1.jpg"
+        imagePath: 'config_library/pattern-2/few_shot_example/example-images/letter1.jpg'
       - classPrompt: "This is an example of the class 'letter'"
-        name: "Letter2"
+        name: 'Letter2'
         attributesPrompt: |
           expected attributes are:
               "sender_name": "William H. W. Anderson",
@@ -171,58 +198,76 @@ classes:
               "signature": "Bill",
               "cc": null,
               "reference_number": null
-        imagePath: "config_library/pattern-2/few_shot_example/example-images/letter2.png"
+        imagePath: 'config_library/pattern-2/few_shot_example/example-images/letter2.png'
 ```
 
 ### Configuration Parameters
 
 Each few-shot example includes:
 
-- **classPrompt**: A description identifying this as an example of the document class (used for classification)
-- **attributesPrompt**: The expected attribute extraction results showing the exact JSON format and values expected
+- **classPrompt**: A description identifying this as an example of the document
+  class (used for classification)
+- **attributesPrompt**: The expected attribute extraction results showing the
+  exact JSON format and values expected
 - **name**: A unique identifier for the example (for reference and debugging)
-- **imagePath**: Path to example document image(s) - supports single files, local directories, or S3 prefixes
+- **imagePath**: Path to example document image(s) - supports single files,
+  local directories, or S3 prefixes
+
+<<<<<<< HEAD
 
 #### Image Path Options
+
+=======
+
+- **Regular Extraction**: Simple documents, cost-sensitive applications, basic
+  field extraction
+- **Agentic via Service**: Existing configurations, need reliability, complex
+  nested structures
+- **Direct Agentic**: Maximum control needed, type safety critical, custom
+  validation logic
+  > > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
 
 The `imagePath` field now supports multiple formats for maximum flexibility:
 
 **Single Image File (Original functionality)**:
 
 ```yaml
-imagePath: "config_library/pattern-2/few_shot_example/example-images/letter1.jpg"
+imagePath: 'config_library/pattern-2/few_shot_example/example-images/letter1.jpg'
 ```
 
 **Local Directory with Multiple Images (New)**:
 
 ```yaml
-imagePath: "config_library/pattern-2/few_shot_example/example-images/"
+imagePath: 'config_library/pattern-2/few_shot_example/example-images/'
 ```
 
 **S3 Prefix with Multiple Images (New)**:
 
 ```yaml
-imagePath: "s3://my-config-bucket/few-shot-examples/letter/"
+imagePath: 's3://my-config-bucket/few-shot-examples/letter/'
 ```
 
-**Direct S3 Image URI**:
+<<<<<<< HEAD **Direct S3 Image URI**:
 
 ```yaml
-imagePath: "s3://my-config-bucket/few-shot-examples/letter/example1.jpg"
+imagePath: 's3://my-config-bucket/few-shot-examples/letter/example1.jpg'
 ```
 
 When pointing to a directory or S3 prefix, the system automatically:
 
-- Discovers all image files with supported extensions (`.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`)
+- Discovers all image files with supported extensions (`.jpg`, `.jpeg`, `.png`,
+  `.gif`, `.bmp`, `.tiff`, `.tif`, `.webp`)
 - Sorts them alphabetically by filename for consistent ordering
 - Includes each image as a separate content item in the few-shot examples
-- Gracefully handles individual image loading failures without breaking the entire process
+- Gracefully handles individual image loading failures without breaking the
+  entire process
 
 #### Environment Variables for Path Resolution
 
 The system uses these environment variables for resolving relative paths:
 
 - **`CONFIGURATION_BUCKET`**: S3 bucket name for configuration files
+
   - Used when `imagePath` doesn't start with `s3://`
   - The path is treated as a key within this bucket
 
@@ -232,7 +277,8 @@ The system uses these environment variables for resolving relative paths:
 
 ### Task Prompt Integration
 
-To use few-shot examples, your task prompt must include the `{FEW_SHOT_EXAMPLES}` placeholder:
+To use few-shot examples, your task prompt must include the
+`{FEW_SHOT_EXAMPLES}` placeholder:
 
 ```yaml
 extraction:
@@ -268,11 +314,16 @@ extraction:
 
 Using few-shot examples provides several advantages for extraction:
 
-1. **Improved Accuracy**: Models understand the expected extraction format and attribute relationships better
-2. **Consistent Formatting**: Examples establish exact JSON structure and value formats expected
-3. **Reduced Hallucination**: Examples reduce the likelihood of made-up attribute values
-4. **Better Null Handling**: Examples show when attributes should be null vs. empty strings
-5. **Domain-Specific Understanding**: Examples help models understand domain-specific terminology and formats
+1. **Improved Accuracy**: Models understand the expected extraction format and
+   attribute relationships better
+2. **Consistent Formatting**: Examples establish exact JSON structure and value
+   formats expected
+3. **Reduced Hallucination**: Examples reduce the likelihood of made-up
+   attribute values
+4. **Better Null Handling**: Examples show when attributes should be null vs.
+   empty strings
+5. **Domain-Specific Understanding**: Examples help models understand
+   domain-specific terminology and formats
 
 ### Best Practices
 
@@ -367,7 +418,8 @@ document = extraction_service.process_document_section(
 
 ### Usage with Extraction Service
 
-The few-shot examples are automatically integrated when using the extraction service:
+The few-shot examples are automatically integrated when using the extraction
+service:
 
 ```python
 from idp_common import get_config
@@ -392,29 +444,31 @@ The service automatically:
 
 1. Loads few-shot examples from the configuration
 2. Filters examples to only include those from the document's classified type
-3. Includes them in extraction prompts using the `{FEW_SHOT_EXAMPLES}` placeholder
+3. Includes them in extraction prompts using the `{FEW_SHOT_EXAMPLES}`
+   placeholder
 4. Formats examples with both text and images for multimodal understanding
 
 ### Example Configuration Structure
 
-Here's a complete example showing how few-shot examples integrate with document class definitions:
+Here's a complete example showing how few-shot examples integrate with document
+class definitions:
 
 ```yaml
 classes:
   - name: email
-    description: "A digital message with email headers..."
+    description: 'A digital message with email headers...'
     attributes:
       - name: from_address
-        description: "The email address of the sender..."
+        description: 'The email address of the sender...'
       - name: to_address
-        description: "The email address of the primary recipient..."
+        description: 'The email address of the primary recipient...'
       - name: subject
-        description: "The topic of the email..."
+        description: 'The topic of the email...'
       - name: date_sent
-        description: "The date and time when the email was sent..."
+        description: 'The date and time when the email was sent...'
     examples:
       - classPrompt: "This is an example of the class 'email'"
-        name: "Email1"
+        name: 'Email1'
         attributesPrompt: |
           expected attributes are: 
              "from_address": "Kelahan, Ben",
@@ -427,7 +481,7 @@ classes:
              "priority": null,
              "thread_id": null,
              "message_id": null
-        imagePath: "config_library/pattern-2/few_shot_example/example-images/email1.jpg"
+        imagePath: 'config_library/pattern-2/few_shot_example/example-images/email1.jpg'
 
 extraction:
   task_prompt: |
@@ -494,16 +548,19 @@ print(f"Built content with {len(content)} items")
 Common issues and solutions:
 
 1. **No Examples Loaded**:
+
    - Verify `{FEW_SHOT_EXAMPLES}` placeholder exists in task_prompt
    - Check that examples are defined for the document class being processed
    - Ensure example image paths are correct
 
 2. **Images Not Found**:
+
    - Set `ROOT_DIR` environment variable for local development
    - Set `CONFIGURATION_BUCKET` for S3 deployment
    - Verify image files exist at specified paths
 
 3. **Inconsistent Extraction Results**:
+
    - Review example quality and ensure they're representative
    - Check that `attributesPrompt` format matches expected output
    - Ensure examples cover the range of variations in your documents
@@ -518,9 +575,11 @@ Common issues and solutions:
 The ExtractionService has built-in error handling:
 
 1. If a section ID is not found in the document, an exception is raised
-2. If extraction fails for any reason, the error is captured in `document.errors`
+2. If extraction fails for any reason, the error is captured in
+   `document.errors`
 3. All errors are logged for debugging
-4. Few-shot example loading errors are handled gracefully with fallback to standard prompts
+4. Few-shot example loading errors are handled gracefully with fallback to
+   standard prompts
 
 ## Performance Optimization
 
@@ -529,15 +588,18 @@ For optimal performance, especially in serverless environments:
 1. Only include the section being processed and its required pages
 2. Set clear expectations about document structure and fail fast on violations
 3. Use the Document model to track metering data
-4. Consider the trade-off between few-shot example accuracy improvements and increased token costs
+4. Consider the trade-off between few-shot example accuracy improvements and
+   increased token costs
 
 ### Extraction Results Storage
 
-The extraction service stores extraction results in S3 and only includes the S3 URI in the document:
+The extraction service stores extraction results in S3 and only includes the S3
+URI in the document:
 
 1. Extracted attributes are written to S3 as JSON files
 2. Only the S3 URI (`extraction_result_uri`) is included in the document
-3. This approach prevents the document from growing too large when extraction results contain many attributes
+3. This approach prevents the document from growing too large when extraction
+   results contain many attributes
 4. To access the actual attributes, load them from the S3 URI when needed
 
 ## Multimodal Extraction
@@ -547,19 +609,29 @@ The service supports both text and image inputs:
 1. Text content is read from each page's `parsed_text_uri`
 2. Images are retrieved from each page's `image_uri`
 3. Both are combined in a multimodal prompt to the LLM
-4. Few-shot examples include both text prompts and document images for better understanding
+4. Few-shot examples include both text prompts and document images for better
+   understanding
 
 ## Thread Safety
 
-The extraction service is designed to be thread-safe, supporting concurrent processing of multiple sections in parallel workloads.
+The extraction service is designed to be thread-safe, supporting concurrent
+processing of multiple sections in parallel workloads.
 
 ## Future Enhancements
 
 - ✅ Few-shot example support for improved accuracy and consistency
 - ✅ Class-specific example filtering for targeted extraction guidance
 - ✅ Multimodal example support with document images
-- ✅ Enhanced imagePath support for multiple images from directories and S3 prefixes
+- ✅ Enhanced imagePath support for multiple images from directories and S3
+  prefixes
 - 🔲 Dynamic few-shot example selection based on document similarity
 - 🔲 Confidence scoring for extracted attributes
 - 🔲 Support for additional extraction backends (custom models)
-- 🔲 Automatic example quality assessment and recommendations
+- # 🔲 Automatic example quality assessment and recommendations
+- The agentic approaches require Python 3.10+ due to strands-agents dependencies
+- Agentic extraction uses more tokens but provides better accuracy and
+  reliability
+- The structured_output function includes image enhancement tools for better OCR
+  results
+- All approaches integrate with the same S3-based document pipeline
+  > > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)

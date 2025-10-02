@@ -1,10 +1,13 @@
 # Model Fine-tuning Service
 
-This module provides the `ModelFinetuningService` class for fine-tuning language models using Amazon Bedrock and creating provisioned throughput for the fine-tuned models.
+This module provides the `ModelFinetuningService` class for fine-tuning language
+models using Amazon Bedrock and creating provisioned throughput for the
+fine-tuned models.
 
 ## ModelFinetuningService Class
 
-The `ModelFinetuningService` class is the core service for managing Nova model fine-tuning workflows programmatically.
+The `ModelFinetuningService` class is the core service for managing Nova model
+fine-tuning workflows programmatically.
 
 ### Initialization
 
@@ -35,8 +38,10 @@ service = ModelFinetuningService(region="us-east-1", config=config)
 
 ### Constructor Parameters
 
-- `region` (str, optional): AWS region for Bedrock service. Defaults to value from config or `AWS_REGION` environment variable.
-- `config` (Dict[str, Any], optional): Configuration dictionary containing model and hyperparameter settings.
+- `region` (str, optional): AWS region for Bedrock service. Defaults to value
+  from config or `AWS_REGION` environment variable.
+- `config` (Dict[str, Any], optional): Configuration dictionary containing model
+  and hyperparameter settings.
 
 ## Fine-tuning Job Management
 
@@ -71,10 +76,14 @@ print(f"Job ARN: {result.job_arn}")
 ```
 
 **Parameters:**
-- `config` (Union[FinetuningJobConfig, Dict[str, Any]]): Job configuration object or dictionary
+
+- `config` (Union[FinetuningJobConfig, Dict[str, Any]]): Job configuration
+  object or dictionary
 
 **Returns:**
-- `FinetuningJobResult`: Object containing job details including ARN, name, and status
+
+- `FinetuningJobResult`: Object containing job details including ARN, name, and
+  status
 
 ### get_job_status()
 
@@ -87,10 +96,12 @@ print(f"Model ID: {status.model_id}")
 ```
 
 **Parameters:**
+
 - `job_identifier` (str): Job ARN or job name
 - `model_type` (str): Type of model being fine-tuned (default: "nova")
 
 **Returns:**
+
 - `FinetuningJobResult`: Job result with current status
 
 ### wait_for_job_completion()
@@ -108,12 +119,14 @@ print(f"Final status: {final_status.status.value}")
 ```
 
 **Parameters:**
+
 - `job_identifier` (str): Job ARN or job name
 - `model_type` (str): Type of model being fine-tuned (default: "nova")
 - `polling_interval` (int): Time in seconds between status checks (default: 60)
 - `max_wait_time` (Optional[int]): Maximum time to wait in seconds
 
 **Returns:**
+
 - `FinetuningJobResult`: Final job status
 
 ## Provisioned Throughput Management
@@ -139,9 +152,12 @@ print(f"Provisioned Model ARN: {result.provisioned_model_arn}")
 ```
 
 **Parameters:**
-- `config` (Union[ProvisionedThroughputConfig, Dict[str, Any]]): Provisioned throughput configuration
+
+- `config` (Union[ProvisionedThroughputConfig, Dict[str, Any]]): Provisioned
+  throughput configuration
 
 **Returns:**
+
 - `ProvisionedThroughputResult`: Result with provisioned model details
 
 ### get_provisioned_throughput_status()
@@ -154,10 +170,12 @@ print(f"Status: {status.status}")
 ```
 
 **Parameters:**
+
 - `provisioned_model_id` (str): Provisioned model ID
 - `model_type` (str): Type of model (default: "nova")
 
 **Returns:**
+
 - `ProvisionedThroughputResult`: Current provisioning status
 
 ### wait_for_provisioning_completion()
@@ -174,12 +192,14 @@ final_status = service.wait_for_provisioning_completion(
 ```
 
 **Parameters:**
+
 - `provisioned_model_id` (str): Provisioned model ID
 - `model_type` (str): Type of model (default: "nova")
 - `polling_interval` (int): Time in seconds between status checks (default: 60)
 - `max_wait_time` (Optional[int]): Maximum time to wait in seconds
 
 **Returns:**
+
 - `ProvisionedThroughputResult`: Final provisioning status
 
 ### delete_provisioned_throughput()
@@ -191,10 +211,12 @@ response = service.delete_provisioned_throughput(provisioned_model_id, model_typ
 ```
 
 **Parameters:**
+
 - `provisioned_model_id` (str): Provisioned model ID
 - `model_type` (str): Type of model (default: "nova")
 
 **Returns:**
+
 - `Dict[str, Any]`: Response from delete operation
 
 ## Configuration Options
@@ -211,7 +233,7 @@ config = {
         "hyperparameters": {
             "default": {
                 "epochCount": "2",
-                "learningRate": "0.00001", 
+                "learningRate": "0.00001",
                 "batchSize": "1"
             },
             "custom": {
@@ -246,6 +268,7 @@ except ValueError as e:
 ```
 
 Common validation errors:
+
 - Missing required parameters (`base_model`, `role_arn`, `training_data_uri`)
 - Invalid hyperparameter ranges
 - Malformed S3 URIs
@@ -310,7 +333,7 @@ bucket, key = service._parse_s3_uri("s3://my-bucket/path/to/file.jsonl")
 
 ```python
 from idp_common.model_finetuning import (
-    ModelFinetuningService, 
+    ModelFinetuningService,
     FinetuningJobConfig,
     ProvisionedThroughputConfig
 )
@@ -340,7 +363,7 @@ if final_result.model_id:
         model_units=1,
         model_type="nova"
     )
-    
+
     throughput_result = service.create_provisioned_throughput(throughput_config)
     service.wait_for_provisioning_completion(throughput_result.provisioned_model_arn)
 ```
@@ -367,11 +390,13 @@ job_config = FinetuningJobConfig(
 
 ## CLI Usage Examples
 
-The following Python scripts provide command-line interfaces for end-to-end Nova fine-tuning workflows:
+The following Python scripts provide command-line interfaces for end-to-end Nova
+fine-tuning workflows:
 
 ### Dataset Preparation
 
 **Basic dataset preparation:**
+
 ```bash
 python prepare_nova_finetuning_data.py \
     --bucket-name my-finetuning-bucket \
@@ -379,6 +404,7 @@ python prepare_nova_finetuning_data.py \
 ```
 
 **With custom dataset and prompts:**
+
 ```bash
 python prepare_nova_finetuning_data.py \
     --bucket-name my-bucket \
@@ -392,6 +418,7 @@ python prepare_nova_finetuning_data.py \
 ### Fine-tuning Job Creation
 
 **Create job with automatic IAM role creation:**
+
 ```bash
 python create_finetuning_job.py \
     --training-data-uri s3://my-bucket/data/train.jsonl \
@@ -401,6 +428,7 @@ python create_finetuning_job.py \
 ```
 
 **Create job with custom hyperparameters:**
+
 ```bash
 python create_finetuning_job.py \
     --training-data-uri s3://my-bucket/data/train.jsonl \
@@ -414,6 +442,7 @@ python create_finetuning_job.py \
 ```
 
 **Monitor job status:**
+
 ```bash
 python create_finetuning_job.py \
     --status-only \
@@ -423,6 +452,7 @@ python create_finetuning_job.py \
 ### Provisioned Throughput Management
 
 **Create provisioned throughput from job details:**
+
 ```bash
 python create_provisioned_throughput.py \
     --job-details-file finetuning_job_20241201_120000.json \
@@ -431,6 +461,7 @@ python create_provisioned_throughput.py \
 ```
 
 **Create from model ID:**
+
 ```bash
 python create_provisioned_throughput.py \
     --model-id arn:aws:bedrock:us-east-1:123456789012:custom-model/... \
@@ -439,11 +470,13 @@ python create_provisioned_throughput.py \
 ```
 
 **List all provisioned models:**
+
 ```bash
 python create_provisioned_throughput.py --list-models
 ```
 
 **Delete provisioned throughput:**
+
 ```bash
 python create_provisioned_throughput.py \
     --delete \
@@ -453,6 +486,7 @@ python create_provisioned_throughput.py \
 ### Model Inference and Evaluation
 
 **Single image inference with base model:**
+
 ```bash
 python inference_example.py \
     --model-id us.amazon.nova-lite-v1:0 \
@@ -460,6 +494,7 @@ python inference_example.py \
 ```
 
 **Batch inference with fine-tuned model:**
+
 ```bash
 python inference_example.py \
     --provisioned-model-arn arn:aws:bedrock:us-east-1:123456789012:provisioned-model/... \
@@ -468,6 +503,7 @@ python inference_example.py \
 ```
 
 **Inference with custom parameters:**
+
 ```bash
 python inference_example.py \
     --model-id us.amazon.nova-lite-v1:0 \
@@ -479,6 +515,7 @@ python inference_example.py \
 ```
 
 **Model comparison with ground truth evaluation:**
+
 ```bash
 python inference_example.py \
     --provisioned-model-arn arn:aws:bedrock:us-east-1:123456789012:provisioned-model/... \
@@ -494,7 +531,7 @@ python inference_example.py \
 # 1. Prepare dataset
 python prepare_nova_finetuning_data.py --bucket-name my-bucket --samples-per-label 100
 
-# 2. Create fine-tuning job  
+# 2. Create fine-tuning job
 python create_finetuning_job.py --training-data-uri s3://my-bucket/train.jsonl --job-name my-job --create-role
 
 # 3. Create provisioned throughput
@@ -518,7 +555,8 @@ python create_provisioned_throughput.py --delete --provisioned-model-arn <arn>
 
 For end-to-end workflows, dataset preparation, and comprehensive examples, see:
 
-- **[Nova Fine-tuning Documentation](../../../../docs/nova-finetuning.md)**: Complete guide with CLI scripts and workflows
+- **[Nova Fine-tuning Documentation](../../../../docs/nova-finetuning.md)**:
+  Complete guide with CLI scripts and workflows
 - **Python Scripts**:
   - `prepare_nova_finetuning_data.py`: Dataset preparation
   - `create_finetuning_job.py`: Job creation and monitoring

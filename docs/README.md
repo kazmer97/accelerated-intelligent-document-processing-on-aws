@@ -3,28 +3,36 @@ SPDX-License-Identifier: MIT-0
 
 # GenAIIDP Documentation
 
-This folder contains detailed documentation on various aspects of the GenAI Intelligent Document Processing solution.
+This folder contains detailed documentation on various aspects of the GenAI
+Intelligent Document Processing solution.
 
 ## Documentation Structure
 
-- [Architecture](./architecture.md) - Detailed component architecture and data flow
+- [Architecture](./architecture.md) - Detailed component architecture and data
+  flow
 - [Deployment](./deployment.md) - Build, publish, deploy, and test instructions
 - [Web UI](./web-ui.md) - Web interface features and usage
-- [Agent Analysis](./agent-analysis.md) - Natural language analytics and data visualization feature
+- [Agent Analysis](./agent-analysis.md) - Natural language analytics and data
+  visualization feature
 - [Knowledge Base](./knowledge-base.md) - Document knowledge base query feature
-- [Post-Processing Lambda Hook](./post-processing-lambda-hook.md) - Custom downstream processing integration
+- [Post-Processing Lambda Hook](./post-processing-lambda-hook.md) - Custom
+  downstream processing integration
 - [Evaluation Framework](./evaluation.md) - Accuracy assessment system
-- [Assessment Feature](./assessment.md) - Extraction confidence evaluation using LLMs
+- [Assessment Feature](./assessment.md) - Extraction confidence evaluation using
+  LLMs
 - [Configuration](./configuration.md) - Configuration and customization options
 - [Classification](./classification.md) - Customizing document classification
 - [Extraction](./extraction.md) - Customizing information extraction
-- [Criteria Validation](./criteria-validation.md) - Document validation against business rules using LLMs
+- [Criteria Validation](./criteria-validation.md) - Document validation against
+  business rules using LLMs
 - [Monitoring](./monitoring.md) - Monitoring and logging capabilities
-- [Troubleshooting](./troubleshooting.md) - Troubleshooting and performance guides
+- [Troubleshooting](./troubleshooting.md) - Troubleshooting and performance
+  guides
 
 ## Screenshots and Diagrams
 
-The documentation references several screenshots and diagrams from the `../images` folder:
+The documentation references several screenshots and diagrams from the
+`../images` folder:
 
 - Architecture diagrams (`IDP.drawio.png`, etc.)
 - Pattern-specific diagrams (`IDP-Pattern1-BDA.drawio.png`, etc.)

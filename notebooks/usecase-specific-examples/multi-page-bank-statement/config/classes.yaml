@@ -9,7 +9,7 @@ classes:
         evaluation_method: EXACT
       - name: Statement Period
         description: Statement period (e.g., January 2024)
-        evaluation_threshold: '0.8'
+        evaluation_threshold: "0.8"
         attributeType: simple
         evaluation_method: FUZZY
       - name: Account Holder Address
@@ -18,15 +18,15 @@ classes:
         groupAttributes:
           - name: Street Number
             description: House or building number
-            evaluation_threshold: '0.9'
+            evaluation_threshold: "0.9"
             evaluation_method: FUZZY
           - name: Street Name
             description: Name of the street
-            evaluation_threshold: '0.8'
+            evaluation_threshold: "0.8"
             evaluation_method: FUZZY
           - name: City
             description: City name
-            evaluation_threshold: '0.9'
+            evaluation_threshold: "0.9"
             evaluation_method: FUZZY
           - name: State
             description: State abbreviation (e.g., CA, NY)
@@ -39,11 +39,11 @@ classes:
           itemAttributes:
             - name: Date
               description: Transaction date (MM/DD/YYYY)
-              evaluation_threshold: '0.9'
+              evaluation_threshold: "0.9"
               evaluation_method: FUZZY
             - name: Description
               description: Transaction description or merchant name
-              evaluation_threshold: '0.7'
+              evaluation_threshold: "0.7"
               evaluation_method: SEMANTIC
             - name: Amount
               description: >-

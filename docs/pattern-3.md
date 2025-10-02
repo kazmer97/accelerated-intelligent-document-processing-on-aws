@@ -3,10 +3,11 @@ SPDX-License-Identifier: MIT-0
 
 # Pattern 3: UDOP Classification with Claude Extraction
 
-This pattern implements an intelligent document processing workflow that uses UDOP (Unified Document Processing) for page classification and grouping, followed by Claude for information extraction.
+This pattern implements an intelligent document processing workflow that uses
+UDOP (Unified Document Processing) for page classification and grouping,
+followed by Claude for information extraction.
 
 <img src="../images/IDP-Pattern3-UDOP.drawio.png" alt="Architecture" width="800">
-
 
 ## Table of Contents
 
@@ -30,27 +31,34 @@ This pattern implements an intelligent document processing workflow that uses UD
 
 ## Fine tuning a UDOP model for classification
 
-See [Fine-Tuning Models on SageMaker](../patterns/pattern-3/fine-tune-sm-udop-classification/README.md) 
+See
+[Fine-Tuning Models on SageMaker](../patterns/pattern-3/fine-tune-sm-udop-classification/README.md)
 
-Once you have trained the model, deploy the GenAIIDP stack for Pattern-3 using the path for your new fine tuned model.
+Once you have trained the model, deploy the GenAIIDP stack for Pattern-3 using
+the path for your new fine tuned model.
 
+Once you have trained the model, deploy the GenAIIDP stack for Pattern-3 using
+the path for your new fine tuned model.
 
 ## Architecture Overview
 
 The workflow consists of three main processing steps:
+
 1. OCR processing using Amazon Textract
 2. Page classification and grouping using a UDOP model deployed on SageMaker
 3. Field extraction using Claude via Amazon Bedrock
 
 ### State Machine Workflow
 
-The Step Functions state machine (`workflow.asl.json`) orchestrates the following flow:
+The Step Functions state machine (`workflow.asl.json`) orchestrates the
+following flow:
 
 ```
 OCRStep → ClassificationStep → ProcessPageGroups (Map State for Extraction)
 ```
 
 Each step includes comprehensive retry logic for handling transient errors:
+
 - Initial retry after 2 seconds
 - Exponential backoff with rate of 2
 - Maximum of 10 retry attempts
@@ -58,6 +66,7 @@ Each step includes comprehensive retry logic for handling transient errors:
 ### Lambda Functions
 
 #### OCR Function
+
 - **Purpose**: Processes input PDFs using Amazon Textract
 - **Input**:
   ```json
@@ -92,10 +101,12 @@ Each step includes comprehensive retry logic for handling transient errors:
   }
   ```
 
-#### Classification Function 
-- **Purpose**: Classifies pages using UDOP model on SageMaker, and segments into sections using class boundaries
+#### Classification Function
+
+- **Purpose**: Classifies pages using UDOP model on SageMaker, and segments into
+  sections using class boundaries
 - **Input**: Output from OCR function plus output bucket
-- **Output**: 
+- **Output**:
   ```json
   {
     "metadata": "<FROM_OCR>",
@@ -110,6 +121,7 @@ Each step includes comprehensive retry logic for handling transient errors:
   ```
 
 #### Extraction Function
+
 - **Purpose**: Extracts fields using Claude via Amazon Bedrock
 - **Input**: Individual section from Classification output
 - **Output**:
@@ -136,7 +148,8 @@ Each step includes comprehensive retry logic for handling transient errors:
 
 - **Purpose**: Aggregates results for all sections
 - **Input**: Extraction output from each section extraction
-- **Output**: Consumed by the GenAIIDP parent stack workflow tracker to update job status/UI etc
+- **Output**: Consumed by the GenAIIDP parent stack workflow tracker to update
+  job status/UI etc
   ```json
   {
     "Sections": [
@@ -164,18 +177,20 @@ Each step includes comprehensive retry logic for handling transient errors:
 The pattern includes a complete UDOP model deployment:
 
 - **SageMaker Endpoint**: `sagemaker_classifier_endpoint.yaml` provisions:
-  - SageMaker model 
+  - SageMaker model
   - Endpoint configuration
   - Endpoint with auto-scaling
   - IAM roles and permissions
 
-To create a new UDOP model fine tuned for your data, see [Fine tuning a UDOP model](#fine-tuning-a-udop-model-for-classification).
+To create a new UDOP model fine tuned for your data, see
+[Fine tuning a UDOP model](#fine-tuning-a-udop-model-for-classification).
 
 ### Monitoring and Metrics
 
 The pattern includes a comprehensive CloudWatch dashboard with:
 
 #### Performance Metrics
+
 - Document and page throughput (per minute)
 - Token usage (input/output/total)
 - Bedrock request statistics and latency
@@ -183,6 +198,7 @@ The pattern includes a comprehensive CloudWatch dashboard with:
 - Processing latencies by function
 
 #### Error Tracking
+
 - Lambda function errors with detailed logs
 - Long-running invocations with duration metrics
 - Classification/extraction failures
@@ -190,6 +206,7 @@ The pattern includes a comprehensive CloudWatch dashboard with:
 - SageMaker endpoint errors
 
 #### Lambda Function Metrics
+
 - Duration (average, p90, maximum)
 - Memory usage and utilization
 - Error rates and exception counts
@@ -208,27 +225,39 @@ The pattern exports these outputs to the parent stack:
 ### Configuration
 
 **Stack Deployment Parameters:**
-- `UDOPModelArtifactPath`: S3 path to UDOP model artifacts (see [Fine tuning a UDOP model](#fine-tuning-a-udop-model-for-classification))
-- **Summarization**: Control summarization via configuration file `summarization.enabled` property (replaces `IsSummarizationEnabled` parameter)
-- `ConfigurationDefaultS3Uri`: Optional S3 URI to custom configuration (uses default configuration if not specified)
+
+- `UDOPModelArtifactPath`: S3 path to UDOP model artifacts (see
+  [Fine tuning a UDOP model](#fine-tuning-a-udop-model-for-classification))
+- **Summarization**: Control summarization via configuration file
+  `summarization.enabled` property (replaces `IsSummarizationEnabled` parameter)
+- `ConfigurationDefaultS3Uri`: Optional S3 URI to custom configuration (uses
+  default configuration if not specified)
 - `MaxConcurrentWorkflows`: Workflow concurrency limit
 - `LogRetentionDays`: CloudWatch log retention period
 - `ExecutionTimeThresholdMs`: Latency threshold for alerts
 
 **Configuration Management:**
-- Model selection for extraction is now handled through configuration files rather than CloudFormation parameters
-- Configuration supports multiple presets per pattern (e.g., default, checkboxed_attributes_extraction, medical_records_summarization)
+
+- Model selection for extraction is now handled through configuration files
+  rather than CloudFormation parameters
+- Configuration supports multiple presets per pattern (e.g., default,
+  checkboxed_attributes_extraction, medical_records_summarization)
 - Configuration can be updated through the Web UI without stack redeployment
-- Extraction model choices are constrained through enum constraints in the configuration schema
-- UDOP classification model is still specified via CloudFormation parameter due to SageMaker endpoint requirements
+- Extraction model choices are constrained through enum constraints in the
+  configuration schema
+- UDOP classification model is still specified via CloudFormation parameter due
+  to SageMaker endpoint requirements
 
 ## Customizing Extraction
 
-The system uses a combination of prompt engineering and predefined attributes to extract information from documents. You can customize both to match your specific document types and extraction needs.
+The system uses a combination of prompt engineering and predefined attributes to
+extract information from documents. You can customize both to match your
+specific document types and extraction needs.
 
 ### Extraction Prompts
 
-The extraction prompts are now defined in the configuration files rather than CloudFormation template. The structure is similar to the one shown below:
+The extraction prompts are now defined in the configuration files rather than
+CloudFormation template. The structure is similar to the one shown below:
 
 ```python
 DEFAULT_SYSTEM_PROMPT = "You are a document assistant. Respond only with JSON..."
@@ -238,6 +267,7 @@ You are an expert in business document analysis and information extraction. You 
 </background>
 ...
 ```
+
 To modify the extraction behavior:
 
 1. Modify the configuration settings through the Web UI or configuration files
@@ -249,44 +279,68 @@ To modify the extraction behavior:
 
 ### Model Selection
 
-- **Extraction model selection** is now handled through configuration files with enum constraints
+- **Extraction model selection** is now handled through configuration files with
+  enum constraints
 - Available models are defined in the configuration schema
 - Changes can be made through the Web UI without redeployment
-- **Classification model (UDOP)** is still specified via CloudFormation parameter due to SageMaker endpoint requirements
+- **Classification model (UDOP)** is still specified via CloudFormation
+  parameter due to SageMaker endpoint requirements
 
 ### Extraction Attributes
-Attributes to be extracted are defined in the configuration files' `classes` section. The structure is similar to the example below:
+
+Attributes to be extracted are defined in the configuration files' `classes`
+section. The structure is similar to the example below:
 
 Example attribute definition:
+
 ```yaml
 classes:
   - name: letter
-    description: A formal written message that is typically sent from one person to another
+    description:
+      A formal written message that is typically sent from one person to another
     attributes:
       - name: sender_name
-        description: The name of the person or entity who wrote or sent the letter. Look for text following or near terms like 'from', 'sender', 'authored by', 'written by', or at the end of the letter before a signature.
+        description:
+          The name of the person or entity who wrote or sent the letter. Look
+          for text following or near terms like 'from', 'sender', 'authored by',
+          'written by', or at the end of the letter before a signature.
       - name: sender_address
-        description: The physical address of the sender, typically appearing at the top of the letter. May be labeled as 'address', 'location', or 'from address'.
+        description:
+          The physical address of the sender, typically appearing at the top of
+          the letter. May be labeled as 'address', 'location', or 'from
+          address'.
       - name: recipient_name
-        description: The name of the person or entity receiving the letter. Look for this after 'to', 'recipient', 'addressee', or at the beginning of the letter.
+        description:
+          The name of the person or entity receiving the letter. Look for this
+          after 'to', 'recipient', 'addressee', or at the beginning of the
+          letter.
       - name: recipient_address
-        description: The physical address where the letter is to be delivered. Often labeled as 'to address' or 'delivery address', typically appearing below the recipient name.
+        description:
+          The physical address where the letter is to be delivered. Often
+          labeled as 'to address' or 'delivery address', typically appearing
+          below the recipient name.
   - name: form
     description: A document with blank spaces for filling in information
     attributes:
       - name: form_type
-        description: The category or purpose of the form, such as 'application', 'registration', 'request', etc. May be identified by 'form name', 'document type', or 'form category'.
+        description:
+          The category or purpose of the form, such as 'application',
+          'registration', 'request', etc. May be identified by 'form name',
+          'document type', or 'form category'.
       - name: form_id
-        description: The unique identifier for the form, typically a number or alphanumeric code. Often labeled as 'form number', 'id', or 'reference number'.
+        description:
+          The unique identifier for the form, typically a number or alphanumeric
+          code. Often labeled as 'form number', 'id', or 'reference number'.
 ```
 
 To customize attributes:
+
 1. Modify the `classes` section in the configuration files or through the Web UI
 2. For each attribute, provide a clear name and detailed description
 3. Changes are applied immediately without requiring function redeployment
 
-Note: Configuration changes through the Web UI take effect immediately for new document processing jobs.
-
+Note: Configuration changes through the Web UI take effect immediately for new
+document processing jobs.
 
 ## Testing
 
@@ -303,36 +357,46 @@ sam local invoke ClassificationFunction --env-vars testing/env.json -e testing/C
 sam local invoke ExtractionFunction --env-vars testing/env.json -e testing/ExtractionFunction-event.json
 ```
 
-Note that for proper testing of the classification function, you'll need access to a running SageMaker endpoint with the UDOP model deployed.
+Note that for proper testing of the classification function, you'll need access
+to a running SageMaker endpoint with the UDOP model deployed.
 
 ## Best Practices
 
 1. **Configuration Management**:
-   - Use the configuration library for different use cases (default, medical_records, etc.)
+
+   - Use the configuration library for different use cases (default,
+     medical_records, etc.)
    - Test configuration changes thoroughly before production deployment
-   - Leverage the Web UI for extraction configuration updates without redeployment
+   - Leverage the Web UI for extraction configuration updates without
+     redeployment
 
 2. **SageMaker Endpoint Management**:
-   - Configure appropriate instance type based on model size and throughput requirements
+
+   - Configure appropriate instance type based on model size and throughput
+     requirements
    - Enable auto-scaling for cost optimization during varying loads
    - Monitor endpoint performance metrics for potential bottlenecks
 
 3. **Retry Handling**:
+
    - All functions implement exponential backoff with jitter
    - Configure appropriate retry limits for different types of failures
    - Handle SageMaker endpoint throttling differently from transient failures
 
 4. **Performance Optimization**:
+
    - Pre-warm the SageMaker endpoint with sample requests during initialization
    - Configure appropriate memory for Lambda functions based on document size
    - Use efficient image preprocessing and data handling techniques
 
 5. **Monitoring**:
+
    - Set up CloudWatch alarms for critical metrics
    - Use detailed logging with correlation IDs for request tracking
    - Monitor token usage and cost metrics for GenAI components
 
 6. **Security**:
+
    - Use KMS encryption for data at rest and in transit
    - Implement least privilege IAM roles for all components
    - Protect SageMaker endpoints with appropriate security groups

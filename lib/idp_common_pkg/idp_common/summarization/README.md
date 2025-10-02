@@ -3,45 +3,53 @@ SPDX-License-Identifier: MIT-0
 
 # Summarization Service
 
-The Summarization Service module provides functionality for generating summaries of documents using LLMs through AWS Bedrock.
+The Summarization Service module provides functionality for generating summaries
+of documents using LLMs through AWS Bedrock.
 
 ## Overview
 
-The Summarization Service processes document text through a Bedrock LLM to extract key information and present it in flexible formats. The service is designed to integrate with the IDP pipeline to enable automatic document summarization with support for any JSON structure returned by LLMs. It dynamically adapts to whatever fields are returned in the JSON response from the model.
+The Summarization Service processes document text through a Bedrock LLM to
+extract key information and present it in flexible formats. The service is
+designed to integrate with the IDP pipeline to enable automatic document
+summarization with support for any JSON structure returned by LLMs. It
+dynamically adapts to whatever fields are returned in the JSON response from the
+model.
 
 ## Main Components
 
 ### DocumentSummary
 
-The `DocumentSummary` class provides a flexible container for any JSON structure returned by LLMs:
+The `DocumentSummary` class provides a flexible container for any JSON structure
+returned by LLMs:
 
 ```python
 @dataclass
 class DocumentSummary:
     """Flexible model for document summary results that can handle any JSON structure."""
-    
+
     content: Dict[str, Any]
     """The raw content from the summarization result, containing any fields the LLM returned."""
-    
+
     metadata: Dict[str, Any] = field(default_factory=dict)
     """Optional metadata about the summarization process."""
-    
+
     def __getitem__(self, key: str) -> Any:
         """Allow dictionary-like access to summary fields."""
-    
+
     def get(self, key: str, default: Any = None) -> Any:
         """Get a summary field with an optional default value."""
-    
+
     def keys(self) -> List[str]:
         """Get a list of available keys in the summary."""
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
 ```
 
 ### DocumentSummarizationResult
 
-The `DocumentSummarizationResult` class contains the comprehensive summarization results:
+The `DocumentSummarizationResult` class contains the comprehensive summarization
+results:
 
 ```python
 @dataclass
@@ -51,10 +59,10 @@ class DocumentSummarizationResult:
     summary: DocumentSummary
     execution_time: float = 0.0
     output_uri: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
-        
+
     def to_markdown(self) -> str:
         """Convert summarization results to markdown format."""
 ```
@@ -66,7 +74,7 @@ The `SummarizationService` class handles the core summarization functionality:
 ```python
 class SummarizationService:
     """Service for summarizing documents using various backends."""
-    
+
     def __init__(
         self,
         region: str = None,
@@ -74,10 +82,10 @@ class SummarizationService:
         backend: str = "bedrock"
     ):
         # Initialize service with region, config and backend
-        
+
     def process_text(self, text: str) -> DocumentSummary:
         # Process raw text to generate a summary with flexible structure
-        
+
     def process_document_section(
         self,
         document: Document,
@@ -85,10 +93,10 @@ class SummarizationService:
     ) -> Document:
         # Process a specific section of a document and update the Document object with the summary
         # Stores summary results in S3 and updates section.attributes with URIs
-        
+
     def process_document(
-        self, 
-        document: Document, 
+        self,
+        document: Document,
         store_results: bool = True
     ) -> Document:
         # Process a Document object and update it with summary information
@@ -145,11 +153,11 @@ if section and section.attributes and 'summary_uri' in section.attributes:
     from idp_common import s3
     summary_uri = section.attributes['summary_uri']
     summary_content = s3.get_json_content(summary_uri)
-    
+
     # Print the summary content
     print(f"Summary for section {section_id} ({section.classification}):")
     print(json.dumps(summary_content, indent=2))
-    
+
     # Access the markdown version
     markdown_uri = section.attributes['summary_md_uri']
     markdown_content = s3.get_text_content(markdown_uri)
@@ -178,24 +186,28 @@ The service requires configuration with the following structure:
 ### Configuration Properties
 
 #### `enabled` (boolean)
+
 - **Purpose**: Controls whether summarization processing is performed
 - **Default**: `true` (for backward compatibility)
 - **Behavior**:
   - `true`: Summarization processing proceeds normally
   - `false`: Summarization is skipped entirely with minimal overhead
 
-**Cost Optimization**: When `enabled: false`, no LLM API calls are made, resulting in zero summarization costs.
+**Cost Optimization**: When `enabled: false`, no LLM API calls are made,
+resulting in zero summarization costs.
 
 **Example - Disabling Summarization:**
+
 ```yaml
 summarization:
-  enabled: false  # Disables all summarization processing
+  enabled: false # Disables all summarization processing
   # Other properties can remain but will be ignored
   model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
   temperature: 0.0
 ```
 
-The service can handle any JSON structure returned by the model. You can use any field names in your prompt template:
+The service can handle any JSON structure returned by the model. You can use any
+field names in your prompt template:
 
 ```json
 {
@@ -206,6 +218,7 @@ The service can handle any JSON structure returned by the model. You can use any
 ```
 
 Important considerations for the prompt template:
+
 1. Always request a valid JSON response format
 2. Specify the exact fields you want to include
 3. Include any formatting or style instructions directly in the prompt
@@ -220,15 +233,20 @@ The Summarization Service integrates with the IDP pipeline by:
 3. Sending the text to Bedrock LLM for summarization
 4. Parsing the JSON response from the LLM with any structure
 5. Creating a `DocumentSummary` with the parsed JSON content
-6. Creating a `DocumentSummarizationResult` object with results and timing information
-7. Optionally generating a markdown summary report and storing it in S3 (when `store_results=True`)
+6. Creating a `DocumentSummarizationResult` object with results and timing
+   information
+7. Optionally generating a markdown summary report and storing it in S3 (when
+   `store_results=True`)
 8. Updating the document with:
-   - `summarization_result`: Complete result object with summary, timing, and URI
-   - `summary_report_uri`: S3 URI to the markdown report (only when `store_results=True`)
+   - `summarization_result`: Complete result object with summary, timing, and
+     URI
+   - `summary_report_uri`: S3 URI to the markdown report (only when
+     `store_results=True`)
 
 ### Flexible Structure Handling
 
-The main advantage of this service is that it can work with any JSON structure returned by the LLM:
+The main advantage of this service is that it can work with any JSON structure
+returned by the LLM:
 
 1. You can specify any JSON structure in your prompt template
 2. The service preserves the exact structure returned by the model
@@ -236,7 +254,9 @@ The main advantage of this service is that it can work with any JSON structure r
 
 ### Summary Report
 
-When `store_results=True` (the default), the service generates a markdown summary report that is stored in S3 at the location:
+When `store_results=True` (the default), the service generates a markdown
+summary report that is stored in S3 at the location:
+
 ```
 s3://{output_bucket}/{document.input_key}/summary/summary.md
 ```
@@ -247,21 +267,27 @@ The report dynamically creates sections based on the JSON keys returned:
 # Document Summary: doc-123
 
 ## Overview
+
 This is a brief overview of the document.
 
 ## Key Points
+
 - Point 1
 - Point 2
 - Point 3
 
 ## Sections
+
 ### Introduction
+
 Content about the introduction
 
 ### Main Content
+
 Content about the main points
 
 ## Entities
+
 - Entity 1
 - Entity 2
 
@@ -269,17 +295,23 @@ Execution time: 1.25 seconds
 ```
 
 Special formatting is applied based on the data type:
+
 - Lists are formatted as bullet points
 - Dictionaries are formatted as nested sections
 - Strings are presented as-is
 
-The report is generated using the `to_markdown()` method of the `DocumentSummarizationResult` class and can be accessed through `document.summary_report_uri` or `document.summarization_result.output_uri`.
+The report is generated using the `to_markdown()` method of the
+`DocumentSummarizationResult` class and can be accessed through
+`document.summary_report_uri` or `document.summarization_result.output_uri`.
 
-When `store_results=False`, the document is still updated with the summary information and the `summarization_result` object, but no markdown report is generated or stored in S3.
+When `store_results=False`, the document is still updated with the summary
+information and the `summarization_result` object, but no markdown report is
+generated or stored in S3.
 
 ## Document Summarization Approaches
 
-The `process_document` method now supports two different approaches to document summarization:
+The `process_document` method now supports two different approaches to document
+summarization:
 
 ### 1. Section-Based Summarization
 
@@ -308,12 +340,14 @@ for section in document.sections:
 ```
 
 This approach:
+
 1. Processes each section separately using `process_document_section`
 2. Stores individual section summaries in S3
 3. Combines all section summaries into a comprehensive document summary
 4. Generates a markdown report with all section summaries
 
-The combined markdown report will include all section summaries in a structured format:
+The combined markdown report will include all section summaries in a structured
+format:
 
 ```markdown
 # Document Summary: doc-123
@@ -335,7 +369,8 @@ Total execution time: 10.25 seconds
 
 ### 2. Whole Document Summarization
 
-When a document has no defined sections, the service automatically falls back to summarizing the entire document at once:
+When a document has no defined sections, the service automatically falls back to
+summarizing the entire document at once:
 
 ```python
 from idp_common.models import Document
@@ -356,11 +391,13 @@ print(f"Summary Report URI: {document.summary_report_uri}")
 ```
 
 This approach:
+
 1. Combines text from all pages
 2. Generates a single summary for the entire document
 3. Stores the summary in S3
 
-The markdown report will follow the standard format based on the JSON fields returned by the model.
+The markdown report will follow the standard format based on the JSON fields
+returned by the model.
 
 ### Summarizing a Document
 
@@ -400,7 +437,9 @@ print(f"Has summary_report_uri: {document.summary_report_uri is not None}")
 
 ## Section-Level Summarization
 
-The `process_document_section` method allows you to generate summaries for specific sections of a document. This is particularly useful for multi-class documents where different sections may require different types of summaries.
+The `process_document_section` method allows you to generate summaries for
+specific sections of a document. This is particularly useful for multi-class
+documents where different sections may require different types of summaries.
 
 ### How It Works
 
@@ -410,26 +449,33 @@ The `process_document_section` method allows you to generate summaries for speci
    - Extracts text from all pages in the section
    - Generates a summary using the Bedrock LLM
    - Stores the summary in S3 in both JSON and Markdown formats
-3. **Output**: 
+3. **Output**:
    - Updates the section's attributes with links to the summary files
    - Returns the updated Document object
 
 ### Key Features
 
-- **Section-specific processing**: Focuses only on the pages in the specified section
-- **Attribute initialization**: Safely initializes `section.attributes` to an empty dictionary if it's `None`
+- **Section-specific processing**: Focuses only on the pages in the specified
+  section
+- **Attribute initialization**: Safely initializes `section.attributes` to an
+  empty dictionary if it's `None`
 - **Dual format storage**: Stores both JSON and Markdown versions of the summary
-- **Error handling**: Gracefully handles errors and updates the document's error list
+- **Error handling**: Gracefully handles errors and updates the document's error
+  list
 
 ### Storage Locations
 
 For a section with ID `section-id`, the summaries are stored at:
-- JSON: `s3://{output_bucket}/{document.input_key}/sections/{section_id}/summary.json`
-- Markdown: `s3://{output_bucket}/{document.input_key}/sections/{section_id}/summary.md`
+
+- JSON:
+  `s3://{output_bucket}/{document.input_key}/sections/{section_id}/summary.json`
+- Markdown:
+  `s3://{output_bucket}/{document.input_key}/sections/{section_id}/summary.md`
 
 ### Section Attributes
 
 After processing, the section's attributes will contain:
+
 - `summary_uri`: S3 URI for the JSON summary
 - `summary_md_uri`: S3 URI for the Markdown summary
 
@@ -461,7 +507,7 @@ def process_section(section_id):
 with ThreadPoolExecutor(max_workers=4) as executor:
     section_ids = [section.section_id for section in document.sections]
     results = list(executor.map(process_section, section_ids))
-    
+
     # Merge results if needed
     # (This is a simplified example - you would need to merge the results properly)
     for result_doc in results:

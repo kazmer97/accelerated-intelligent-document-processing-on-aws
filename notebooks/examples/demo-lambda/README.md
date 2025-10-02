@@ -1,20 +1,27 @@
 # Custom Prompt Generator Lambda - Complete Guide
 
-This directory contains the **complete implementation and demonstration** of the custom prompt generator Lambda feature for GenAI IDP Accelerator. This feature enables users to inject custom business logic into extraction processing for Patterns 2 and 3.
+This directory contains the **complete implementation and demonstration** of the
+custom prompt generator Lambda feature for GenAI IDP Accelerator. This feature
+enables users to inject custom business logic into extraction processing for
+Patterns 2 and 3.
 
 ## 🎯 Overview
 
 The custom prompt generator Lambda feature allows you to:
 
-- **Customize extraction prompts** based on document type, content, or business rules  
+- **Customize extraction prompts** based on document type, content, or business
+  rules
 - **Implement domain-specific logic** for specialized document processing
-- **Integrate with external systems** to retrieve customer-specific configurations
+- **Integrate with external systems** to retrieve customer-specific
+  configurations
 - **Apply conditional processing** based on document characteristics
-- **Maintain full control** over prompt generation while leveraging IDP infrastructure
+- **Maintain full control** over prompt generation while leveraging IDP
+  infrastructure
 
 ## 📁 Files in This Directory
 
-- **`GENAIIDP-notebook-demo-extractor.py`** - Demo Lambda function with educational business logic
+- **`GENAIIDP-notebook-demo-extractor.py`** - Demo Lambda function with
+  educational business logic
 - **`template.yml`** - CloudFormation SAM template to deploy the demo function
 - **`README.md`** - This comprehensive documentation and guide
 
@@ -25,34 +32,34 @@ flowchart TD
     A[Document Processing] --> B{Custom Lambda Configured?}
     B -->|No| C[Use Default Prompts]
     B -->|Yes| D[Invoke GENAIIDP-* Lambda]
-    
+
     subgraph Lambda
         D --> E[Receive Full Context]
-        E --> F[Apply Business Logic]  
+        E --> F[Apply Business Logic]
         F --> G[Generate Custom Prompts]
     end
-    
+
     G --> H[Use Custom Prompts for Extraction]
     C --> I[Continue with Standard Extraction]
     H --> I
-    
+
     subgraph Input
         J[Complete Config]
-        K[Prompt Placeholders]  
+        K[Prompt Placeholders]
         L[Default Task Prompt URIs]
         M[Document Object]
     end
-    
+
     subgraph Output
         N[Custom System Prompt]
         O[Custom Task Prompt URIs]
     end
-    
+
     D -.-> J
-    D -.-> K  
+    D -.-> K
     D -.-> L
     D -.-> M
-    
+
     G -.-> N
     G -.-> O
 ```
@@ -61,7 +68,7 @@ flowchart TD
 
 ### Step 1: Deploy the Demo Lambda Function
 
-```bash
+````bash
 # Navigate to the demo-lambda directory
 cd notebooks/examples/demo-lambda
 
@@ -78,7 +85,7 @@ aws cloudformation describe-stacks \
     --stack-name genaiidp-custom-lambda-demo \
     --query 'Stacks[0].Outputs[?OutputKey==`DemoLambdaFunctionArn`].OutputValue' \
     --output text
-```
+````
 
 ### Step 3: Run the Demo Notebook
 
@@ -93,6 +100,7 @@ aws cloudformation describe-stacks \
 The demo Lambda shows three different customization scenarios:
 
 #### 1. Bank Statement Processing
+
 ```python
 # Detects business vs personal accounts
 business_indicators = ["llc", "inc", "corp", "business", "company", "dba"]
@@ -106,6 +114,7 @@ else:
 ```
 
 #### 2. Invoice Processing
+
 ```python
 # Detects international vs domestic invoices
 international_indicators = ["vat", "gst", "euro", "€", "£", "currency", "exchange rate"]
@@ -119,6 +128,7 @@ else:
 ```
 
 #### 3. Generic Document Enhancement
+
 ```python
 # Adds demo context to any other document type
 enhanced_system_prompt = f"{default_system_prompt}\n\nNote: This extraction is powered by a custom Lambda function..."
@@ -140,6 +150,7 @@ logger.info("DEMO RESULT: Generated specialized bank statement prompts")
 ## Lambda Interface
 
 ### Input Payload Structure
+
 ```json
 {
   "config": {
@@ -149,7 +160,7 @@ logger.info("DEMO RESULT: Generated specialized bank statement prompts")
   },
   "prompt_placeholders": {
     "DOCUMENT_TEXT": "Full OCR text from all pages",
-    "DOCUMENT_CLASS": "Bank Statement", 
+    "DOCUMENT_CLASS": "Bank Statement",
     "ATTRIBUTE_NAMES_AND_DESCRIPTIONS": "Account Number\t[Primary account identifier]..."
   },
   "default_task_prompt_content": [
@@ -168,6 +179,7 @@ logger.info("DEMO RESULT: Generated specialized bank statement prompts")
 ```
 
 ### Output Payload Structure
+
 ```json
 {
   "system_prompt": "Custom system prompt text",
@@ -184,12 +196,14 @@ logger.info("DEMO RESULT: Generated specialized bank statement prompts")
 ### CloudWatch Logs
 
 Monitor these log groups:
+
 - `/aws/lambda/GENAIIDP-notebook-demo-extractor` - Demo Lambda logs
 - Your IDP stack extraction function logs - IDP system logs
 
 ### Key Log Messages
 
 **Successful Operation:**
+
 ```
 === DEMO LAMBDA INVOKED ===
 DEMO LOGIC: Applying [document type] customization
@@ -198,6 +212,7 @@ DEMO RESULT: Generated specialized [type] prompts
 ```
 
 **From IDP System:**
+
 ```
 Using custom prompt Lambda: arn:aws:lambda:...
 Custom prompt Lambda invoked successfully
@@ -207,6 +222,7 @@ Successfully applied custom prompt from Lambda function
 ### Performance Monitoring
 
 The notebook measures and reports:
+
 - **Processing Time Comparison**: Default vs custom Lambda
 - **Lambda Overhead**: Additional time added by Lambda invocation
 - **Success Rates**: Whether Lambda processing completed successfully
@@ -226,13 +242,16 @@ This demo demonstrates:
 To adapt this for production:
 
 ### 1. Business Logic Customization
+
 Replace the demo logic with your specific requirements:
+
 - Industry-specific processing rules
 - Customer-specific configurations
 - External system integrations
 - Compliance requirements
 
 ### 2. Enhanced Error Handling
+
 ```python
 try:
     # Your business logic
@@ -246,12 +265,14 @@ except Exception as e:
 ```
 
 ### 3. Performance Optimization
+
 - Cache frequently accessed data
 - Minimize external API calls
 - Use appropriate Lambda memory/timeout settings
 - Consider async processing for non-critical operations
 
 ### 4. Security Considerations
+
 - Validate all inputs from IDP system
 - Implement proper error messages without exposing sensitive data
 - Use appropriate IAM permissions for any external resource access
@@ -260,12 +281,14 @@ except Exception as e:
 ## Deployment Options
 
 ### Option 1: AWS SAM (Recommended)
+
 ```bash
 sam build
 sam deploy --guided
 ```
 
 ### Option 2: AWS CLI
+
 ```bash
 # Package the function
 zip -r demo-function.zip GENAIIDP-notebook-demo-extractor.py
@@ -278,6 +301,7 @@ aws cloudformation create-stack \
 ```
 
 ### Option 3: AWS Console
+
 1. Upload the `GENAIIDP-notebook-demo-extractor.py` file to Lambda console
 2. Set function name to `GENAIIDP-notebook-demo-extractor`
 3. Configure runtime as Python 3.13
@@ -305,4 +329,5 @@ After running the demo:
 4. **Create production Lambda functions** based on your requirements
 5. **Integrate with your IDP deployment** using the production Lambda ARNs
 
-The demo provides a foundation for understanding how to implement powerful custom business logic while leveraging the robust IDP infrastructure.
+The demo provides a foundation for understanding how to implement powerful
+custom business logic while leveraging the robust IDP infrastructure.

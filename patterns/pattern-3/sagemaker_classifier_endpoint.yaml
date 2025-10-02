@@ -1,11 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template to deploy a SageMaker inference endpoint for UDOP model'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template to deploy a SageMaker inference endpoint for UDOP model"
 
 Parameters:
-
   StackName:
     Type: String
 
@@ -81,7 +80,7 @@ Resources:
     Properties:
       PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -94,24 +93,24 @@ Resources:
       Policies:
         - PolicyName: S3ModelAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:ListBucket
                 Resource:
-                  - !Join 
-                    - ''
-                    - - !Sub 'arn:${AWS::Partition}:s3:::'
+                  - !Join
+                    - ""
+                    - - !Sub "arn:${AWS::Partition}:s3:::"
                       - !Select [2, !Split ["/", !Ref UDOPModelArtifactPath]]
-                  - !Join 
-                    - ''
-                    - - !Sub 'arn:${AWS::Partition}:s3:::'
+                  - !Join
+                    - ""
+                    - - !Sub "arn:${AWS::Partition}:s3:::"
                       - !Select [2, !Split ["/", !Ref UDOPModelArtifactPath]]
-                      - '/*'
-                  - !Sub 'arn:${AWS::Partition}:s3:::${S3Bucket}'
-                  - !Sub 'arn:${AWS::Partition}:s3:::${S3Bucket}/*'
+                      - "/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3Bucket}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${S3Bucket}/*"
               - Effect: Allow
                 Action:
                   - kms:Encrypt
@@ -154,7 +153,7 @@ Resources:
     Type: AWS::SageMaker::Endpoint
     Properties:
       EndpointConfigName: !GetAtt UDOPEndpointConfig.EndpointConfigName
-      EndpointName: !Sub '${StackName}-SageMaker-Endpoint'
+      EndpointName: !Sub "${StackName}-SageMaker-Endpoint"
 
   ScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget

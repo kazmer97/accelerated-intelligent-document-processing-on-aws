@@ -69,7 +69,7 @@ classes:
         evaluation_method: EXACT
         attributeType: simple
 
-  - name: US-drivers-licenses  
+  - name: US-drivers-licenses
     description: >-
       An official government-issued identification document that authorizes an individual to operate 
       motor vehicles, containing personal information and driving privileges.
@@ -116,7 +116,6 @@ classes:
         description: The general type or category of this document.
         evaluation_method: EXACT
         attributeType: simple
-
 # Regex Pattern Examples and Guidelines:
 #
 # Document Name Regex (single-class only):
@@ -131,7 +130,7 @@ classes:
 #
 # Best Practices:
 # 1. Use (?i) for case-insensitive matching
-# 2. Use \\s+ for flexible whitespace matching  
+# 2. Use \\s+ for flexible whitespace matching
 # 3. Use | for alternation (multiple possible terms)
 # 4. Test patterns against diverse document samples
 # 5. Balance specificity - specific enough to avoid false matches, flexible enough to catch variations

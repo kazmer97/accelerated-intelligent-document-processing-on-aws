@@ -1,13 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: AWS GenAI IDP Accelerator - resources for IDP Pattern 1 (BDA)
 
 Parameters:
-
   StackName:
     Type: String
 
@@ -40,7 +38,7 @@ Parameters:
 
   LogRetentionDays:
     Type: Number
-  
+
   LogLevel:
     Type: String
     Default: WARN
@@ -51,14 +49,14 @@ Parameters:
       - ERROR
       - CRITICAL
     Description: Default logging level for all Lambda functions
-  
+
   ExecutionTimeThresholdMs:
     Type: Number
     Default: 30000
 
   BDAProjectArn:
     Type: String
-    Default: ''
+    Default: ""
     Description: Bedrock Data Automation (BDA) project ARN
 
   UpdateConfigurationFunctionArn:
@@ -66,22 +64,22 @@ Parameters:
 
   ConfigurationTable:
     Type: String
-    
+
   BedrockGuardrailId:
     Type: String
     Default: ""
     Description: "Optionally provide the Id (not name) of an existing Bedrock Guardrail to be used for Bedrock interactions"
-    
+
   BedrockGuardrailVersion:
     Type: String
     Default: ""
     Description: "If you provided a Bedrock Guardrail Id above, provide the corresponding Guardrail version here"
-    
+
   AppSyncApiUrl:
     Type: String
     Default: ""
     Description: "URL of the AppSync GraphQL API for document status updates"
-    
+
   AppSyncApiArn:
     Type: String
     Default: ""
@@ -94,12 +92,12 @@ Parameters:
   ConfigLibraryHash:
     Type: String
     Description: "Hash token from config library to force updates when config library changes"
-    
+
   EnableHITL:
     Type: String
     Default: "true"
     Description: "Enable Human In The Loop?"
-    
+
   SageMakerA2IReviewPortalURL:
     Type: String
     Description: "SageMaker A2I Review Portal URL for HITL tasks"
@@ -121,12 +119,12 @@ Parameters:
     ConstraintDescription: Must be empty or a valid IAM policy ARN
 
 Conditions:
-  HasGuardrailConfig: !And [!Not [!Equals [!Ref BedrockGuardrailId, ""]], !Not [!Equals [!Ref BedrockGuardrailVersion, ""]]]
+  HasGuardrailConfig:
+    !And [!Not [!Equals [!Ref BedrockGuardrailId, ""]], !Not [!Equals [!Ref BedrockGuardrailVersion, ""]]]
   HasPermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundaryArn, ""]]
   HasAppSyncApi: !Not [!Equals [!Ref AppSyncApiArn, ""]]
 
 Resources:
-
   # JSON Schema which defines the structure of the pattern configuration settings
   # used by the UI to allow the configuration to be inspected and customized.
   # For BDA, this is a no-op, since project configuration is contained in BDA project settings.
@@ -222,40 +220,28 @@ Resources:
                         description: Evaluation Method
                         enum: ["", "LLM", "SEMANTIC", "FUZZY", "NUMERIC_EXACT", "EXACT"]
                         order: 3
-                        dependsOn: {
-                          field: "attributeType",
-                          value: "simple"
-                        }
+                        dependsOn: { field: "attributeType", value: "simple" }
                       evaluation_threshold:
                         type: number
                         description: Evaluation Threshold - used for SEMANTIC, and FUZZY methods
                         minimum: 0
                         maximum: 1
                         order: 5
-                        dependsOn: {
-                          field: "evaluation_method",
-                          values: ["SEMANTIC", "FUZZY"]
-                        }
+                        dependsOn: { field: "evaluation_method", values: ["SEMANTIC", "FUZZY"] }
                       confidence_threshold:
                         type: number
                         description: Confidence threshold for this specific attribute (0.0 to 1.0). If not set, the default confidence threshold from assessment section will be used.
                         minimum: 0
                         maximum: 1
                         order: 6
-                        dependsOn: {
-                          field: "attributeType",
-                          value: "simple"
-                        }
+                        dependsOn: { field: "attributeType", value: "simple" }
                       # Group-specific properties
                       groupAttributes:
                         type: array
                         listLabel: Group Attributes
                         itemLabel: Attribute
                         order: 7
-                        dependsOn: {
-                          field: "attributeType",
-                          value: "group"
-                        }
+                        dependsOn: { field: "attributeType", value: "group" }
                         items:
                           type: object
                           required:
@@ -281,10 +267,7 @@ Resources:
                               minimum: 0
                               maximum: 1
                               order: 4
-                              dependsOn: {
-                                field: "evaluation_method",
-                                values: ["SEMANTIC", "FUZZY"]
-                              }
+                              dependsOn: { field: "evaluation_method", values: ["SEMANTIC", "FUZZY"] }
                             confidence_threshold:
                               type: number
                               description: Confidence threshold for this specific attribute (0.0 to 1.0). If not set, the default confidence threshold from assessment section will be used.
@@ -297,10 +280,7 @@ Resources:
                         type: object
                         sectionLabel: List Item Template
                         order: 8
-                        dependsOn: {
-                          field: "attributeType",
-                          value: "list"
-                        }
+                        dependsOn: { field: "attributeType", value: "list" }
                         required:
                           - itemAttributes
                         properties:
@@ -338,10 +318,7 @@ Resources:
                                   minimum: 0
                                   maximum: 1
                                   order: 4
-                                  dependsOn: {
-                                    field: "evaluation_method",
-                                    values: ["SEMANTIC", "FUZZY"]
-                                  }
+                                  dependsOn: { field: "evaluation_method", values: ["SEMANTIC", "FUZZY"] }
                                 confidence_threshold:
                                   type: number
                                   description: Confidence threshold for this specific attribute (0.0 to 1.0). If not set, the default confidence threshold from assessment section will be used.
@@ -491,7 +468,7 @@ Resources:
                     type: string
                     format: textarea
                     description: User prompt template for discovery without ground truth
-                    default: "This image contains forms data. Analyze the form line by line. Image may contains multiple pages, process all the pages. Form may contain multiple name value pair in one line. Extract all the names in the form including the name value pair which doesn't have value. Organize them into groups, extract field_name, data_type and field description. Field_name should be less than 60 characters, should not have space use '-' instead of space. field_description is a brief description of the field and the location of the field like box number or line number in the form and section of the form. Field_name should be unique within the group. Add two fields document_class and document_description. For document_class generate a short name based on the document content like W4, I-9, Paystub. For document_description generate a description about the document in less than 50 words. Group the fields based on the section they are grouped in the form. Group should have attributeType as \"group\". If the group repeats, add an additional field groupType and set the value as \"Table\". Do not extract the values. Return the extracted data in JSON format."
+                    default: 'This image contains forms data. Analyze the form line by line. Image may contains multiple pages, process all the pages. Form may contain multiple name value pair in one line. Extract all the names in the form including the name value pair which doesn''t have value. Organize them into groups, extract field_name, data_type and field description. Field_name should be less than 60 characters, should not have space use ''-'' instead of space. field_description is a brief description of the field and the location of the field like box number or line number in the form and section of the form. Field_name should be unique within the group. Add two fields document_class and document_description. For document_class generate a short name based on the document content like W4, I-9, Paystub. For document_description generate a description about the document in less than 50 words. Group the fields based on the section they are grouped in the form. Group should have attributeType as "group". If the group repeats, add an additional field groupType and set the value as "Table". Do not extract the values. Return the extracted data in JSON format.'
                     order: 5
               with_ground_truth:
                 order: 1
@@ -536,7 +513,7 @@ Resources:
                     type: string
                     format: textarea
                     description: User prompt template for discovery with ground truth (use {ground_truth_json} placeholder)
-                    default: "This image contains unstructured data. Analyze the data line by line using the provided ground truth as reference. <GROUND_TRUTH_REFERENCE>{ground_truth_json}</GROUND_TRUTH_REFERENCE> Ground truth reference JSON has the fields we are interested in extracting from the document/image. Use the ground truth to optimize field extraction. Match field names, data types, and groupings from the reference. Image may contain multiple pages, process all pages. Extract all field names including those without values. Do not change the group name and field name from ground truth in the extracted data json. Add field_description field for every field which will contain instruction to LLM to extract the field data from the image/document. Add data_type field for every field. Add two fields document_class and document_description. For document_class generate a short name based on the document content like W4, I-9, Paystub. For document_description generate a description about the document in less than 50 words. If the group repeats and follows table format, add a special field group_type with value \"Table\" and description field for the group. Do not extract the values."
+                    default: 'This image contains unstructured data. Analyze the data line by line using the provided ground truth as reference. <GROUND_TRUTH_REFERENCE>{ground_truth_json}</GROUND_TRUTH_REFERENCE> Ground truth reference JSON has the fields we are interested in extracting from the document/image. Use the ground truth to optimize field extraction. Match field names, data types, and groupings from the reference. Image may contain multiple pages, process all pages. Extract all field names including those without values. Do not change the group name and field name from ground truth in the extracted data json. Add field_description field for every field which will contain instruction to LLM to extract the field data from the image/document. Add data_type field for every field. Add two fields document_class and document_description. For document_class generate a short name based on the document content like W4, I-9, Paystub. For document_description generate a description about the document in less than 50 words. If the group repeats and follows table format, add a special field group_type with value "Table" and description field for the group. Do not extract the values.'
                     order: 5
               output_format:
                 order: 2
@@ -629,7 +606,6 @@ Resources:
       Default: !Ref ConfigurationDefaultS3Uri
       ConfigLibraryHash: !Ref ConfigLibraryHash
 
-
   DocumentProcessingStateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
@@ -668,7 +644,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       KmsKeyId: !Ref CustomerManagedEncryptionKeyArn
-      LogGroupName: !Sub "/aws/vendedlogs/states/${AWS::StackName}/workflow"  # required prefix
+      LogGroupName: !Sub "/aws/vendedlogs/states/${AWS::StackName}/workflow" # required prefix
       RetentionInDays: !Ref LogRetentionDays
 
   InvokeBDAFunction:
@@ -710,35 +686,35 @@ Resources:
         - S3CrudPolicy:
             BucketName: !Ref OutputBucket
         - DynamoDBCrudPolicy:
-           TableName: !Ref TrackingTable
+            TableName: !Ref TrackingTable
         - Statement:
-          - Effect: Allow
-            Action: cloudwatch:PutMetricData
-            Resource: '*'
-          - Effect: Allow
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-            Resource: !Ref CustomerManagedEncryptionKeyArn
-          - Effect: Allow
-            Action: bedrock:InvokeDataAutomationAsync
-            Resource: 
-              - !Ref BDAProjectArn
-              - !Sub "arn:${AWS::Partition}:bedrock:us-east-1:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
-              - !Sub "arn:${AWS::Partition}:bedrock:us-east-2:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
-              - !Sub "arn:${AWS::Partition}:bedrock:us-west-1:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
-              - !Sub "arn:${AWS::Partition}:bedrock:us-west-2:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
-  
+            - Effect: Allow
+              Action: cloudwatch:PutMetricData
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !Ref CustomerManagedEncryptionKeyArn
+            - Effect: Allow
+              Action: bedrock:InvokeDataAutomationAsync
+              Resource:
+                - !Ref BDAProjectArn
+                - !Sub "arn:${AWS::Partition}:bedrock:us-east-1:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
+                - !Sub "arn:${AWS::Partition}:bedrock:us-east-2:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
+                - !Sub "arn:${AWS::Partition}:bedrock:us-west-1:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
+                - !Sub "arn:${AWS::Partition}:bedrock:us-west-2:${AWS::AccountId}:data-automation-profile/us.data-automation-v1"
+
   InvokeBDAFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       KmsKeyId: !Ref CustomerManagedEncryptionKeyArn
       LogGroupName: !Sub "/${AWS::StackName}/lambda/InvokeBDAFunction"
       RetentionInDays: !Ref LogRetentionDays
-  
+
   BDADiscoveryFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -792,7 +768,7 @@ Resources:
         - Statement:
             - Effect: Allow
               Action: cloudwatch:PutMetricData
-              Resource: '*'
+              Resource: "*"
             - Effect: Allow
               Action:
                 - kms:Encrypt
@@ -838,7 +814,7 @@ Resources:
           - id: W92
             reason: "Function does not require concurrent execution limits as it is designed to scale based on demand"
     # checkov:skip=CKV_AWS_116: "DLQ not required for this function as StepFunctions will handle retries"
-    # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"    
+    # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
@@ -854,7 +830,7 @@ Resources:
           LOG_LEVEL: !Ref LogLevel
           APPSYNC_API_URL: !Ref AppSyncApiUrl
           TRACKING_TABLE: !Ref TrackingTable
-          DOCUMENT_TRACKING_MODE: !If [HasAppSyncApi, 'appsync', 'dynamodb']
+          DOCUMENT_TRACKING_MODE: !If [HasAppSyncApi, "appsync", "dynamodb"]
           ENABLE_HITL: !Ref EnableHITL
           DB_NAME: !Ref BDAMetadataTable
           BDA_PROJECT_ARN: !Ref BDAProjectArn
@@ -878,45 +854,44 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref TrackingTable
         - Statement:
-          - Effect: Allow
-            Action: cloudwatch:PutMetricData
-            Resource: '*'
-          - Effect: Allow
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-            Resource: !Ref CustomerManagedEncryptionKeyArn
-          # AppSync permissions for updating document status (only if AppSync API is available)
-          - !If
-            - HasAppSyncApi
+            - Effect: Allow
+              Action: cloudwatch:PutMetricData
+              Resource: "*"
             - Effect: Allow
               Action:
-                - appsync:GraphQL
-              Resource: 
-                - !Sub "${AppSyncApiArn}/types/Mutation/*"
-            - !Ref AWS::NoValue
-          - Effect: Allow
-            Action:
-              - sagemaker:StartHumanLoop
-            Resource: !Sub "arn:${AWS::Partition}:sagemaker:*:*:flow-definition/*"
-          - Effect: Allow
-            Action:
-              - ssm:GetParameter
-              - ssm:PutParameter
-              - ssm:GetParametersByPath
-            Resource: '*'
-          - Effect: Allow
-            Action:
-              - bedrock:GetDataAutomationProject
-              - bedrock:ListDataAutomationProjects
-              - bedrock:GetBlueprint
-              - bedrock:GetBlueprintRecommendation
-            Resource: '*'
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !Ref CustomerManagedEncryptionKeyArn
+            # AppSync permissions for updating document status (only if AppSync API is available)
+            - !If
+              - HasAppSyncApi
+              - Effect: Allow
+                Action:
+                  - appsync:GraphQL
+                Resource:
+                  - !Sub "${AppSyncApiArn}/types/Mutation/*"
+              - !Ref AWS::NoValue
+            - Effect: Allow
+              Action:
+                - sagemaker:StartHumanLoop
+              Resource: !Sub "arn:${AWS::Partition}:sagemaker:*:*:flow-definition/*"
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+                - ssm:PutParameter
+                - ssm:GetParametersByPath
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - bedrock:GetDataAutomationProject
+                - bedrock:ListDataAutomationProjects
+                - bedrock:GetBlueprint
+                - bedrock:GetBlueprintRecommendation
+              Resource: "*"
 
-  
   ProcessResultsFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -936,7 +911,7 @@ Resources:
           - id: W92
             reason: "Function does not require concurrent execution limits as it is designed to scale based on demand"
     # checkov:skip=CKV_AWS_116: "DLQ not required for this function as StepFunctions will handle retries"
-    # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"    
+    # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
@@ -950,11 +925,12 @@ Resources:
         Variables:
           METRIC_NAMESPACE: !Ref StackName
           CONFIGURATION_TABLE_NAME: !Ref ConfigurationTable
-          GUARDRAIL_ID_AND_VERSION: !If [HasGuardrailConfig, !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}", ""]
+          GUARDRAIL_ID_AND_VERSION:
+            !If [HasGuardrailConfig, !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}", ""]
           LOG_LEVEL: !Ref LogLevel
           APPSYNC_API_URL: !Ref AppSyncApiUrl
           TRACKING_TABLE: !Ref TrackingTable
-          DOCUMENT_TRACKING_MODE: !If [HasAppSyncApi, 'appsync', 'dynamodb']
+          DOCUMENT_TRACKING_MODE: !If [HasAppSyncApi, "appsync", "dynamodb"]
           WORKING_BUCKET: !Ref WorkingBucket
       LoggingConfig:
         LogGroup: !Ref SummarizationFunctionLogGroup
@@ -971,37 +947,37 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref TrackingTable
         - Statement:
-          - Effect: Allow
-            Action: cloudwatch:PutMetricData
-            Resource: '*'
-          - Effect: Allow
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-            Resource: !Ref CustomerManagedEncryptionKeyArn
-          # AppSync permissions for updating document status (only if AppSync API is available)
-          - !If
-            - HasAppSyncApi
+            - Effect: Allow
+              Action: cloudwatch:PutMetricData
+              Resource: "*"
             - Effect: Allow
               Action:
-                - appsync:GraphQL
-              Resource: 
-                - !Sub "${AppSyncApiArn}/types/Mutation/*"
-            - !Ref AWS::NoValue
-          - Effect: Allow
-            Action: bedrock:InvokeModel
-            Resource: 
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !Ref CustomerManagedEncryptionKeyArn
+            # AppSync permissions for updating document status (only if AppSync API is available)
+            - !If
+              - HasAppSyncApi
+              - Effect: Allow
+                Action:
+                  - appsync:GraphQL
+                Resource:
+                  - !Sub "${AppSyncApiArn}/types/Mutation/*"
+              - !Ref AWS::NoValue
+            - Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource:
                 - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/*"
                 - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*"
-          - !If
-            - HasGuardrailConfig
-            - Effect: Allow
-              Action: bedrock:ApplyGuardrail
-              Resource: !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:guardrail/${BedrockGuardrailId}"
-            - !Ref AWS::NoValue
+            - !If
+              - HasGuardrailConfig
+              - Effect: Allow
+                Action: bedrock:ApplyGuardrail
+                Resource: !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:guardrail/${BedrockGuardrailId}"
+              - !Ref AWS::NoValue
 
   SummarizationFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1044,33 +1020,32 @@ Resources:
           METRIC_NAMESPACE: !Ref StackName
           LOG_LEVEL: !Ref LogLevel
       DeadLetterQueue:
-       Type: SQS
-       TargetArn: !GetAtt BDACompletionFunctionDLQ.Arn
+        Type: SQS
+        TargetArn: !GetAtt BDACompletionFunctionDLQ.Arn
       LoggingConfig:
         LogGroup: !Ref BDACompletionFunctionLogGroup
       Policies:
         - AWSLambdaBasicExecutionRole
         - DynamoDBReadPolicy:
-           TableName: !Ref TrackingTable
+            TableName: !Ref TrackingTable
         - Statement:
-          - Effect: Allow
-            Action: cloudwatch:PutMetricData
-            Resource: '*'
-          - Effect: Allow
-            Action: 
-              - states:SendTaskSuccess
-              - states:SendTaskFailure
-            Resource: !GetAtt DocumentProcessingStateMachine.Arn
-          - Effect: Allow
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-            Resource: !Ref CustomerManagedEncryptionKeyArn
+            - Effect: Allow
+              Action: cloudwatch:PutMetricData
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - states:SendTaskSuccess
+                - states:SendTaskFailure
+              Resource: !GetAtt DocumentProcessingStateMachine.Arn
+            - Effect: Allow
+              Action:
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !Ref CustomerManagedEncryptionKeyArn
 
-  
   BDACompletionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -1127,26 +1102,26 @@ Resources:
         SSEEnabled: true
         SSEType: KMS
         KMSMasterKeyId: !Ref CustomerManagedEncryptionKeyArn
-  
+
   #EventBridge Rule to check Human In the Loop Status change
   HITLEventRule:
     Type: AWS::Events::Rule
     Properties:
-      Description: 'Rule for SageMaker A2I HumanLoop Status Change'
+      Description: "Rule for SageMaker A2I HumanLoop Status Change"
       EventPattern:
         detail-type:
-          - 'SageMaker A2I HumanLoop Status Change'
+          - "SageMaker A2I HumanLoop Status Change"
         source:
-          - 'aws.sagemaker'
+          - "aws.sagemaker"
         detail:
           humanLoopStatus:
-            - 'Completed'
-            - 'Failed'
-            - 'Stopped'
-      State: 'ENABLED'
+            - "Completed"
+            - "Failed"
+            - "Stopped"
+      State: "ENABLED"
       Targets:
         - Arn: !GetAtt HITLProcessLambdaFunction.Arn
-          Id: 'HITLProcessLambdaTarget'
+          Id: "HITLProcessLambdaTarget"
 
   HITLProcessLambdaLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1187,7 +1162,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -1199,7 +1174,7 @@ Resources:
       Policies:
         - PolicyName: HITLProcessLambdaPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -1211,7 +1186,7 @@ Resources:
                   - dynamodb:DeleteItem
                   - dynamodb:Scan
                   - dynamodb:Query
-                Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${BDAMetadataTable}'
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${BDAMetadataTable}"
               - Effect: Allow
                 Action:
                   - dynamodb:PutItem
@@ -1222,7 +1197,7 @@ Resources:
                   - dynamodb:DeleteItem
                   - dynamodb:Scan
                   - dynamodb:Query
-                Resource: !Sub 'arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TrackingTable}'
+                Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${TrackingTable}"
               - Effect: Allow
                 Action:
                   - s3:GetObject
@@ -1240,7 +1215,7 @@ Resources:
                   - !Sub "arn:${AWS::Partition}:s3:::${OutputBucket}"
                   - !Sub "arn:${AWS::Partition}:s3:::${OutputBucket}/*"
               - Effect: Allow
-                Action: 
+                Action:
                   - states:SendTaskSuccess
                   - states:SendTaskFailure
                 Resource: !GetAtt DocumentProcessingStateMachine.Arn
@@ -1293,14 +1268,14 @@ Resources:
         - S3ReadPolicy:
             BucketName: !Ref WorkingBucket
         - Statement:
-          - Effect: Allow
-            Action:
-              - kms:Decrypt
-            Resource: !Ref CustomerManagedEncryptionKeyArn
-          - Effect: Allow
-            Action: cloudwatch:PutMetricData
-            Resource: '*'
-  
+            - Effect: Allow
+              Action:
+                - kms:Decrypt
+              Resource: !Ref CustomerManagedEncryptionKeyArn
+            - Effect: Allow
+              Action: cloudwatch:PutMetricData
+              Resource: "*"
+
   HITLWaitFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -1343,14 +1318,14 @@ Resources:
         - S3CrudPolicy:
             BucketName: !Ref WorkingBucket
         - Statement:
-          - Effect: Allow
-            Action:
-              - kms:Encrypt
-              - kms:Decrypt
-              - kms:ReEncrypt*
-              - kms:GenerateDataKey*
-              - kms:DescribeKey
-            Resource: !Ref CustomerManagedEncryptionKeyArn
+            - Effect: Allow
+              Action:
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !Ref CustomerManagedEncryptionKeyArn
 
   HITLStatusUpdateFunctionLogGroup:
     Type: AWS::Logs::LogGroup
@@ -1359,15 +1334,14 @@ Resources:
       LogGroupName: !Sub "/${AWS::StackName}/lambda/HITLStatusUpdateFunction"
       RetentionInDays: !Ref LogRetentionDays
 
-  #Event Bridge permissions to invoke Lambda function during HITL change 
+  #Event Bridge permissions to invoke Lambda function during HITL change
   EventBridgeInvokeLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref HITLProcessLambdaFunction
-      Action: 'lambda:InvokeFunction'
+      Action: "lambda:InvokeFunction"
       Principal: !Sub "events.${AWS::URLSuffix}"
       SourceArn: !GetAtt HITLEventRule.Arn
-
 
   Dashboard:
     Type: AWS::CloudWatch::Dashboard
@@ -1761,7 +1735,6 @@ Resources:
         }
 
 Outputs:
-
   # Outputs required by main template
 
   StateMachineName:
@@ -1771,7 +1744,7 @@ Outputs:
   StateMachineArn:
     Description: Step Functions State machine ARN
     Value: !GetAtt DocumentProcessingStateMachine.Arn
-  
+
   StateMachineLogGroup:
     Description: Step Functions State machine LogGroup
     Value: !Ref StateMachineLogGroup

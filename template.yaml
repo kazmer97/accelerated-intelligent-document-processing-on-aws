@@ -335,26 +335,7 @@ Parameters:
     Type: Number
     Default: 30
     Description: Number of days to retain CloudWatch logs
-    AllowedValues:
-      [
-        1,
-        3,
-        5,
-        7,
-        14,
-        30,
-        60,
-        90,
-        120,
-        150,
-        180,
-        365,
-        400,
-        545,
-        731,
-        1827,
-        3653,
-      ]
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
 
   CloudFrontPriceClass:
     Type: String
@@ -394,16 +375,13 @@ Parameters:
 
 Rules:
   Pattern3UDOPModelArtifactPath:
-    RuleCondition:
-      !Equals [
-        !Ref IDPPattern,
-        "Pattern3 - Packet processing with Textract, SageMaker(UDOP), and Bedrock",
-      ]
+    RuleCondition: !Equals [!Ref IDPPattern, "Pattern3 - Packet processing with Textract, SageMaker(UDOP), and Bedrock"]
     Assertions:
       - Assert: !Not [!Equals [!Ref Pattern3UDOPModelArtifactPath, ""]]
         AssertDescription: UDOP Model Artifact Path is required when IDPPattern is 'Pattern1'
 
 Conditions:
+<<<<<<< HEAD
   IsPattern1:
     !Equals [
       !Ref IDPPattern,
@@ -427,28 +405,29 @@ Conditions:
       !Not [!Equals [!Ref BedrockGuardrailId, ""]],
       !Not [!Equals [!Ref BedrockGuardrailVersion, ""]],
     ]
+  HasGuardrailConfig: !And [!Not [!Equals [!Ref BedrockGuardrailId, ""]], !Not [!Equals [!Ref BedrockGuardrailVersion, ""]]]
+  
+=======
+  IsPattern1: !Equals [!Ref IDPPattern, "Pattern1 - Packet or Media processing with Bedrock Data Automation (BDA)"]
+  IsPattern2: !Equals [!Ref IDPPattern, "Pattern2 - Packet processing with Textract and Bedrock"]
 
+  IsPattern3: !Equals [!Ref IDPPattern, "Pattern3 - Packet processing with Textract, SageMaker(UDOP), and Bedrock"]
+  ShouldCreateBDASampleProject: !And [!Condition IsPattern1, !Equals [!Ref Pattern1BDAProjectArn, ""]]
+  HasGuardrailConfig:
+    !And [!Not [!Equals [!Ref BedrockGuardrailId, ""]], !Not [!Equals [!Ref BedrockGuardrailVersion, ""]]]
+
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
   # HITL and Private Workforce conditions
   IsHITLEnabled: !Equals [!Ref EnableHITL, "true"]
-  ShouldCreatePrivateWorkteam:
-    !And [
-      !Condition IsHITLEnabled,
-      !Equals [!Ref ExistingPrivateWorkforceArn, ""],
-    ]
+  ShouldCreatePrivateWorkteam: !And [!Condition IsHITLEnabled, !Equals [!Ref ExistingPrivateWorkforceArn, ""]]
   ShouldUseExistingPrivateWorkteam:
-    !And [
-      !Condition IsHITLEnabled,
-      !Not [!Equals [!Ref ExistingPrivateWorkforceArn, ""]],
-    ]
+    !And [!Condition IsHITLEnabled, !Not [!Equals [!Ref ExistingPrivateWorkforceArn, ""]]]
 
   # General rules
-  ShouldAllowSignUpEmailDomain:
-    !Not [!Equals [!Ref AllowedSignUpEmailDomain, ""]]
+  ShouldAllowSignUpEmailDomain: !Not [!Equals [!Ref AllowedSignUpEmailDomain, ""]]
   ShouldEnableGeoRestriction: !Not [!Equals [!Ref CloudFrontAllowedGeos, ""]]
-  ShouldEnablePostProcessingLambdaHook:
-    !Not [!Equals [!Ref PostProcessingLambdaHookFunctionArn, ""]]
-  ShouldCreateEvaluationBaselineBucket:
-    !Equals [!Ref EvaluationBaselineBucketName, ""]
+  ShouldEnablePostProcessingLambdaHook: !Not [!Equals [!Ref PostProcessingLambdaHookFunctionArn, ""]]
+  ShouldCreateEvaluationBaselineBucket: !Equals [!Ref EvaluationBaselineBucketName, ""]
   ShouldCreateReportingBucket: !Equals [!Ref ReportingBucketName, ""]
   IsEvaluationAutoEnabled: !Equals [!Ref EvaluationAutoEnabled, "true"]
   IsWafEnabled: !Not [!Equals [!Ref WAFAllowedIPv4Ranges, "0.0.0.0/0"]]
@@ -2269,14 +2248,7 @@ Resources:
                   - "s3:ListBucket"
                 Resource: !Sub
                   - "arn:${AWS::Partition}:s3:::${BucketName}"
-                  - BucketName:
-                      !Select [
-                        0,
-                        !Split [
-                          "/",
-                          !Select [1, !Split ["s3://", !Ref CustomConfigPath]],
-                        ],
-                      ]
+                  - BucketName: !Select [0, !Split ["/", !Select [1, !Split ["s3://", !Ref CustomConfigPath]]]]
               - !Ref AWS::NoValue
 
   UpdateConfigurationFunctionLogGroup:
@@ -4397,12 +4369,7 @@ Resources:
   CognitoUserPoolEmailDomainVerifyPermissionReady:
     Type: AWS::CloudFormation::WaitConditionHandle
     Metadata:
-      ConditionalDependency:
-        !If [
-          ShouldAllowSignUpEmailDomain,
-          !Ref CognitoUserPoolEmailDomainVerifyPermission,
-          "",
-        ]
+      ConditionalDependency: !If [ShouldAllowSignUpEmailDomain, !Ref CognitoUserPoolEmailDomainVerifyPermission, ""]
 
   AdminGroup:
     Type: AWS::Cognito::UserPoolGroup
@@ -5613,12 +5580,7 @@ Resources:
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
       Handler: index.handler
       Runtime: python3.12
       CodeUri: ./src/lambda/configuration_resolver
@@ -6331,11 +6293,7 @@ Resources:
           KB_REGION: !Ref AWS::Region
           MODEL_ID: !Ref KnowledgeBaseModelId
           GUARDRAIL_ID_AND_VERSION:
-            !If [
-              HasGuardrailConfig,
-              !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}",
-              "",
-            ]
+            !If [HasGuardrailConfig, !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}", ""]
       LoggingConfig:
         LogGroup: !Ref QueryKnowledgeBaseResolverFunctionLogGroup
       Policies:

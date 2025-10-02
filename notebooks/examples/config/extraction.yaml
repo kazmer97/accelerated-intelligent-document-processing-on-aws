@@ -1,15 +1,15 @@
 # Extraction Service Configuration
 extraction:
-  top_p: '0.1'
-  max_tokens: '4096'
-  top_k: '5'
-  temperature: '0.0'
+  top_p: "0.1"
+  max_tokens: "4096"
+  top_k: "5"
+  temperature: "0.0"
   model: us.amazon.nova-pro-v1:0
   system_prompt: >-
     You are a document assistant. Respond only with JSON. Never make up data, only provide data found in the document being provided.
   task_prompt: >-
     <background>
-    
+
     You are an expert in document analysis and information extraction. 
     You can understand and extract key information from documents classified as type 
 
@@ -72,7 +72,7 @@ extraction:
     {DOCUMENT_TEXT}
 
     </document-text>
-  
+
 
     <document_image>
 
@@ -93,4 +93,3 @@ extraction:
     7. Think step by step before finalizing your answer
 
     </final-instructions>
-

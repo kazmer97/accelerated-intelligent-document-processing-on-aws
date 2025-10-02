@@ -3,27 +3,38 @@ SPDX-License-Identifier: MIT-0
 
 # IDP Common Package
 
-This package contains common utilities and services for the GenAI IDP Accelerator patterns.
+This package contains common utilities and services for the GenAI IDP
+Accelerator patterns.
 
 ## 📑 Documentation Structure
 
-This README provides a high-level overview of the package. For detailed documentation:
+This README provides a high-level overview of the package. For detailed
+documentation:
 
-- [**Core Data Models**](idp_common/README.md): Central document model, compression support, and key classes
-- [**OCR**](idp_common/ocr/README.md): Document text extraction using AWS Textract
-- [**Classification**](idp_common/classification/README.md): Document type identification using LLMs or SageMaker
-- [**Extraction**](idp_common/extraction/README.md): Structured information extraction from documents
-- [**Evaluation**](idp_common/evaluation/README.md): Accuracy measurement against ground truth
-- [**Summarization**](idp_common/summarization/README.md): Document summary generation
-- [**AppSync**](idp_common/appsync/README.md): Document storage through GraphQL API
-- [**Reporting**](idp_common/reporting/README.md): Analytics data storage and management
+- [**Core Data Models**](idp_common/README.md): Central document model,
+  compression support, and key classes
+- [**OCR**](idp_common/ocr/README.md): Document text extraction using AWS
+  Textract
+- [**Classification**](idp_common/classification/README.md): Document type
+  identification using LLMs or SageMaker
+- [**Extraction**](idp_common/extraction/README.md): Structured information
+  extraction from documents
+- [**Evaluation**](idp_common/evaluation/README.md): Accuracy measurement
+  against ground truth
+- [**Summarization**](idp_common/summarization/README.md): Document summary
+  generation
+- [**AppSync**](idp_common/appsync/README.md): Document storage through GraphQL
+  API
+- [**Reporting**](idp_common/reporting/README.md): Analytics data storage and
+  management
 - [**BDA**](idp_common/bda/README.md): Integration with Bedrock Data Automation
 
 ## ✨ Components
 
 ### Core Services
 
-- **Core Data Model**: Central document processing pipeline structure ([models.py](idp_common/models.py))
+- **Core Data Model**: Central document processing pipeline structure
+  ([models.py](idp_common/models.py))
 - **OCR**: Text extraction using AWS Textract
 - **Classification**: Document type identification using LLMs and SageMaker/UDOP
 - **Extraction**: Structured field extraction using LLMs
@@ -121,13 +132,14 @@ updated_document = appsync_service.update_document(document)
 
 ## 📦 Handling Large Documents
 
-The Document model includes automatic compression support for documents exceeding Step Functions payload limits (256KB):
+The Document model includes automatic compression support for documents
+exceeding Step Functions payload limits (256KB):
 
 ```python
 # Handle input - automatically detects and decompresses if needed
 document = Document.load_document(
-    event_data=event["document"], 
-    working_bucket=working_bucket, 
+    event_data=event["document"],
+    working_bucket=working_bucket,
     logger=logger
 )
 
@@ -137,14 +149,15 @@ document = Document.load_document(
 # Prepare output - automatically compresses if document is large
 response = {
     "document": document.serialize_document(
-        working_bucket=working_bucket, 
-        step_name="classification", 
+        working_bucket=working_bucket,
+        step_name="classification",
         logger=logger
     )
 }
 ```
 
-See the [Core Data Models documentation](idp_common/README.md) for more details on document compression features.
+See the [Core Data Models documentation](idp_common/README.md) for more details
+on document compression features.
 
 ## ⚙️ Configuration
 
@@ -184,9 +197,11 @@ This package uses a unified Document-based approach across all services:
 1. All services accept and return Document objects
 2. Each service updates the Document with its results
 3. Results are properly encapsulated in the Document model
-4. Large results (like extraction attributes) are stored in S3 with only URIs in the Document
+4. Large results (like extraction attributes) are stored in S3 with only URIs in
+   the Document
 
 Key benefits:
+
 - Consistency across all services
 - Simplified data flow in serverless functions
 - Better resource usage with the focused document pattern

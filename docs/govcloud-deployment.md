@@ -2,10 +2,15 @@
 
 ## Overview
 
-The GenAI IDP Accelerator now supports deployment to AWS GovCloud regions through a specialized template generation script. This solution addresses two key GovCloud requirements:
+The GenAI IDP Accelerator now supports deployment to AWS GovCloud regions
+through a specialized template generation script. This solution addresses two
+key GovCloud requirements:
 
-1. **ARN Partition Compatibility**: All ARN references use `arn:${AWS::Partition}:` instead of `arn:aws:` to work in both commercial and GovCloud regions
-2. **Service Compatibility**: Removes services not available in GovCloud (AppSync, CloudFront, WAF, Cognito UI components)
+1. **ARN Partition Compatibility**: All ARN references use
+   `arn:${AWS::Partition}:` instead of `arn:aws:` to work in both commercial and
+   GovCloud regions
+2. **Service Compatibility**: Removes services not available in GovCloud
+   (AppSync, CloudFront, WAF, Cognito UI components)
 
 ## Architecture Differences
 
@@ -43,12 +48,17 @@ You need to have the following packages installed on your computer:
 2. aws (AWS CLI)
 3. [sam (AWS SAM)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
 4. python 3.11 or later
-5. A local Docker daemon
-6. Python packages for publish.py: `pip install boto3 rich PyYAML botocore setuptools docker`
+5. A local Docker daemon <<<<<<< HEAD
+6. # Python packages for publish.py: `pip install boto3 rich PyYAML botocore setuptools`
+7. Python packages for publish.py:
+   `pip install boto3 rich PyYAML botocore setuptools docker`
+   > > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
 
 ### Step 1: Generate GovCloud Template
 
-First, generate the GovCloud-compatible template - this run the standard build process first to create all Lambda functions and artifacts, and then creates a stripped down version for GovCloud:
+First, generate the GovCloud-compatible template - this run the standard build
+process first to create all Lambda functions and artifacts, and then creates a
+stripped down version for GovCloud:
 
 ```bash
 # Build for GovCloud region
@@ -60,7 +70,8 @@ python scripts/generate_govcloud_template.py my-bucket my-prefix us-east-1
 
 ### Step 2: Deploy to GovCloud
 
-Deploy the generated template to GovCloud using the AWS CloudFormation console (recommended) or deploy using AWS CLI e.g:
+Deploy the generated template to GovCloud using the AWS CloudFormation console
+(recommended) or deploy using AWS CLI e.g:
 
 ```bash
 aws cloudformation deploy \
@@ -122,8 +133,10 @@ The following essential services remain available:
 
 ### Document Processing
 
-- ✅ All 3 processing patterns (BDA, Textract+Bedrock, Textract+SageMaker+Bedrock)
-- ✅ Complete 6-step pipeline (OCR, Classification, Extraction, Assessment, Summarization, Evaluation)
+- ✅ All 3 processing patterns (BDA, Textract+Bedrock,
+  Textract+SageMaker+Bedrock)
+- ✅ Complete 6-step pipeline (OCR, Classification, Extraction, Assessment,
+  Summarization, Evaluation)
 - ✅ Step Functions workflows
 - ✅ Lambda function processing
 - ✅ Custom prompt Lambda integration
@@ -167,7 +180,8 @@ Using the lookup script
 ./scripts/lookup_file_status.sh documents/my-document.pdf MyStack
 ````
 
-Or navigate to the AWS Step Functions workflow using the link in the stack Outputs tab in CloudFormation, to visually monitor workflow progress.
+Or navigate to the AWS Step Functions workflow using the link in the stack
+Outputs tab in CloudFormation, to visually monitor workflow progress.
 
 ## Monitoring & Troubleshooting
 
@@ -259,9 +273,12 @@ The following features are not available:
 
 ### Support Resources
 
-1. **AWS Documentation**: [GovCloud User Guide](https://docs.aws.amazon.com/govcloud-us/)
-2. **Bedrock in GovCloud**: [Model Availability](https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html)
-3. **Service Limits**: [GovCloud Service Quotas](https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-limits.html)
+1. **AWS Documentation**:
+   [GovCloud User Guide](https://docs.aws.amazon.com/govcloud-us/)
+2. **Bedrock in GovCloud**:
+   [Model Availability](https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html)
+3. **Service Limits**:
+   [GovCloud Service Quotas](https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-limits.html)
 
 ## Migration from Commercial AWS
 

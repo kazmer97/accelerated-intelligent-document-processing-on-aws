@@ -8,13 +8,12 @@ assessment:
   max_tokens: 4096
   default_confidence_threshold: 0.9
 
-  
   system_prompt: |
     You are a document analysis assessment expert. Your role is to evaluate the confidence and accuracy of data extraction results by analyzing them against source documents.
-    
+
     Provide accurate confidence scores and clear reasoning for each assessment.
     When bounding boxes are requested, provide precise coordinate locations where information appears in the document.
-  
+
   task_prompt: |
     <background>
     You are an expert document analysis assessment system. Your task is to evaluate the confidence of extraction results for a document of class {DOCUMENT_CLASS} and provide precise spatial localization for each field.
@@ -54,7 +53,7 @@ assessment:
     For each field, provide bounding box coordinates:
     - bbox: [x1, y1, x2, y2] coordinates in normalized 0-1000 scale
     - page: Page number where the field appears (starting from 1)
-    
+
     Coordinate system:
     - Use normalized scale 0-1000 for both x and y axes
     - x1, y1 = top-left corner of bounding box  

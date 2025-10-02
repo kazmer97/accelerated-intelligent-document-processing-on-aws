@@ -3,7 +3,9 @@ SPDX-License-Identifier: MIT-0
 
 # Contributing to GenAI Intelligent Document Processing (GenAIIDP)
 
-Thank you for your interest in contributing to the GenAI Intelligent Document Processing accelerator! This document provides guidelines and instructions for contributing to this project.
+Thank you for your interest in contributing to the GenAI Intelligent Document
+Processing accelerator! This document provides guidelines and instructions for
+contributing to this project.
 
 ## Table of Contents
 
@@ -24,8 +26,10 @@ Thank you for your interest in contributing to the GenAI Intelligent Document Pr
 
 ## Code of Conduct
 
-This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
-For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
+This project has adopted the
+[Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct). For
+more information see the
+[Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
 opensource-codeofconduct@amazon.com with any additional questions or comments.
 
 ## Getting Started
@@ -33,6 +37,7 @@ opensource-codeofconduct@amazon.com with any additional questions or comments.
 ### Development Environment Setup
 
 1. **Prerequisites**:
+
    - Bash shell (Linux, MacOS)
    - AWS CLI
    - AWS SAM CLI
@@ -40,6 +45,7 @@ opensource-codeofconduct@amazon.com with any additional questions or comments.
    - Docker
 
 2. **Fork and Clone the Repository**:
+
    ```bash
    git clone <repository-url> genaiic-idp-accelerator
    cd genaiic-idp-accelerator
@@ -47,7 +53,8 @@ opensource-codeofconduct@amazon.com with any additional questions or comments.
 
 3. **Install Dependencies and test local build**:
 
-See [Build Deployment Assets from Source Code](docs/deployment.md#option-2-build-deployment-assets-from-source-code)
+See
+[Build Deployment Assets from Source Code](docs/deployment.md#option-2-build-deployment-assets-from-source-code)
 
 ### Project Structure
 
@@ -56,7 +63,7 @@ Familiarize yourself with the project structure:
 - `config_library/`: Configuration templates for different processing patterns
 - `docs/`: Documentation files
 - `lib/idp_common_pkg/`: Core functionality library for IDP
-- `notebooks`: Notebooks demonstrating use of idp_common python package. 
+- `notebooks`: Notebooks demonstrating use of idp_common python package.
 - `patterns/`: Implementation of document processing patterns
 - `samples/`: Sample documents for testing
 - `scripts/`: Utility scripts for development, testing, and deployment
@@ -70,10 +77,11 @@ Familiarize yourself with the project structure:
 ### Branching Strategy
 
 1. Create a branch from `develop` for your work:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
-   
+
    Use prefixes like `feature/`, `fix/`, `docs/` to indicate the type of change.
 
 ### Making Changes
@@ -88,6 +96,7 @@ Familiarize yourself with the project structure:
 ### Testing Your Changes
 
 1. **Local Testing**:
+
    ```bash
    # Run Python unit tests
    pytest lib/idp_common_pkg/tests/
@@ -96,7 +105,7 @@ Familiarize yourself with the project structure:
    cd patterns/pattern-2/
    sam build
    sam local invoke OCRFunction -e ../../testing/OCRFunction-event.json --env-vars ../../testing/env.json
-   
+
    # Verify UI code passes linting checks
    cd src/ui/
    npm run lint
@@ -109,20 +118,23 @@ Familiarize yourself with the project structure:
 
 ## Pull Request Process
 
-1. **Update Documentation**: Ensure all documentation affected by your changes is updated
+1. **Update Documentation**: Ensure all documentation affected by your changes
+   is updated
 2. **Run Tests**: Verify that your changes pass all tests
 3. **Create a Pull Request**: Submit a PR with a clear description of:
    - What the changes do
    - Why the changes are needed
    - Any relevant context or considerations
-4. **Address Review Feedback**: Be responsive to review comments and make requested changes
+4. **Address Review Feedback**: Be responsive to review comments and make
+   requested changes
 5. **Merge**: Once approved, your contribution will be merged
 
 ## Coding Standards
 
 - **Python**: Follow PEP 8 style guidelines
 - **JavaScript/TypeScript**: Follow the ESLint configuration in the project
-- **Documentation**: Update relevant documentation for any changes to functionality
+- **Documentation**: Update relevant documentation for any changes to
+  functionality
 - **Commit Messages**: Write clear, descriptive commit messages
 - **Versioning**: Follow semantic versioning principles
 
@@ -135,13 +147,18 @@ Familiarize yourself with the project structure:
 
 ## Reporting Bugs/Feature Requests
 
-We welcome you to use the GitHub issue tracker to report bugs or suggest features for the GenAIIDP solution.
+We welcome you to use the GitHub issue tracker to report bugs or suggest
+features for the GenAIIDP solution.
 
 ### Distinguishing Between Solution Issues and AWS Service Issues
 
-**Important:** This repository is specifically for issues related to the GenAIIDP accelerator solution, not the underlying AWS services it uses (such as Amazon Bedrock Data Automation (BDA), Amazon Bedrock Foundational Models, Amazon Bedrock Knowledge Bases, Amazon Textract, etc.).
+**Important:** This repository is specifically for issues related to the
+GenAIIDP accelerator solution, not the underlying AWS services it uses (such as
+Amazon Bedrock Data Automation (BDA), Amazon Bedrock Foundational Models, Amazon
+Bedrock Knowledge Bases, Amazon Textract, etc.).
 
 - **For GenAIIDP Solution Issues:** Use this GitHub repository
+
   - Deployment issues with the CloudFormation templates
   - Bugs in the Step Functions workflows
   - Issues with the Web UI
@@ -155,16 +172,19 @@ We welcome you to use the GitHub issue tracker to report bugs or suggest feature
 
 We provide issue templates to make this process easier:
 
-- [Bug Report Template](/.github/ISSUE_TEMPLATE/bug_report.md) - Use this template when reporting a bug
-- [Feature Request Template](/.github/ISSUE_TEMPLATE/feature_request.md) - Use this template when suggesting new functionality
+- [Bug Report Template](/.github/ISSUE_TEMPLATE/bug_report.md) - Use this
+  template when reporting a bug
+- [Feature Request Template](/.github/ISSUE_TEMPLATE/feature_request.md) - Use
+  this template when suggesting new functionality
 
-When filing an issue, please check existing open, or recently closed, issues to make sure somebody else hasn't already
-reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
+When filing an issue, please check existing open, or recently closed, issues to
+make sure somebody else hasn't already reported the issue. Please try to include
+as much information as you can. Details like these are incredibly useful:
 
-* A reproducible test case or series of steps
-* The version of our code being used
-* Any modifications you've made relevant to the bug
-* Anything unusual about your environment or deployment
+- A reproducible test case or series of steps
+- The version of our code being used
+- Any modifications you've made relevant to the bug
+- Anything unusual about your environment or deployment
 
 For feature requests:
 
@@ -177,12 +197,19 @@ For feature requests:
 - **Cost Awareness**: Consider the cost implications of your changes
 - **Security**: Follow AWS security best practices
 - **Region Compatibility**: Ensure changes work across supported AWS regions
-- **Service Quotas**: Be aware of AWS service quotas that may affect your implementation
-- **IAM Permissions**: Only request the minimum necessary permissions for new functionality
+- **Service Quotas**: Be aware of AWS service quotas that may affect your
+  implementation
+- **IAM Permissions**: Only request the minimum necessary permissions for new
+  functionality
 
 ## Security issue notifications
-If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
+
+If you discover a potential security issue in this project we ask that you
+notify AWS/Amazon Security via our
+[vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/).
+Please do **not** create a public github issue.
 
 ---
 
-Thank you for contributing to the GenAI Intelligent Document Processing accelerator!
+Thank you for contributing to the GenAI Intelligent Document Processing
+accelerator!

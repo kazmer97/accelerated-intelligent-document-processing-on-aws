@@ -1,69 +1,69 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CodePipeline for deployment automation'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CodePipeline for deployment automation"
 
 Parameters:
   PipelineName:
     Type: String
-    Description: 'Name of the CodePipeline'
+    Description: "Name of the CodePipeline"
     Default: idp-sdlc-deploy-pipeline
 
   BucketName:
     Type: String
-    Description: 'Name of the S3 bucket containing the deployment assets'
+    Description: "Name of the S3 bucket containing the deployment assets"
     Default: idp-sdlc-sourcecode-YOUR_AWS_ACCOUNT-YOUR_REGION
-  
+
   FileKey:
     Type: String
-    Description: 'S3 key of the deployment asset file'
+    Description: "S3 key of the deployment asset file"
     Default: deploy/code.zip
-    
+
   CodeBuildRoleArn:
     Type: String
-    Description: 'Optional ARN of an existing IAM role for CodeBuild. If not provided, a new role will be created.'
-    Default: ''
+    Description: "Optional ARN of an existing IAM role for CodeBuild. If not provided, a new role will be created."
+    Default: ""
 
 Conditions:
-  CreateCodeBuildRole: !Equals [!Ref CodeBuildRoleArn, '']
+  CreateCodeBuildRole: !Equals [!Ref CodeBuildRoleArn, ""]
 
 Resources:
   CodePipelineRole:
-      Type: 'AWS::IAM::Role'
-      Properties:
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service: codepipeline.amazonaws.com
-              Action: 'sts:AssumeRole'
-        Policies:
-          - PolicyName: CodePipelinePolicy
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - 's3:GetObject'
-                    - 's3:GetObjectVersion'
-                    - 's3:GetBucketVersioning'
-                    - 's3:ListBucket'
-                    - 's3:PutObject'
-                  Resource:
-                    - !Sub 'arn:aws:s3:::${BucketName}/*'
-                    - !Sub 'arn:aws:s3:::${ArtifactBucket}/*'
-                    - !Sub 'arn:aws:s3:::${BucketName}'
-                    - !Sub 'arn:aws:s3:::${ArtifactBucket}'
-                - Effect: Allow
-                  Action:
-                    - 'codebuild:BatchGetBuilds'
-                    - 'codebuild:StartBuild'
-                  Resource: !GetAtt IdkInstallCodeBuild.Arn
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: CodePipelinePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:GetBucketVersioning"
+                  - "s3:ListBucket"
+                  - "s3:PutObject"
+                Resource:
+                  - !Sub "arn:aws:s3:::${BucketName}/*"
+                  - !Sub "arn:aws:s3:::${ArtifactBucket}/*"
+                  - !Sub "arn:aws:s3:::${BucketName}"
+                  - !Sub "arn:aws:s3:::${ArtifactBucket}"
+              - Effect: Allow
+                Action:
+                  - "codebuild:BatchGetBuilds"
+                  - "codebuild:StartBuild"
+                Resource: !GetAtt IdkInstallCodeBuild.Arn
 
   CodeBuildRole:
-    Type: 'AWS::IAM::Role'
+    Type: "AWS::IAM::Role"
     Condition: CreateCodeBuildRole
     # checkov:skip=CKV_AWS_111: "This role requires specific permissions for CodeBuild deployment operations"
     # checkov:skip=CKV_AWS_107: "This role requires access to resources for deployment operations"
@@ -74,32 +74,32 @@ Resources:
             reason: "Required for EC2 resource discovery during deployment"
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service: codebuild.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: "sts:AssumeRole"
       # TODO: Adjust these rights as appropriate >>>
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/ReadOnlyAccess'
+        - "arn:aws:iam::aws:policy/ReadOnlyAccess"
       # <<< TODO: Adjust these rights as appropriate
       Policies:
         - PolicyName: CodeBuildPolicy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - 'ec2:DescribeAvailabilityZones'
-                  - 'ec2:DescribeVpcs'
-                  - 'ec2:DescribeSubnets'
-                  - 'ec2:DescribeSecurityGroups'
-                  - 'sts:AssumeRole'
-                Resource: '*'
+                  - "ec2:DescribeAvailabilityZones"
+                  - "ec2:DescribeVpcs"
+                  - "ec2:DescribeSubnets"
+                  - "ec2:DescribeSecurityGroups"
+                  - "sts:AssumeRole"
+                Resource: "*"
 
   ArtifactBucket:
-    Type: 'AWS::S3::Bucket'
+    Type: "AWS::S3::Bucket"
     # checkov:skip=CKV_AWS_18: "This is a temporary deployment artifact bucket; access logging not required"
     Metadata:
       cfn_nag:
@@ -124,7 +124,7 @@ Resources:
         RestrictPublicBuckets: true
 
   IdkInstallCodeBuild:
-    Type: 'AWS::CodeBuild::Project'
+    Type: "AWS::CodeBuild::Project"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -164,7 +164,7 @@ Resources:
                 - make uninstall -e IDP_CFN_PREFIX=$IDP_CFN_PREFIX || echo "Cleanup failed but continuing"
 
   DeploymentPipeline:
-    Type: 'AWS::CodePipeline::Pipeline'
+    Type: "AWS::CodePipeline::Pipeline"
     Properties:
       Name: !Ref PipelineName
       RoleArn: !GetAtt CodePipelineRole.Arn
@@ -180,7 +180,7 @@ Resources:
                 Category: Source
                 Owner: AWS
                 Provider: S3
-                Version: '1'
+                Version: "1"
               Configuration:
                 S3Bucket: !Ref BucketName
                 S3ObjectKey: !Ref FileKey
@@ -195,7 +195,7 @@ Resources:
                 Category: Build
                 Owner: AWS
                 Provider: CodeBuild
-                Version: '1'
+                Version: "1"
               Configuration:
                 ProjectName: !Ref IdkInstallCodeBuild
               InputArtifacts:
@@ -205,32 +205,32 @@ Resources:
               RunOrder: 1
 
   CodeBuildRoleS3Policy:
-    Type: 'AWS::IAM::Policy'
+    Type: "AWS::IAM::Policy"
     Condition: CreateCodeBuildRole
     Properties:
       PolicyName: CodeBuildS3Access
-      Roles: 
+      Roles:
         - !Ref CodeBuildRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
-              - 's3:GetObject'
-              - 's3:GetObjectVersion'
-              - 's3:PutObject'
-            Resource: 
-              - !Sub 'arn:aws:s3:::${BucketName}/*'
-              - !Sub 'arn:aws:s3:::${ArtifactBucket}/*'
+              - "s3:GetObject"
+              - "s3:GetObjectVersion"
+              - "s3:PutObject"
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketName}/*"
+              - !Sub "arn:aws:s3:::${ArtifactBucket}/*"
           - Effect: Allow
             Action:
-              - 's3:ListBucket'
-            Resource: 
-              - !Sub 'arn:aws:s3:::${BucketName}'
-              - !Sub 'arn:aws:s3:::${ArtifactBucket}'
+              - "s3:ListBucket"
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketName}"
+              - !Sub "arn:aws:s3:::${ArtifactBucket}"
 
   CodeBuildLogsPolicy:
-    Type: 'AWS::IAM::Policy'
+    Type: "AWS::IAM::Policy"
     Condition: CreateCodeBuildRole
     Metadata:
       cfn_nag:
@@ -240,14 +240,14 @@ Resources:
     # checkov:skip=CKV_AWS_111: "CloudWatch Logs policies require write access for log creation"
     Properties:
       PolicyName: CodeBuildLogs
-      Roles: 
+      Roles:
         - !Ref CodeBuildRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
-              - 'logs:CreateLogGroup'
-              - 'logs:CreateLogStream'
-              - 'logs:PutLogEvents'
-            Resource: '*'
+              - "logs:CreateLogGroup"
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource: "*"

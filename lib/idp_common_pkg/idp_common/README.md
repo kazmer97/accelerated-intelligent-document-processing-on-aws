@@ -3,15 +3,19 @@ SPDX-License-Identifier: MIT-0
 
 # IDP Common Core Data Models
 
-This document describes the core data models for the IDP processing pipeline. For a high-level overview of the entire package, see the [main README](../README.md).
+This document describes the core data models for the IDP processing pipeline.
+For a high-level overview of the entire package, see the
+[main README](../README.md).
 
 ## 📑 Module Structure
 
 The IDP Common library provides these main modules:
 
 - **Models**: Core document representation (this document)
-- **[Bedrock](bedrock/README.md)**: Utilities for working with Amazon Bedrock LLMs
-- **[Classification](classification/README.md)**: Document classification services
+- **[Bedrock](bedrock/README.md)**: Utilities for working with Amazon Bedrock
+  LLMs
+- **[Classification](classification/README.md)**: Document classification
+  services
 - **[Extraction](extraction/README.md)**: Field extraction services
 - **[Evaluation](evaluation/README.md)**: Result evaluation tools
 - **[OCR](ocr/README.md)**: Text extraction using AWS Textract
@@ -24,7 +28,8 @@ The IDP Common library provides these main modules:
 
 ### Document
 
-The `Document` class is the central data structure for the entire IDP pipeline with automatic compression support for large documents:
+The `Document` class is the central data structure for the entire IDP pipeline
+with automatic compression support for large documents:
 
 ```python
 @dataclass
@@ -32,7 +37,7 @@ class Document:
     """
     Core document type that is passed through the processing pipeline.
     Each processing step enriches this object.
-    
+
     The Document class provides comprehensive support for handling large documents
     in Step Functions workflows through automatic compression and decompression.
     """
@@ -41,21 +46,21 @@ class Document:
     input_bucket: Optional[str] = None  # S3 bucket containing the input document
     input_key: Optional[str] = None     # S3 key of the input document
     output_bucket: Optional[str] = None # S3 bucket for processing outputs
-    
+
     # Processing state and timing
     status: Status = Status.QUEUED
     queued_time: Optional[str] = None
     start_time: Optional[str] = None
     completion_time: Optional[str] = None
     workflow_execution_arn: Optional[str] = None
-    
+
     # Document content details
     num_pages: int = 0
     pages: Dict[str, Page] = field(default_factory=dict)
     sections: List[Section] = field(default_factory=list)
     summary: Optional[str] = None
     detailed_summary: Optional[str] = None
-    
+
     # Processing metadata
     metering: Dict[str, Any] = field(default_factory=dict)
     evaluation_report_uri: Optional[str] = None
@@ -83,14 +88,18 @@ class Page:
 ```
 
 **Key URIs:**
+
 - `image_uri`: S3 URI to the page image (JPG format)
-- `raw_text_uri`: S3 URI to the raw Textract response (full JSON with all metadata)
+- `raw_text_uri`: S3 URI to the raw Textract response (full JSON with all
+  metadata)
 - `parsed_text_uri`: S3 URI to the parsed text content (markdown format)
-- `text_confidence_uri`: S3 URI to condensed text confidence data (optimized for assessment prompts)
+- `text_confidence_uri`: S3 URI to condensed text confidence data (optimized for
+  assessment prompts)
 
 ### Section
 
-The `Section` class represents a logical section of the document (typically with a consistent document class):
+The `Section` class represents a logical section of the document (typically with
+a consistent document class):
 
 ```python
 @dataclass
@@ -115,7 +124,7 @@ class Status(Enum):
     RUNNING = "RUNNING"         # Step function workflow has started
     OCR = "OCR"                 # OCR processing
     CLASSIFYING = "CLASSIFYING" # Document classification
-    EXTRACTING = "EXTRACTING"   # Information extraction 
+    EXTRACTING = "EXTRACTING"   # Information extraction
     POSTPROCESSING = "POSTPROCESSING" # Document summarization
     SUMMARIZING = "SUMMARIZING" # Document summarization
     COMPLETED = "COMPLETED"     # All processing completed
@@ -124,7 +133,9 @@ class Status(Enum):
 
 ## 📦 Document Compression for Large Documents
 
-The Document class includes automatic compression support to handle large documents that exceed Step Functions payload limits (256KB). This is essential for processing multi-page documents with extensive content.
+The Document class includes automatic compression support to handle large
+documents that exceed Step Functions payload limits (256KB). This is essential
+for processing multi-page documents with extensive content.
 
 ### Compression Methods
 
@@ -145,15 +156,15 @@ document = Document.from_compressed_or_dict(data, working_bucket)
 ```python
 # Handle input - automatically detects and decompresses if needed
 document = Document.load_document(
-    event_data=event["document"], 
-    working_bucket=working_bucket, 
+    event_data=event["document"],
+    working_bucket=working_bucket,
     logger=logger
 )
 
 # Prepare output - automatically compresses if document is large
 response_data = document.serialize_document(
-    working_bucket=working_bucket, 
-    step_name="classification", 
+    working_bucket=working_bucket,
+    step_name="classification",
     logger=logger,
     size_threshold_kb=200  # Optional: custom threshold
 )
@@ -161,11 +172,16 @@ response_data = document.serialize_document(
 
 ### Key Compression Features
 
-- **Automatic Detection**: Utility methods automatically detect compressed vs uncompressed documents
-- **Size Threshold**: Configurable compression threshold (default 0KB - always compress)
-- **Section Preservation**: Section IDs are preserved in compressed payloads for Step Functions Map operations
-- **Transparent Handling**: Lambda functions work seamlessly with both compressed and uncompressed documents
-- **S3 Storage**: Compressed documents are stored in `s3://working-bucket/compressed_documents/{document_id}/`
+- **Automatic Detection**: Utility methods automatically detect compressed vs
+  uncompressed documents
+- **Size Threshold**: Configurable compression threshold (default 0KB - always
+  compress)
+- **Section Preservation**: Section IDs are preserved in compressed payloads for
+  Step Functions Map operations
+- **Transparent Handling**: Lambda functions work seamlessly with both
+  compressed and uncompressed documents
+- **S3 Storage**: Compressed documents are stored in
+  `s3://working-bucket/compressed_documents/{document_id}/`
 
 ## 🔄 Common Operations
 
@@ -323,8 +339,10 @@ document = appsync_service.update_document(document)
 
 ## 📝 Best Practices
 
-1. **Always use the Document.load_document() method** to handle input data in Lambda functions
+1. **Always use the Document.load_document() method** to handle input data in
+   Lambda functions
 2. **Always use document.serialize_document()** to prepare output data
-3. **Keep the Document model as the central data structure** across all processing steps
+3. **Keep the Document model as the central data structure** across all
+   processing steps
 4. **Store large data in S3** and reference by URI in the Document model
 5. **Use Section objects** to group related pages by document type

@@ -1,15 +1,19 @@
 # Document Service Factory
 
-The `docs_service` module provides a factory pattern for creating document services, allowing you to switch between AppSync and DynamoDB implementations while maintaining the same interface.
+The `docs_service` module provides a factory pattern for creating document
+services, allowing you to switch between AppSync and DynamoDB implementations
+while maintaining the same interface.
 
 ## Overview
 
-This module enables runtime switching between different document tracking backends:
+This module enables runtime switching between different document tracking
+backends:
 
 - **AppSync Mode**: Uses AWS AppSync GraphQL API for document operations
 - **DynamoDB Mode**: Uses direct DynamoDB operations for document tracking
 
-The factory pattern ensures that your Lambda functions can work with either backend without code changes, controlled by environment variables.
+The factory pattern ensures that your Lambda functions can work with either
+backend without code changes, controlled by environment variables.
 
 ## Key Components
 
@@ -58,7 +62,8 @@ elif is_dynamodb_mode():
 
 ## Environment Configuration
 
-The factory uses the `DOCUMENT_TRACKING_MODE` environment variable to determine which service to create:
+The factory uses the `DOCUMENT_TRACKING_MODE` environment variable to determine
+which service to create:
 
 ```bash
 # Use AppSync (default)
@@ -101,13 +106,13 @@ from idp_common.docs_service import create_document_service
 def lambda_handler(event, context):
     # Service type determined by environment variable
     service = create_document_service()
-    
+
     # Your document processing logic here
     document = process_document(event)
-    
+
     # Update document status
     service.update_document(document)
-    
+
     return {"statusCode": 200}
 ```
 
@@ -141,7 +146,7 @@ class DocumentProcessor:
             mode=config.get('tracking_mode', 'appsync'),
             **config.get('service_params', {})
         )
-    
+
     def process(self, document):
         # Process document using configured service
         return self.service.update_document(document)
@@ -221,7 +226,8 @@ service = create_document_service()  # Mode controlled by environment
 
 ## Best Practices
 
-1. **Use Environment Variables**: Control service type through `DOCUMENT_TRACKING_MODE` rather than hardcoding
+1. **Use Environment Variables**: Control service type through
+   `DOCUMENT_TRACKING_MODE` rather than hardcoding
 2. **Consistent Interface**: Write code that works with both service types
 3. **Error Handling**: Handle service-specific errors appropriately
 4. **Testing**: Test with both service types to ensure compatibility
@@ -244,6 +250,7 @@ The module recognizes these environment variables:
 ## Examples
 
 See `idp_common/dynamodb/example.py` for comprehensive usage examples including:
+
 - Basic service creation and usage
 - Factory pattern usage
 - Environment-based mode switching

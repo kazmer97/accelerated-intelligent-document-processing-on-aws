@@ -1,8 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template to create an AWS Bedrock Data Automation Project'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template to create an AWS Bedrock Data Automation Project"
 
 Parameters:
   ProjectName:
@@ -13,12 +13,12 @@ Parameters:
     AllowedPattern: ^[a-zA-Z0-9-_]+$
     ConstraintDescription: Project name can only contain alphanumeric characters, hyphens, and underscores
     Default: "MyProject"
-  
+
   ProjectDescription:
     Type: String
     Description: Description for the Bedrock Data Automation Project
     Default: "Data Automation Project created via CloudFormation"
-  
+
   BlueprintName:
     Type: String
     Description: Name for the Bedrock Blueprint
@@ -76,7 +76,7 @@ Resources:
             type: "string"
             inferenceType: "explicit"
             instruction: "Extract the hospital or medical facility name and contact information."
-      Type: "DOCUMENT"  # Added required Type property
+      Type: "DOCUMENT" # Added required Type property
       Tags:
         - Key: Environment
           Value: Development
@@ -107,15 +107,15 @@ Outputs:
   ProjectArn:
     Description: ARN of the created Bedrock Data Automation Project
     Value: !GetAtt BedRockDataAutomationProject.ProjectArn
-  
+
   ProjectStatus:
     Description: Status of the created Bedrock Data Automation Project
     Value: !GetAtt BedRockDataAutomationProject.Status
-  
+
   CreationTime:
     Description: Creation time of the Bedrock Data Automation Project
     Value: !GetAtt BedRockDataAutomationProject.CreationTime
-  
+
   BlueprintArn:
     Description: ARN of the created Bedrock Blueprint
     Value: !GetAtt BedrockBlueprint.BlueprintArn

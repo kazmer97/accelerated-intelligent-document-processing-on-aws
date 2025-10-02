@@ -3,7 +3,8 @@ SPDX-License-Identifier: MIT-0
 
 # Evaluation Framework
 
-The GenAIIDP solution includes a built-in evaluation framework to assess the accuracy of document processing outputs. This allows you to:
+The GenAIIDP solution includes a built-in evaluation framework to assess the
+accuracy of document processing outputs. This allows you to:
 
 - Compare processing outputs against baseline (ground truth) data
 - Generate detailed evaluation reports using configurable methods and thresholds
@@ -12,18 +13,21 @@ The GenAIIDP solution includes a built-in evaluation framework to assess the acc
 ## How It Works
 
 1. **Baseline Data**
+
    - Store validated baseline data in a dedicated S3 bucket
    - Use an existing bucket or let the solution create one
-   - Can use outputs from another GenAIIDP stack to compare different patterns/prompts
+   - Can use outputs from another GenAIIDP stack to compare different
+     patterns/prompts
 
 2. **Automatic Evaluation**
+
    - When enabled, automatically evaluates each processed document
    - Compares against baseline data if available
    - Generates detailed markdown reports using AI analysis
 
 3. **Evaluation Reports**
    - Compare section classification accuracy
-   - Analyze extracted field differences 
+   - Analyze extracted field differences
    - Identify patterns in discrepancies
    - Assess severity of differences (cosmetic vs. substantial)
 
@@ -31,29 +35,43 @@ The GenAIIDP solution includes a built-in evaluation framework to assess the acc
 
 The framework supports multiple comparison methods:
 
-- **Exact Match (EXACT)**: Compares values character-by-character after normalizing whitespace and punctuation
-- **Numeric Exact Match (NUMERIC_EXACT)**: Compares numeric values after normalizing formats (removing currency symbols, commas, etc.)
-- **Fuzzy Match (FUZZY)**: Allows for minor variations in formatting and whitespace with configurable similarity thresholds
-- **Semantic Match (SEMANTIC)**: Evaluates meaning equivalence using embedding-based similarity with Bedrock Titan embeddings
-- **List Matching (HUNGARIAN)**: Uses the Hungarian algorithm for optimal bipartite matching of lists with multiple comparator types:
+- **Exact Match (EXACT)**: Compares values character-by-character after
+  normalizing whitespace and punctuation
+- **Numeric Exact Match (NUMERIC_EXACT)**: Compares numeric values after
+  normalizing formats (removing currency symbols, commas, etc.)
+- **Fuzzy Match (FUZZY)**: Allows for minor variations in formatting and
+  whitespace with configurable similarity thresholds
+- **Semantic Match (SEMANTIC)**: Evaluates meaning equivalence using
+  embedding-based similarity with Bedrock Titan embeddings
+- **List Matching (HUNGARIAN)**: Uses the Hungarian algorithm for optimal
+  bipartite matching of lists with multiple comparator types:
   - **EXACT**: Default comparator for exact string matching after normalization
   - **FUZZY**: Fuzzy string matching with configurable threshold
-  - **NUMERIC**: Numeric comparison after normalizing currency symbols and formats
-- **LLM-Powered Analysis (LLM)**: Uses AI to determine functional equivalence of extracted data with detailed explanations
+  - **NUMERIC**: Numeric comparison after normalizing currency symbols and
+    formats
+- **LLM-Powered Analysis (LLM)**: Uses AI to determine functional equivalence of
+  extracted data with detailed explanations
 
 ## Assessment Confidence Integration
 
-The evaluation framework automatically integrates with the assessment feature to provide enhanced quality insights. When documents have been processed with assessment enabled via the configuration `assessment.enabled: true` property, the evaluation reports include confidence scores alongside traditional accuracy metrics.
+The evaluation framework automatically integrates with the assessment feature to
+provide enhanced quality insights. When documents have been processed with
+assessment enabled via the configuration `assessment.enabled: true` property,
+the evaluation reports include confidence scores alongside traditional accuracy
+metrics.
 
 ### Confidence Score Display
 
-The evaluation framework automatically extracts confidence scores from the `explainability_info` section of assessment results and displays them in both JSON and Markdown evaluation reports:
+The evaluation framework automatically extracts confidence scores from the
+`explainability_info` section of assessment results and displays them in both
+JSON and Markdown evaluation reports:
 
 - **Confidence**: Confidence score for extraction results being evaluated
 
 ### Enhanced Evaluation Reports
 
-When confidence data is available, evaluation reports include additional columns:
+When confidence data is available, evaluation reports include additional
+columns:
 
 ```
 | Status | Attribute | Expected | Actual | Confidence | Score | Method | Reason |
@@ -64,15 +82,20 @@ When confidence data is available, evaluation reports include additional columns
 
 ### Quality Analysis Benefits
 
-The combination of evaluation accuracy and confidence scores provides deeper insights:
+The combination of evaluation accuracy and confidence scores provides deeper
+insights:
 
-2. **Extraction Quality Assessment**: Low confidence highlights extraction results requiring human verification
-3. **Quality Prioritization**: Focus improvement efforts on attributes with both low confidence and low accuracy
-4. **Pattern Identification**: Analyze relationships between confidence levels and evaluation outcomes
+2. **Extraction Quality Assessment**: Low confidence highlights extraction
+   results requiring human verification
+3. **Quality Prioritization**: Focus improvement efforts on attributes with both
+   low confidence and low accuracy
+4. **Pattern Identification**: Analyze relationships between confidence levels
+   and evaluation outcomes
 
 ### Backward Compatibility
 
 The confidence integration is fully backward compatible:
+
 - Evaluation reports without assessment data show "N/A" in confidence columns
 - All existing evaluation workflows continue to function unchanged
 - No additional configuration required to enable confidence display
@@ -83,18 +106,23 @@ Set the following parameters during stack deployment:
 
 ```yaml
 EvaluationBaselineBucketName:
-  Description: Existing bucket with baseline data, or leave empty to create new bucket
-  
+  Description:
+    Existing bucket with baseline data, or leave empty to create new bucket
+
 EvaluationAutoEnabled:
   Default: true
   Description: Automatically evaluate each document (if baseline exists)
-  
+
 EvaluationModelId:
-  Default: "anthropic.claude-3-sonnet-20240229-v1:0"
-  Description: Model to use for evaluation reports (e.g., "us.anthropic.claude-3-7-sonnet-20250219-v1:0")
+  Default: 'anthropic.claude-3-sonnet-20240229-v1:0'
+  Description:
+    Model to use for evaluation reports (e.g.,
+    "us.anthropic.claude-3-7-sonnet-20250219-v1:0")
 ```
 
-You can also configure evaluation methods for specific document classes and attributes through the solution's configuration. The framework supports three types of attributes with different evaluation approaches:
+You can also configure evaluation methods for specific document classes and
+attributes through the solution's configuration. The framework supports three
+types of attributes with different evaluation approaches:
 
 ### Simple Attributes
 
@@ -106,15 +134,15 @@ classes:
     attributes:
       - name: invoice_number
         description: The unique identifier for the invoice
-        attributeType: simple  # or omit for default
-        evaluation_method: EXACT  # Use exact string matching
+        attributeType: simple # or omit for default
+        evaluation_method: EXACT # Use exact string matching
       - name: amount_due
         description: The total amount to be paid
-        evaluation_method: NUMERIC_EXACT  # Use numeric comparison
+        evaluation_method: NUMERIC_EXACT # Use numeric comparison
       - name: vendor_name
         description: Name of the vendor
-        evaluation_method: FUZZY  # Use fuzzy matching
-        evaluation_threshold: 0.8  # Minimum similarity threshold
+        evaluation_method: FUZZY # Use fuzzy matching
+        evaluation_threshold: 0.8 # Minimum similarity threshold
 ```
 
 ### Group Attributes
@@ -123,73 +151,80 @@ Nested object structures where each sub-attribute is evaluated individually:
 
 ```yaml
 classes:
-  - name: "Bank Statement"
+  - name: 'Bank Statement'
     attributes:
-      - name: "Account Holder Address"
-        description: "Complete address information for the account holder"
+      - name: 'Account Holder Address'
+        description: 'Complete address information for the account holder'
         attributeType: group
         groupAttributes:
-          - name: "Street Number"
-            description: "House or building number"
+          - name: 'Street Number'
+            description: 'House or building number'
             evaluation_method: FUZZY
             evaluation_threshold: 0.9
-          - name: "Street Name"
-            description: "Name of the street"
+          - name: 'Street Name'
+            description: 'Name of the street'
             evaluation_method: FUZZY
             evaluation_threshold: 0.8
-          - name: "City"
-            description: "City name"
+          - name: 'City'
+            description: 'City name'
             evaluation_method: FUZZY
             evaluation_threshold: 0.9
-          - name: "State"
-            description: "State abbreviation (e.g., CA, NY)"
+          - name: 'State'
+            description: 'State abbreviation (e.g., CA, NY)'
             evaluation_method: EXACT
-          - name: "ZIP Code"
-            description: "5 or 9 digit postal code"
+          - name: 'ZIP Code'
+            description: '5 or 9 digit postal code'
             evaluation_method: EXACT
 ```
 
 ### List Attributes
 
-Arrays of items where each item's attributes are evaluated individually across all list entries:
+Arrays of items where each item's attributes are evaluated individually across
+all list entries:
 
 ```yaml
 classes:
-  - name: "Bank Statement"
+  - name: 'Bank Statement'
     attributes:
-      - name: "Transactions"
-        description: "List of all transactions in the statement period"
+      - name: 'Transactions'
+        description: 'List of all transactions in the statement period'
         attributeType: list
         listItemTemplate:
-          itemDescription: "Individual transaction record"
+          itemDescription: 'Individual transaction record'
           itemAttributes:
-            - name: "Date"
-              description: "Transaction date (MM/DD/YYYY)"
+            - name: 'Date'
+              description: 'Transaction date (MM/DD/YYYY)'
               evaluation_method: FUZZY
               evaluation_threshold: 0.9
-            - name: "Description"
-              description: "Transaction description or merchant name"
+            - name: 'Description'
+              description: 'Transaction description or merchant name'
               evaluation_method: SEMANTIC
               evaluation_threshold: 0.7
-            - name: "Amount"
-              description: "Transaction amount (positive for deposits, negative for withdrawals)"
+            - name: 'Amount'
+              description:
+                'Transaction amount (positive for deposits, negative for
+                withdrawals)'
               evaluation_method: NUMERIC_EXACT
 ```
 
 ## Attribute Processing and Evaluation
 
-The evaluation framework automatically processes nested structures by flattening them into individual evaluable fields:
+The evaluation framework automatically processes nested structures by flattening
+them into individual evaluable fields:
 
 ### Group Attribute Processing
 
 Group attributes are flattened using dot notation:
+
 - `Account Holder Address.Street Number` (evaluated with FUZZY method)
 - `Account Holder Address.City` (evaluated with FUZZY method)
 - `Account Holder Address.State` (evaluated with EXACT method)
 
 ### List Attribute Processing
 
-List attributes are processed by creating individual evaluations for each array item:
+List attributes are processed by creating individual evaluations for each array
+item:
+
 - `Transactions[0].Date` (evaluated with FUZZY method)
 - `Transactions[0].Amount` (evaluated with NUMERIC_EXACT method)
 - `Transactions[1].Date` (evaluated with FUZZY method)
@@ -201,6 +236,7 @@ List attributes are processed by creating individual evaluations for each array 
 The evaluation reports provide detailed breakdowns for all nested attributes:
 
 **Group Attribute Results:**
+
 ```
 | Status | Attribute | Expected | Actual | Confidence | Score | Method | Reason |
 | :----: | --------- | -------- | ------ | :--------: | ----- | ------ | ------ |
@@ -210,6 +246,7 @@ The evaluation reports provide detailed breakdowns for all nested attributes:
 ```
 
 **List Attribute Results:**
+
 ```
 | Status | Attribute | Expected | Actual | Confidence | Score | Method | Reason |
 | :----: | --------- | -------- | ------ | :--------: | ----- | ------ | ------ |
@@ -220,15 +257,22 @@ The evaluation reports provide detailed breakdowns for all nested attributes:
 
 ### Evaluation Metrics for Complex Documents
 
-For documents with nested structures, the evaluation framework provides comprehensive metrics at multiple levels:
+For documents with nested structures, the evaluation framework provides
+comprehensive metrics at multiple levels:
 
-1. **Overall Document Metrics**: Aggregate accuracy across all attributes (simple, group, and list)
+1. **Overall Document Metrics**: Aggregate accuracy across all attributes
+   (simple, group, and list)
 2. **Section-Level Metrics**: Performance within each document section
-3. **Attribute-Level Metrics**: Individual performance for each flattened attribute
-4. **Group-Level Insights**: Summary statistics for related attributes within groups
-5. **List-Level Analysis**: Pattern analysis across list items (e.g., transaction accuracy trends)
+3. **Attribute-Level Metrics**: Individual performance for each flattened
+   attribute
+4. **Group-Level Insights**: Summary statistics for related attributes within
+   groups
+5. **List-Level Analysis**: Pattern analysis across list items (e.g.,
+   transaction accuracy trends)
 
-This multi-level analysis helps identify specific areas for improvement, such as:
+This multi-level analysis helps identify specific areas for improvement, such
+as:
+
 - Consistent issues with certain group attributes (e.g., address parsing)
 - Performance degradation with larger transaction lists
 - Specific list item attributes that frequently fail evaluation
@@ -236,12 +280,13 @@ This multi-level analysis helps identify specific areas for improvement, such as
 ## Viewing Reports
 
 1. In the web UI, select a document from the Documents list
-2. Click "View Evaluation Report" button 
+2. Click "View Evaluation Report" button
 3. The report shows:
    - Section classification accuracy
    - Field-by-field comparison with visual indicators (✅/❌)
    - Analysis of differences with detailed reasons
-   - Overall accuracy assessment with color-coded metrics (🟢 Excellent, 🟡 Good, 🟠 Fair, 🔴 Poor)
+   - Overall accuracy assessment with color-coded metrics (🟢 Excellent, 🟡
+     Good, 🟠 Fair, 🔴 Poor)
    - Progress bar visualizations for match rates
    - Comprehensive metrics and performance ratings
 
@@ -255,7 +300,8 @@ There are two main approaches to creating baseline data:
 2. Review the output in the web UI
 3. Make any necessary corrections
 4. For documents with satisfactory results, click "Copy to Baseline"
-5. The system will asynchronously copy all processing results to the baseline bucket
+5. The system will asynchronously copy all processing results to the baseline
+   bucket
 6. The document status will update to indicate baseline availability:
    - BASELINE_COPYING: Copy operation in progress
    - BASELINE_AVAILABLE: Document successfully copied to baseline
@@ -277,7 +323,8 @@ baseline-bucket/
     └── document3.pdf.json  # Baseline for subfolder/document3.pdf
 ```
 
-Each baseline file should match the format of the GenAIIDP output, typically including:
+Each baseline file should match the format of the GenAIIDP output, typically
+including:
 
 ```json
 {
@@ -290,7 +337,7 @@ Each baseline file should match the format of the GenAIIDP output, typically inc
 ## Best Practices
 
 - Enable auto-evaluation during testing/tuning phases
-- Disable auto-evaluation in production for cost efficiency 
+- Disable auto-evaluation in production for cost efficiency
 - Use evaluation reports to:
   - Compare different processing patterns
   - Test effects of prompt changes
@@ -299,7 +346,8 @@ Each baseline file should match the format of the GenAIIDP output, typically inc
 
 ## Automatic Field Discovery
 
-The evaluation framework automatically discovers and evaluates fields that exist in the data but are not defined in the configuration:
+The evaluation framework automatically discovers and evaluates fields that exist
+in the data but are not defined in the configuration:
 
 - Detects fields present in actual results, expected results, or both
 - Uses LLM evaluation method by default for discovered fields
@@ -307,6 +355,7 @@ The evaluation framework automatically discovers and evaluates fields that exist
 - Handles cases where fields are missing from either actual or expected results
 
 This capability is valuable when:
+
 - The complete schema is not yet fully defined
 - You're handling variations in extraction outputs
 - Identifying potential new fields to add to your configuration
@@ -316,39 +365,47 @@ This capability is valuable when:
 
 The framework offers two approaches for semantic evaluation:
 
-- **SEMANTIC Method**: Uses embedding-based comparison with Bedrock Titan embeddings
+- **SEMANTIC Method**: Uses embedding-based comparison with Bedrock Titan
+  embeddings
   - Faster and more cost-effective than LLM-based evaluation
   - Provides similarity scores without explanations
   - Great for high-volume comparisons where speed is important
   - Configurable threshold for matching sensitivity
-  
 - **LLM Method**: Uses Bedrock Claude or other LLM models
   - Provides detailed reasoning for why values match or don't match
   - Better at handling implicit/explicit information differences
   - More nuanced understanding of semantic equivalence
   - Ideal for cases where understanding the rationale is important
-  - Used as the default method for attributes discovered in the data but not in the configuration
+  - Used as the default method for attributes discovered in the data but not in
+    the configuration
 
 ## Metrics and Monitoring
 
-The evaluation framework includes comprehensive monitoring through CloudWatch metrics:
+The evaluation framework includes comprehensive monitoring through CloudWatch
+metrics:
 
-- **Evaluation Success/Failure Rates**: Track evaluation completion and error rates
-- **Baseline Data Availability**: Monitor percentage of documents with baseline data for comparison
+- **Evaluation Success/Failure Rates**: Track evaluation completion and error
+  rates
+- **Baseline Data Availability**: Monitor percentage of documents with baseline
+  data for comparison
 - **Report Generation Performance**: Track time to generate evaluation reports
-- **Model Usage Metrics**: Monitor token consumption and API calls for evaluation models
+- **Model Usage Metrics**: Monitor token consumption and API calls for
+  evaluation models
 - **Accuracy Trends**: Historical tracking of processing accuracy over time
 
-The framework calculates the following detailed metrics for each document and section:
+The framework calculates the following detailed metrics for each document and
+section:
 
 - **Precision**: Accuracy of positive predictions (TP / (TP + FP))
 - **Recall**: Coverage of actual positive cases (TP / (TP + FN))
 - **F1 Score**: Harmonic mean of precision and recall
 - **Accuracy**: Overall correctness (TP + TN) / (TP + TN + FP + FN)
 - **False Alarm Rate**: Rate of false positives among negatives (FP / (FP + TN))
-- **False Discovery Rate**: Rate of false positives among positive predictions (FP / (FP + TP))
+- **False Discovery Rate**: Rate of false positives among positive predictions
+  (FP / (FP + TP))
 
 The evaluation also tracks different evaluation statuses:
+
 - **RUNNING**: Evaluation is in progress
 - **COMPLETED**: Evaluation finished successfully
 - **FAILED**: Evaluation encountered errors
@@ -359,28 +416,37 @@ The evaluation also tracks different evaluation statuses:
 
 ## Aggregate Evaluation Analytics and Reporting
 
-The solution includes a comprehensive analytics system that stores evaluation metrics in a structured database for advanced reporting and trend analysis.
+The solution includes a comprehensive analytics system that stores evaluation
+metrics in a structured database for advanced reporting and trend analysis.
 
 ### ReportingDatabase Overview
 
-The evaluation framework automatically saves detailed metrics to an AWS Glue database (available from CloudFormation stack outputs as `ReportingDatabase`) containing three main tables:
+The evaluation framework automatically saves detailed metrics to an AWS Glue
+database (available from CloudFormation stack outputs as `ReportingDatabase`)
+containing three main tables:
 
 #### 1. document_evaluations
+
 Stores document-level metrics including:
+
 - Document ID, input key, evaluation date
 - Overall accuracy, precision, recall, F1 score
 - False alarm rate, false discovery rate
 - Execution time performance metrics
 
-#### 2. section_evaluations  
+#### 2. section_evaluations
+
 Stores section-level metrics including:
+
 - Document ID, section ID, section type
 - Section-specific accuracy, precision, recall, F1 score
 - Section classification performance
 - Evaluation timestamps
 
 #### 3. attribute_evaluations
+
 Stores detailed attribute-level metrics including:
+
 - Document ID, section context, attribute name
 - Expected vs actual values, match results
 - Individual attribute scores and evaluation methods
@@ -392,18 +458,18 @@ All evaluation data is partitioned by date and document for efficient querying:
 
 ```sql
 -- Example: Find documents with low accuracy in the last 7 days
-SELECT document_id, accuracy, evaluation_date 
-FROM "your-database-name".document_evaluations 
-WHERE evaluation_date >= current_date - interval '7' day 
+SELECT document_id, accuracy, evaluation_date
+FROM "your-database-name".document_evaluations
+WHERE evaluation_date >= current_date - interval '7' day
   AND accuracy < 0.8
 ORDER BY accuracy ASC;
 
 -- Example: Analyze attribute-level performance trends
-SELECT attribute_name, 
+SELECT attribute_name,
        COUNT(*) as total_evaluations,
        AVG(CASE WHEN matched THEN 1.0 ELSE 0.0 END) as match_rate,
        AVG(score) as avg_score
-FROM "your-database-name".attribute_evaluations 
+FROM "your-database-name".attribute_evaluations
 WHERE evaluation_date >= current_date - interval '30' day
 GROUP BY attribute_name
 ORDER BY match_rate ASC;
@@ -420,77 +486,110 @@ ORDER BY avg_accuracy DESC;
 
 ### Analytics Notebook
 
-The solution includes a comprehensive Jupyter notebook (`notebooks/evaluation_reporting_analytics.ipynb`) that provides:
+The solution includes a comprehensive Jupyter notebook
+(`notebooks/evaluation_reporting_analytics.ipynb`) that provides:
 
-- **Automated Data Loading**: Connects to Athena and automatically loads partitions for all evaluation tables
-- **Table Testing**: Validates connectivity and shows content summaries for document, section, and attribute evaluation tables
-- **Multi-level Analysis**: Document, section, and attribute-level performance insights with detailed breakdowns
-- **Visual Analytics**: Rich charts and graphs showing accuracy trends, problem areas, and performance distributions
-- **Problem Identification**: Automatically flags low-performing documents, sections, and attributes requiring attention
-- **Trend Analysis**: Historical accuracy tracking showing improvement/regression patterns over time
-- **Configurable Filters**: Dynamic filtering by date ranges, document name patterns, and accuracy thresholds
-- **Method Comparison**: Analysis of different evaluation methods and their effectiveness
-- **Processing Time Analysis**: Correlation between execution time and accuracy performance
+- **Automated Data Loading**: Connects to Athena and automatically loads
+  partitions for all evaluation tables
+- **Table Testing**: Validates connectivity and shows content summaries for
+  document, section, and attribute evaluation tables
+- **Multi-level Analysis**: Document, section, and attribute-level performance
+  insights with detailed breakdowns
+- **Visual Analytics**: Rich charts and graphs showing accuracy trends, problem
+  areas, and performance distributions
+- **Problem Identification**: Automatically flags low-performing documents,
+  sections, and attributes requiring attention
+- **Trend Analysis**: Historical accuracy tracking showing
+  improvement/regression patterns over time
+- **Configurable Filters**: Dynamic filtering by date ranges, document name
+  patterns, and accuracy thresholds
+- **Method Comparison**: Analysis of different evaluation methods and their
+  effectiveness
+- **Processing Time Analysis**: Correlation between execution time and accuracy
+  performance
 
 #### Key Analytics Features:
 
-1. **Comprehensive Dashboard**: Interactive summary report with health indicators and top issues
-2. **Problem Detection Reports**: 
+1. **Comprehensive Dashboard**: Interactive summary report with health
+   indicators and top issues
+2. **Problem Detection Reports**:
    - Documents with lowest accuracy scores
-   - Section types with poor performance 
+   - Section types with poor performance
    - Attributes with low match rates and common failure reasons
-3. **Accuracy Trend Analysis**: Track same documents over time to identify improvement/regression patterns
-4. **Processing Performance**: Analyze correlation between processing time and accuracy
-5. **Method Effectiveness**: Compare different evaluation methods' performance and coverage
-6. **Export Capabilities**: Save analysis results to CSV files for further analysis or reporting
+3. **Accuracy Trend Analysis**: Track same documents over time to identify
+   improvement/regression patterns
+4. **Processing Performance**: Analyze correlation between processing time and
+   accuracy
+5. **Method Effectiveness**: Compare different evaluation methods' performance
+   and coverage
+6. **Export Capabilities**: Save analysis results to CSV files for further
+   analysis or reporting
 
 #### Using the Analytics Notebook:
 
-1. **Configuration**: Set your ReportingDatabase name, AWS region, and S3 output location for Athena
-2. **Filter Setup**: Configure date range, document name filters, and accuracy thresholds
-3. **Automated Analysis**: Run partition loading, table testing, and comprehensive reporting
-4. **Interactive Updates**: Use `update_filters()` function to dynamically change parameters and re-run analyses
-5. **Visual Insights**: Review generated charts and visualizations for patterns and trends
-6. **Export Results**: Optional CSV export for stakeholder reporting and further analysis
+1. **Configuration**: Set your ReportingDatabase name, AWS region, and S3 output
+   location for Athena
+2. **Filter Setup**: Configure date range, document name filters, and accuracy
+   thresholds
+3. **Automated Analysis**: Run partition loading, table testing, and
+   comprehensive reporting
+4. **Interactive Updates**: Use `update_filters()` function to dynamically
+   change parameters and re-run analyses
+5. **Visual Insights**: Review generated charts and visualizations for patterns
+   and trends
+6. **Export Results**: Optional CSV export for stakeholder reporting and further
+   analysis
 
 #### Sample Analytics Use Cases:
 
 - **Quality Monitoring**: Weekly accuracy assessments across all document types
-- **Performance Tuning**: Identify which attributes or sections need prompt improvements
+- **Performance Tuning**: Identify which attributes or sections need prompt
+  improvements
 - **Trend Tracking**: Monitor if recent changes improved or degraded accuracy
-- **Method Optimization**: Compare evaluation methods to select the most effective approach
-- **Problem Prioritization**: Focus improvement efforts on consistently problematic areas
+- **Method Optimization**: Compare evaluation methods to select the most
+  effective approach
+- **Problem Prioritization**: Focus improvement efforts on consistently
+  problematic areas
 
 ### Data Retention and Partitioning
 
-- Evaluation data is automatically partitioned by year/month/day/document for efficient querying
+- Evaluation data is automatically partitioned by year/month/day/document for
+  efficient querying
 - Data retention follows the stack's `DataRetentionInDays` parameter
 - Partitions are automatically loaded when using the analytics notebook
 - Historical data enables long-term trend analysis and accuracy monitoring
 
 ### Best Practices for Analytics
 
-1. **Regular Monitoring**: Use the analytics notebook weekly to identify accuracy trends
-2. **Threshold Tuning**: Adjust accuracy thresholds based on your use case requirements
-3. **Pattern Recognition**: Look for patterns in low-performing document types or sections
-4. **Comparative Analysis**: Compare performance across different prompt configurations
-5. **Automated Alerts**: Set up CloudWatch alarms based on accuracy metrics stored in the database
+1. **Regular Monitoring**: Use the analytics notebook weekly to identify
+   accuracy trends
+2. **Threshold Tuning**: Adjust accuracy thresholds based on your use case
+   requirements
+3. **Pattern Recognition**: Look for patterns in low-performing document types
+   or sections
+4. **Comparative Analysis**: Compare performance across different prompt
+   configurations
+5. **Automated Alerts**: Set up CloudWatch alarms based on accuracy metrics
+   stored in the database
 
 ## Troubleshooting Evaluation Issues
 
 Common issues and resolutions:
 
 1. **Missing Baseline Data**
+
    - Verify baseline files exist in the baseline bucket
    - Check that baseline filenames match the input document keys
    - Ensure baseline files are valid JSON
 
 2. **Evaluation Failures**
+
    - Check Lambda function logs for error details
    - Verify that the evaluation model is available in your region
    - Increase Lambda timeout if needed for complex documents
 
 3. **Low Accuracy Scores**
+
    - Review document quality and OCR results
    - Examine prompt configurations for classification and extraction
    - Check for processing errors in the workflow execution

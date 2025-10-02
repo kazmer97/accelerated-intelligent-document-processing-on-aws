@@ -1,8 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template to create Limited IAM Policy and SDLC Role with PowerUser access. TODO: Refine this role to be least privilege'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation template to create Limited IAM Policy and SDLC Role with PowerUser access. TODO: Refine this role to be least privilege"
 
 Parameters:
   BuilderRoleName:
@@ -12,7 +12,7 @@ Parameters:
 
 Resources:
   LimitedIAMAccessPolicy:
-    Type: 'AWS::IAM::ManagedPolicy'
+    Type: "AWS::IAM::ManagedPolicy"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -26,10 +26,10 @@ Resources:
     # checkov:skip=CKV_AWS_109: "This policy needs permissions management capabilities for SDLC deployment"
     # checkov:skip=CKV_AWS_110: "This policy requires privilege escalation capabilities for SDLC deployment"
     Properties:
-      Description: 'Policy for limited IAM access'
-      ManagedPolicyName: 'LimitedIAMAccess'
+      Description: "Policy for limited IAM access"
+      ManagedPolicyName: "LimitedIAMAccess"
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Sid: LimitedIAMaccess
             Effect: Allow
@@ -80,10 +80,10 @@ Resources:
               - iam:GenerateServiceLastAccessedDetails
               - iam:UpdateAssumeRolePolicy
               - iam:UpdateAccessKey
-            Resource: '*'
+            Resource: "*"
 
   BuilderRole:
-    Type: 'AWS::IAM::Role'
+    Type: "AWS::IAM::Role"
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -98,34 +98,34 @@ Resources:
             reason: "PowerUserAccess is required for SDLC pipeline deployment operations"
     Properties:
       RoleName: !Ref BuilderRoleName
-      Description: 'Role for application builders with PowerUser and Limited IAM access'
+      Description: "Role for application builders with PowerUser and Limited IAM access"
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Service: 
+              Service:
                 - ec2.amazonaws.com
                 - codebuild.amazonaws.com
                 - cloudformation.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
+              - "sts:AssumeRole"
       ManagedPolicyArns:
         - !Ref LimitedIAMAccessPolicy
-        - 'arn:aws:iam::aws:policy/PowerUserAccess'
+        - "arn:aws:iam::aws:policy/PowerUserAccess"
       Tags:
         - Key: Purpose
           Value: ApplicationBuilder
 
 Outputs:
   LimitedIAMPolicyArn:
-    Description: 'ARN of the created Limited IAM policy'
+    Description: "ARN of the created Limited IAM policy"
     Value: !Ref LimitedIAMAccessPolicy
 
   BuilderRoleArn:
-    Description: 'ARN of the created Builder Role'
+    Description: "ARN of the created Builder Role"
     Value: !GetAtt BuilderRole.Arn
 
   BuilderRoleName:
-    Description: 'Name of the created Builder Role'
+    Description: "Name of the created Builder Role"
     Value: !Ref BuilderRole

@@ -1,4 +1,7 @@
+# Environment files
 .env
+
+# Build outputs
 .aws-sam
 build.toml
 model.tar.gz
@@ -6,20 +9,32 @@ model.tar.gz
 .checksums/
 .build_checksum
 .lib_checksum
-.vscode/
-.DS_Store
 dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+
+# Temporary/Data
 .sav/
 .delete/
 .data/
-*.egg-info/
-build/
-__pycache__
-*.code-workspace
-.ruff_cache
 .kiro
 rvl_cdip_*
 notebooks/examples/data
-.idea/
 .dsr/
 *tmp-dev-assets*
+
+# Python
+__pycache__
+.ruff_cache
+
+# Node.js (prettier/pre-commit)
+node_modules/
+package-lock.json

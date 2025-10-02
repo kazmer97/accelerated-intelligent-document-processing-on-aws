@@ -3,14 +3,17 @@ SPDX-License-Identifier: MIT-0
 
 # Troubleshooting Guide
 
-This guide provides solutions for common issues and optimization techniques for the GenAIIDP solution.
+This guide provides solutions for common issues and optimization techniques for
+the GenAIIDP solution.
 
 ## AI-Powered Error Analysis
 
 For automated troubleshooting, use the **Error Analyzer** tool:
 
-- **What it is**: AI-powered agent that automatically diagnoses document processing failures
-- **When to use**: Document-specific failures, system-wide error patterns, performance issues
+- **What it is**: AI-powered agent that automatically diagnoses document
+  processing failures
+- **When to use**: Document-specific failures, system-wide error patterns,
+  performance issues
 - **How to access**: Web UI → Failed document → Troubleshoot button
 - **Documentation**: See [Error Analyzer](error-analyzer.md) for complete guide
 
@@ -31,7 +34,8 @@ The Error Analyzer automatically:
 - Identifies root causes with AI reasoning
 - Provides actionable recommendations
 
-For issues not covered by the Error Analyzer, use the manual troubleshooting steps below.
+For issues not covered by the Error Analyzer, use the manual troubleshooting
+steps below.
 
 ---
 
@@ -88,8 +92,10 @@ Optimize performance through proper resource sizing:
 
 - **Lambda Memory**: Scale based on document complexity
   - OCR Function: 1024-2048 MB recommended
-  - Classification/Extraction: 512-1024 MB for text-only, 1024-2048 MB for image-based processing
+  - Classification/Extraction: 512-1024 MB for text-only, 1024-2048 MB for
+    image-based processing
 - **Timeouts**: Configure appropriate timeouts
+
   - Step Functions: 5-15 minutes for standard documents
   - Lambda functions: 1-3 minutes for individual processing steps
   - SQS visibility timeout: 5-6x Lambda function timeout
@@ -102,14 +108,17 @@ Optimize performance through proper resource sizing:
 ### Performance Optimization Tips
 
 1. **Document Size and Quality**
+
    - Optimize input document size (600-1200 DPI recommended for scans)
    - Reduce file size when possible without losing quality
    - Consider preprocessing large documents to split them
 
 2. **Model Selection**
+
    - Balance accuracy vs. speed based on use case requirements
    - Test different models with representative documents
-   - Consider smaller models for simple documents, larger models for complex extraction
+   - Consider smaller models for simple documents, larger models for complex
+     extraction
 
 3. **Batch Processing**
    - For high volumes, stagger document uploads
@@ -193,7 +202,8 @@ For Cognito authentication problems:
 ### Bedrock
 
 - **Throttling**: Request quota increases or reduce concurrency
-- **Content Filtering**: Review guardrail configuration if content is being filtered unexpectedly
+- **Content Filtering**: Review guardrail configuration if content is being
+  filtered unexpectedly
 - **Prompt Issues**: Test prompts directly in Bedrock console or notebook
 - **Region Availability**: Verify model availability in your region
 
@@ -243,10 +253,22 @@ Test system capacity and identify bottlenecks:
 | Issue                               | Resolution                                                                                               |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | **Generic "Failed to build" error** | Use `--verbose` flag to see detailed error messages: `python3 publish.py bucket prefix region --verbose` |
-| **Python version mismatch**         | Ensure Python 3.13 is installed and available in PATH. Check with `python3 --version`                    |
-| **SAM build fails**                 | Verify SAM CLI is installed and up to date. Check Docker is running if using containerized builds        |
-| **Missing dependencies**            | Install required packages: `pip install boto3 typer rich botocore`                                       |
-| **Permission errors**               | Verify AWS credentials are configured and have necessary S3/CloudFormation permissions                   |
+
+<<<<<<< HEAD | **Python version mismatch** | Ensure Python 3.13 is installed and
+available in PATH. Check with `python3 --version` | | **SAM build fails** |
+Verify SAM CLI is installed and up to date. Check Docker is running if using
+containerized builds | | **Missing dependencies** | Install required packages:
+`pip install boto3 typer rich botocore` | | **Permission errors** | Verify AWS
+credentials are configured and have necessary S3/CloudFormation permissions |
+======= | **Python version mismatch** | Ensure Python 3.13 is installed and
+available in PATH. Check with `python3 --version` | | **SAM build fails** |
+Verify SAM CLI is installed and up to date. Check Docker is running if using
+containerized builds | | **Missing dependencies** | Install required packages:
+`pip install boto3 typer rich botocore docker` | | **Permission errors** |
+Verify AWS credentials are configured and have necessary S3/CloudFormation
+permissions |
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
 
 ### Common Build Error Messages
 
@@ -256,7 +278,13 @@ Test system capacity and identify bottlenecks:
 Error: PythonPipBuilder:Validation - Binary validation failed for python, searched for python in following locations: [...] which did not satisfy constraints for runtime: python3.12
 ```
 
-**Resolution:** Install Python 3.13 and ensure it's in your PATH, or use the `--use-container` flag for containerized builds.
+<<<<<<< HEAD **Resolution:** Install Python 3.13 and ensure it's in your PATH,
+or use the `--use-container` flag for containerized builds. =======
+
+**Resolution:** Install Python 3.12+ and ensure it's in your PATH. Docker is
+required and must be running for Pattern-2 container builds.
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
 
 **Docker Not Running:**
 
@@ -272,11 +300,13 @@ Error: Running AWS SAM projects locally requires Docker
 Error: Unable to locate credentials
 ```
 
-**Resolution:** Configure AWS credentials using `aws configure` or set environment variables.
+**Resolution:** Configure AWS credentials using `aws configure` or set
+environment variables.
 
 ### Verbose Mode Usage
 
-For detailed debugging information, always use the `--verbose` flag when troubleshooting build issues:
+For detailed debugging information, always use the `--verbose` flag when
+troubleshooting build issues:
 
 ```bash
 # Standard usage
@@ -291,19 +321,23 @@ Verbose mode provides:
 - Exact SAM build commands being executed
 - Complete stdout/stderr from failed operations
 - Python environment and dependency information
-- Detailed error traces and stack traces
+- Detailed error traces and stack traces <<<<<<< HEAD =======
 
 ### Container-Based Lambda Deployment Issues
 
-| Issue | Resolution |
-|-------|------------|
+| Issue                                  | Resolution                                                                                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Lambda package exceeds 250MB limit** | Pattern-2 uses container images automatically. For Pattern-1/3, consider reducing dependency size or switching to container images in a future update. |
-| **Docker daemon not running** | Start Docker Desktop or Docker service before running container deployment |
-| **ECR login failed** | Ensure AWS credentials have ECR permissions. The script will automatically handle ECR login |
-| **Container build fails** | Check Dockerfile syntax and ensure all referenced files exist |
-| **Image push timeout** | Check network connectivity and ECR repository permissions |
+| **Docker daemon not running**          | Start Docker Desktop or Docker service before running container deployment                                                                             |
+| **ECR login failed**                   | Ensure AWS credentials have ECR permissions. The script will automatically handle ECR login                                                            |
+| **Container build fails**              | Check Dockerfile syntax and ensure all referenced files exist                                                                                          |
+| **Image push timeout**                 | Check network connectivity and ECR repository permissions                                                                                              |
 
 **Container Deployment Behavior:**
-- Pattern-2 builds and pushes container images automatically when Pattern-2 changes are detected.
-- Ensure Docker Desktop/service is running and your AWS credentials have ECR permissions.
+
+- Pattern-2 builds and pushes container images automatically when Pattern-2
+  changes are detected.
+- Ensure Docker Desktop/service is running and your AWS credentials have ECR
+  permissions.
 - Use `--verbose` to see detailed build and push logs.
+  > > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)

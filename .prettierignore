@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+build/
+dist/
+.aws-sam/
+**/.aws-sam/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.template
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Git
+.git/
+
+# Specific files that shouldn't be formatted
+VERSION
+LICENSE
+NOTICE
+
+# Template/example files with placeholder tokens (using <> syntax)
+**/testing/**/*.json
+**/examples/**/*.json
+**/*Example*.json
+**/*Template*.json
+**/*example*.json
+**/*template*.json

@@ -3,13 +3,16 @@ SPDX-License-Identifier: MIT-0
 
 # AppSync Integration Module
 
-This module provides integration between the `idp_common` Document model and AWS AppSync. It allows for seamless conversion between Document objects and the GraphQL schema used in the IDP Accelerator's AppSync API.
+This module provides integration between the `idp_common` Document model and AWS
+AppSync. It allows for seamless conversion between Document objects and the
+GraphQL schema used in the IDP Accelerator's AppSync API.
 
 ## Features
 
 - AppSyncClient class with authenticated GraphQL request execution
 - GraphQL mutations for document creation and updates
-- Document adapter methods for converting between Document objects and AppSync schema
+- Document adapter methods for converting between Document objects and AppSync
+  schema
 - Error handling and logging
 
 ## Usage
@@ -75,13 +78,16 @@ except AppSyncError as e:
 
 ## Module Components
 
-- **client.py** - Contains the AppSyncClient class for authenticated GraphQL operations
+- **client.py** - Contains the AppSyncClient class for authenticated GraphQL
+  operations
 - **mutations.py** - GraphQL mutation strings for document operations
-- **service.py** - DocumentAppSyncService class for converting between Document and AppSync schemas
+- **service.py** - DocumentAppSyncService class for converting between Document
+  and AppSync schemas
 
 ## Integration Notes
 
-This module handles several key conversions between the Document model and AppSync schema:
+This module handles several key conversions between the Document model and
+AppSync schema:
 
 1. Document status is mapped to ObjectStatus in AppSync
 2. Page IDs in Document (strings) are converted to integers for AppSync
@@ -89,4 +95,5 @@ This module handles several key conversions between the Document model and AppSy
 4. Document metering data is serialized to JSON for AppSync
 5. Timestamps are properly formatted for GraphQL DateTime types
 
-When mapping between the two formats, special care is taken to handle missing or optional fields.
+When mapping between the two formats, special care is taken to handle missing or
+optional fields.

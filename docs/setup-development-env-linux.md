@@ -2,9 +2,13 @@
 
 # Introduction
 
-This guide establishes a cloud-based development environment using Amazon Linux 2023 on AWS EC2, specifically designed for the GenAI IDP accelerator.
+This guide establishes a cloud-based development environment using Amazon Linux
+2023 on AWS EC2, specifically designed for the GenAI IDP accelerator.
 
-Purpose: Provides a standardized, scalable development infrastructure that combines the familiar VSCode interface on your local machine with powerful cloud compute resources. This approach eliminates local environment configuration issues while ensuring consistent development experiences across team members.
+Purpose: Provides a standardized, scalable development infrastructure that
+combines the familiar VSCode interface on your local machine with powerful cloud
+compute resources. This approach eliminates local environment configuration
+issues while ensuring consistent development experiences across team members.
 
 When to use this guide:
 
@@ -14,7 +18,9 @@ When to use this guide:
 - You want a clean, isolated environment for this project
 
 What you'll achieve:  
-A hybrid development setup where your code runs on a pre-configured Amazon Linux EC2 instance while you work through VS Code on your local machine, providing both performance and consistency.
+A hybrid development setup where your code runs on a pre-configured Amazon Linux
+EC2 instance while you work through VS Code on your local machine, providing
+both performance and consistency.
 
 # Step 1: Launch EC2 Instance
 
@@ -85,7 +91,8 @@ sudo dnf install git -y
 
 ### Clone Repository
 
-git clone https://github.com/aws-solutions-library-samples/accelerated-intelligent-document-processing-on-aws
+git clone
+https://github.com/aws-solutions-library-samples/accelerated-intelligent-document-processing-on-aws
 
 ### Go to directory
 
@@ -135,7 +142,8 @@ Host genai-idp-dev
 1. Press Ctrl+Shift+P
 2. Type "Remote-SSH: Connect to Host"
 3. Select "genai-idp-dev"
-4. Open folder: /home/ec2-user/accelerated-intelligent-document-processing-on-aws
+4. Open folder:
+   /home/ec2-user/accelerated-intelligent-document-processing-on-aws
 
 # Step 5: AWS Configure
 
@@ -151,9 +159,18 @@ https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
 pip install boto3 rich PyYAML botocore setuptools docker
 ```
 
-> **Note**: The `docker` Python package is required for container-based Lambda deployments.
+<<<<<<< HEAD
 
-# Step 7: Run Publish Script 
+# Step 7: Run Publish Script
+
+=======
+
+> **Note**: The `docker` Python package is required for container-based Lambda
+> deployments.
+
+# Step 7: Run Publish Script
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
 
 ## Using publish.py (Recommended)
 
@@ -165,12 +182,22 @@ python3 publish.py --help
 
 ### Test build using publish.py
 
+# <<<<<<< HEAD
+
 Standard ZIP-based deployment:
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
+
 ```bash
 python3 publish.py bucket_name build-test us-east-1
 ```
 
-Pattern-2 container images are built automatically when Pattern-2 changes are detected. Ensure Docker is running and you have ECR permissions.
+# <<<<<<< HEAD
+
+Pattern-2 container images are built automatically when Pattern-2 changes are
+detected. Ensure Docker is running and you have ECR permissions.
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
 
 ### Troubleshooting Build Issues
 
@@ -205,7 +232,8 @@ The verbose flag will show:
 
 ### Cline
 
-What it is: An AI coding assistant that runs as a VS Code extension, powered by various LLMs (Claude, GPT, etc.)
+What it is: An AI coding assistant that runs as a VS Code extension, powered by
+various LLMs (Claude, GPT, etc.)
 
 Key capabilities:
 
@@ -215,13 +243,15 @@ Key capabilities:
 - Maintains context across entire codebases
 - Handles complex, multi-step development tasks
 
-Why it's helpful: Acts like an AI pair programmer that can actually write, test, and debug code independently while you supervise.
+Why it's helpful: Acts like an AI pair programmer that can actually write, test,
+and debug code independently while you supervise.
 
 - You can install it from "Extensions" tab on VSCode.
 
 ### Amazon Q Developer
 
-What it is: AWS's AI coding assistant integrated into IDEs, specifically designed for AWS development
+What it is: AWS's AI coding assistant integrated into IDEs, specifically
+designed for AWS development
 
 Key capabilities:
 
@@ -231,8 +261,8 @@ Key capabilities:
 - Infrastructure as Code (CloudFormation, CDK) assistance
 - Direct integration with AWS documentation and services
 
-Why it's helpful: Specialized for AWS development with deep knowledge of AWS services, perfect for this GenAI-IDP project since it's
-built entirely on AWS.
+Why it's helpful: Specialized for AWS development with deep knowledge of AWS
+services, perfect for this GenAI-IDP project since it's built entirely on AWS.
 
-- You can install it from https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-installing.html
-
+- You can install it from
+  https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-installing.html

@@ -11,17 +11,17 @@ criteria_validation:
   top_k: 20
   top_p: 0.01
   max_tokens: 4096
-  semaphore: 3  # Number of concurrent API calls
-  max_chunk_size: 180000  # Maximum tokens per chunk
-  token_size: 4  # Average characters per token
-  overlap_percentage: 10  # Chunk overlap percentage
+  semaphore: 3 # Number of concurrent API calls
+  max_chunk_size: 180000 # Maximum tokens per chunk
+  token_size: 4 # Average characters per token
+  overlap_percentage: 10 # Chunk overlap percentage
   response_prefix: "<response>"
-  
+
   # Main validation prompt
   system_prompt: |
     You are a specialized insurance evaluator tasked with determining the eligibility of insurance coverage based on a patient's user history and a set of criterias. 
     Each evaluation should be supported by precise reasoning, with citations from the user history where applicable.
-  
+
   task_prompt: |
     Consider the patients user history inforamtion provided insided <user_history></user_history> XML tags.
 
@@ -96,7 +96,7 @@ criteria_validation:
       - "Are safety protocols adequate for the proposed treatment?"
       - "Has the patient been screened for contraindications?"
       - "Are monitoring procedures in place during treatment?"
-    
+
     # Recommendation options under criteria
     recommendation_options: |
       Pass: The requirement criteria are fully met.
@@ -110,7 +110,7 @@ summary:
     You will assist in summarizing important patient user insurance auth request information determining the eligibility of insurance coverage based on a patient's user history and a set of questions/criterias. 
     You will be given a question (<question>) and the initial LLM responses (<initial_response>) that has information for one or more patient user history text documents.
     Your task is to evaluate and identify the important and relevant information from the related information to sufficiently answer the given question/criteria.
-  
+
   task_prompt: |
     <criteria>
     <criteria_type>{criteria_type}</criteria_type>
@@ -232,8 +232,8 @@ discovery:
           ]
       }
   with_ground_truth:
-    top_p: '0.1'
-    temperature: '1.0'
+    top_p: "0.1"
+    temperature: "1.0"
     user_prompt: >-
       This image contains unstructured data. Analyze the data line by line using the provided ground truth as reference.                        
       <GROUND_TRUTH_REFERENCE>
@@ -258,10 +258,10 @@ discovery:
       documents. Use provided ground truth data as reference to optimize field
       extraction and ensure consistency with expected document structure and
       field definitions.
-    max_tokens: '10000'
+    max_tokens: "10000"
   without_ground_truth:
-    top_p: '0.1'
-    temperature: '1.0'
+    top_p: "0.1"
+    temperature: "1.0"
     user_prompt: >-
       This image contains forms data. Analyze the form line by line.
       Image may contains multiple pages, process all the pages. 
@@ -287,7 +287,7 @@ discovery:
       documents. Analyze forms line by line to identify field names, data types,
       and organizational structure. Focus on creating comprehensive blueprints
       for document processing without extracting actual values.
-    max_tokens: '10000'
+    max_tokens: "10000"
 
 agents:
   error_analyzer:
@@ -385,9 +385,9 @@ pricing:
   - name: lambda/requests
     units:
       - name: invocations
-        price: '2.0E-7'       # $0.0000002 per request ($0.20 per 1M requests)
-  - name: lambda/duration  
+        price: "2.0E-7" # $0.0000002 per request ($0.20 per 1M requests)
+  - name: lambda/duration
     units:
       - name: gb_seconds
-        price: '1.66667E-5'   # $0.0000166667 per GB-second ($16.67 per 1M GB-seconds)
+        price: "1.66667E-5" # $0.0000166667 per GB-second ($16.67 per 1M GB-seconds)
 

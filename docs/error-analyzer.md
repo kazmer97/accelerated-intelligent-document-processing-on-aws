@@ -2,30 +2,44 @@
 
 ## Overview
 
-The Error Analyzer is an intelligent AI-powered troubleshooting tool that helps diagnose and resolve document processing failures in the GenAI IDP Accelerator. It uses Amazon Bedrock's Claude Sonnet 4 model with the Strands agent framework to automatically analyze CloudWatch logs, DynamoDB tracking data, and Step Functions execution history to identify root causes and provide actionable recommendations.
+The Error Analyzer is an intelligent AI-powered troubleshooting tool that helps
+diagnose and resolve document processing failures in the GenAI IDP Accelerator.
+It uses Amazon Bedrock's Claude Sonnet 4 model with the Strands agent framework
+to automatically analyze CloudWatch logs, DynamoDB tracking data, and Step
+Functions execution history to identify root causes and provide actionable
+recommendations.
 
-This tool is not yet mature - we expect to refine and improve the capabilities in sucessive releases. Try it, and give us feedback via GitHub Issues.
+This tool is not yet mature - we expect to refine and improve the capabilities
+in sucessive releases. Try it, and give us feedback via GitHub Issues.
 
 https://github.com/user-attachments/assets/78764207-0fcf-4523-ad12-f428581a685f
 
-
-
 ### Key Capabilities
 
-- **Automatic Failure Diagnosis**: AI agent automatically investigates document processing failures
-- **Intelligent Query Routing**: Distinguishes between document-specific and system-wide analysis
-- **Multi-Source Analysis**: Correlates data from CloudWatch Logs, DynamoDB, and Step Functions
-- **Contextual Recommendations**: Provides specific guidance for configuration, operational, or code issues
-- **Real-Time Updates**: Live job status with progress tracking and resumption capability
-- **Evidence-Based Analysis**: Shows detailed log evidence supporting diagnostic conclusions
+- **Automatic Failure Diagnosis**: AI agent automatically investigates document
+  processing failures
+- **Intelligent Query Routing**: Distinguishes between document-specific and
+  system-wide analysis
+- **Multi-Source Analysis**: Correlates data from CloudWatch Logs, DynamoDB, and
+  Step Functions
+- **Contextual Recommendations**: Provides specific guidance for configuration,
+  operational, or code issues
+- **Real-Time Updates**: Live job status with progress tracking and resumption
+  capability
+- **Evidence-Based Analysis**: Shows detailed log evidence supporting diagnostic
+  conclusions
 
 ### When to Use the Error Analyzer
 
-- **Document Processing Failures**: Investigate why a specific document failed to process
-- **Recurring Error Patterns**: Identify systemic issues affecting multiple documents
-- **Performance Investigation**: Analyze timeout errors and processing bottlenecks
+- **Document Processing Failures**: Investigate why a specific document failed
+  to process
+- **Recurring Error Patterns**: Identify systemic issues affecting multiple
+  documents
+- **Performance Investigation**: Analyze timeout errors and processing
+  bottlenecks
 - **System Health Checks**: Review recent errors across the entire system
-- **Troubleshooting Support**: Generate detailed error reports for support escalation
+- **Troubleshooting Support**: Generate detailed error reports for support
+  escalation
 
 ## Architecture
 
@@ -36,22 +50,22 @@ flowchart TD
     UI[Web UI - TroubleshootModal] -->|GraphQL Mutation| Submit[submitAgentQuery]
     Submit --> Agent[Error Analyzer Agent]
     Agent -->|Route Query| Router{analyze_errors Tool}
-    
+
     Router -->|Document-Specific| DocAnalysis[analyze_document_failure]
     Router -->|System-Wide| SysAnalysis[analyze_recent_system_errors]
-    
+
     DocAnalysis --> GetContext[get_document_context]
     DocAnalysis --> SearchDocLogs[search_document_logs]
-    
+
     SysAnalysis --> FindTable[find_tracking_table]
     SysAnalysis --> ScanDB[scan_dynamodb_table]
     SysAnalysis --> SearchStackLogs[search_stack_logs]
-    
+
     GetContext --> DDB[(DynamoDB<br/>TrackingTable)]
     SearchDocLogs --> CW[(CloudWatch Logs)]
     SearchStackLogs --> CW
     ScanDB --> DDB
-    
+
     DocAnalysis --> Result[Analysis Result]
     SysAnalysis --> Result
     Result -->|GraphQL Subscription| UI
@@ -66,20 +80,20 @@ flowchart LR
     subgraph "Main Router"
         Router[analyze_errors]
     end
-    
+
     subgraph "Document Analysis"
         DocFail[analyze_document_failure]
         GetCtx[get_document_context]
         SearchDoc[search_document_logs]
     end
-    
+
     subgraph "System Analysis"
         SysErr[analyze_recent_system_errors]
         FindTbl[find_tracking_table]
         ScanTbl[scan_dynamodb_table]
         SearchStk[search_stack_logs]
     end
-    
+
     Router --> DocFail
     Router --> SysErr
     DocFail --> GetCtx
@@ -92,36 +106,43 @@ flowchart LR
 **Tool Descriptions:**
 
 1. **analyze_errors** (Main Router)
+
    - Classifies query intent (document-specific vs system-wide)
    - Routes to appropriate analysis tool
    - Manages time range parsing
 
 2. **analyze_document_failure** (Document-Specific)
+
    - Investigates individual document failures
    - Retrieves execution context and Lambda request IDs
    - Searches document-specific logs
 
 3. **analyze_recent_system_errors** (System-Wide)
+
    - Analyzes error patterns across the system
    - Categorizes errors by type
    - Provides statistical summaries
 
 4. **get_document_context** (Lambda Integration)
+
    - Retrieves document tracking data
    - Extracts Step Functions execution ARN
    - Provides Lambda request IDs for tracing
 
 5. **search_document_logs** (CloudWatch)
+
    - Filters logs by document ObjectKey
    - Searches across multiple log groups
    - Returns events with timestamps and context
 
 6. **search_stack_logs** (CloudWatch)
+
    - System-wide log pattern matching
    - Multi-pattern prioritized search
    - Adaptive sampling for context management
 
 7. **find_tracking_table** (DynamoDB Discovery)
+
    - Locates TrackingTable by stack name
    - Validates table existence
 
@@ -135,13 +156,13 @@ flowchart LR
 ```mermaid
 flowchart TD
     Query[User Query] --> Check{Document-Specific<br/>Pattern?}
-    
+
     Check -->|Match| DocPattern["Patterns:<br/>• document: filename.pdf<br/>• file: report.docx<br/>• ObjectKey: path/file"]
     Check -->|No Match| GeneralPattern["General Queries:<br/>• Recent errors<br/>• System failures<br/>• Processing issues"]
-    
+
     DocPattern --> DocAnalysis[Document-Specific<br/>Analysis]
     GeneralPattern --> SysAnalysis[System-Wide<br/>Analysis]
-    
+
     DocAnalysis --> DocResult["Results:<br/>• Execution context<br/>• Document-specific logs<br/>• Lambda request IDs"]
     SysAnalysis --> SysResult["Results:<br/>• Error categories<br/>• Failed documents<br/>• Pattern statistics"]
 ```
@@ -162,31 +183,34 @@ flowchart TD
 The TroubleshootModal displays:
 
 - **Document Information**: Shows the ObjectKey being analyzed
-- **Status Indicator**: 
+- **Status Indicator**:
   - `PENDING`: Job submitted, waiting to start
   - `PROCESSING`: Agent actively analyzing with real-time messages
   - `COMPLETED`: Analysis finished, results available
   - `FAILED`: Analysis encountered an error
 - **Agent Messages**: Live progress updates during processing
 - **Results Display**: Formatted analysis with collapsible sections
-- **Job Resumption**: If you close and reopen the modal, the existing job resumes
+- **Job Resumption**: If you close and reopen the modal, the existing job
+  resumes
 
 #### Reading Analysis Results
 
 Results are structured in three sections:
 
 **1. Root Cause**
+
 ```
-The underlying technical reason for the failure. Focuses on the primary 
+The underlying technical reason for the failure. Focuses on the primary
 cause rather than symptoms.
 
-Example: "Bedrock throttling exception due to exceeding token rate limits 
+Example: "Bedrock throttling exception due to exceeding token rate limits
 for the configured model."
 ```
 
 **2. Recommendations**
+
 ```
-Specific, actionable steps to resolve the issue. Limited to top three 
+Specific, actionable steps to resolve the issue. Limited to top three
 recommendations with clear guidance.
 
 Example:
@@ -196,17 +220,14 @@ Example:
 ```
 
 **3. Evidence** (Collapsible)
+
 ```html
 <details>
-<summary><strong>Evidence</strong></summary>
+  <summary><strong>Evidence</strong></summary>
 
-**Log Group:**  
-/aws-stack-name/lambda/ClassificationFunction
-
-**Log Stream:**  
-2025/01/03/[$LATEST]abc123def456
-
-[ERROR] 2025-01-03T14:23:45.123Z ThrottlingException: Rate exceeded
+  **Log Group:** /aws-stack-name/lambda/ClassificationFunction **Log Stream:**
+  2025/01/03/[$LATEST]abc123def456 [ERROR] 2025-01-03T14:23:45.123Z
+  ThrottlingException: Rate exceeded
 </details>
 ```
 
@@ -218,11 +239,12 @@ Use these patterns to analyze a specific document:
 
 ```
 document: lending_package.pdf
-file: bank_statement.docx  
+file: bank_statement.docx
 ObjectKey: uploads/2024/contract.pdf
 ```
 
-The query **must** include the keyword (`document:`, `file:`, or `ObjectKey:`) followed immediately by a colon and the filename.
+The query **must** include the keyword (`document:`, `file:`, or `ObjectKey:`)
+followed immediately by a colon and the filename.
 
 #### System-Wide Queries
 
@@ -239,19 +261,20 @@ Summarize recent problems
 
 The agent interprets time ranges intelligently:
 
-| Query Phrase | Time Range |
-|--------------|------------|
-| "recent" or "recently" | 1 hour |
-| "last hour" | 1 hour |
-| "last day" or "yesterday" | 24 hours |
-| "last week" | 168 hours (7 days) |
-| No time specified | 24 hours (default) |
+| Query Phrase              | Time Range         |
+| ------------------------- | ------------------ |
+| "recent" or "recently"    | 1 hour             |
+| "last hour"               | 1 hour             |
+| "last day" or "yesterday" | 24 hours           |
+| "last week"               | 168 hours (7 days) |
+| No time specified         | 24 hours (default) |
 
 ## Configuration
 
 ### Agent Configuration in template.yaml
 
-The Error Analyzer is configured in the CloudFormation template under the `agents` section of the configuration schema:
+The Error Analyzer is configured in the CloudFormation template under the
+`agents` section of the configuration schema:
 
 ```yaml
 agents:
@@ -261,13 +284,14 @@ agents:
     properties:
       model_id:
         type: string
-        enum: [
-          "anthropic.claude-3-sonnet-20240229-v1:0",
-          "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-          "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
-          "us.anthropic.claude-sonnet-4-20250514-v1:0"
-        ]
-        default: "us.anthropic.claude-sonnet-4-20250514-v1:0"
+        enum:
+          [
+            'anthropic.claude-3-sonnet-20240229-v1:0',
+            'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
+            'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+            'us.anthropic.claude-sonnet-4-20250514-v1:0',
+          ]
+        default: 'us.anthropic.claude-sonnet-4-20250514-v1:0'
       system_prompt:
         type: string
         format: textarea
@@ -289,13 +313,17 @@ agents:
 **Purpose**: Selects the Bedrock model for error analysis
 
 **Recommended**: `us.anthropic.claude-sonnet-4-20250514-v1:0`
+
 - Superior reasoning for complex error diagnosis
 - Better structured output formatting
 - More accurate root cause identification
 
 **Alternative Options**:
-- `us.anthropic.claude-3-7-sonnet-20250219-v1:0`: Good balance of cost and capability
-- `us.anthropic.claude-3-5-sonnet-20241022-v2:0`: Cost-effective for simple errors
+
+- `us.anthropic.claude-3-7-sonnet-20250219-v1:0`: Good balance of cost and
+  capability
+- `us.anthropic.claude-3-5-sonnet-20241022-v2:0`: Cost-effective for simple
+  errors
 - `anthropic.claude-3-sonnet-20240229-v1:0`: Legacy option
 
 #### system_prompt
@@ -303,12 +331,14 @@ agents:
 **Purpose**: Defines agent behavior and response formatting
 
 **Key Requirements**:
+
 1. Enforce three-section structure (Root Cause, Recommendations, Evidence)
 2. Specify evidence formatting with collapsible HTML details
 3. Define recommendation guidelines for different issue types
 4. Set time range parsing rules
 
 **Default Prompt Highlights**:
+
 ```
 You are an intelligent error analysis agent for the GenAI IDP system.
 
@@ -327,14 +357,14 @@ For operational issues: Provide immediate troubleshooting steps
 
 **Purpose**: Limits log events returned to manage context window
 
-**Default**: `5` events
-**Range**: 1-100
-**Considerations**:
+**Default**: `5` events **Range**: 1-100 **Considerations**:
+
 - Higher values provide more context but consume more tokens
 - For system-wide analysis, uses adaptive sampling across patterns
 - Individual log messages are truncated if exceeding 200 characters
 
 **Tuning Guidance**:
+
 - Simple errors: 3-5 events sufficient
 - Complex investigations: 10-20 events
 - Pattern analysis: 20-50 events
@@ -343,14 +373,15 @@ For operational issues: Provide immediate troubleshooting steps
 
 **Purpose**: Default lookback period when not specified in query
 
-**Default**: `24` hours (1 day)
-**Range**: 1-168 hours (1 week)
+**Default**: `24` hours (1 day) **Range**: 1-168 hours (1 week)
 **Considerations**:
+
 - Longer ranges increase CloudWatch Logs query time
 - Wider time windows may return less relevant results
 - Balance between coverage and performance
 
 **Tuning Guidance**:
+
 - Active development: 1-6 hours
 - Production monitoring: 24 hours
 - Post-mortem analysis: 72-168 hours
@@ -363,17 +394,17 @@ agents:
     model_id: us.anthropic.claude-sonnet-4-20250514-v1:0
     system_prompt: |
       You are an intelligent error analysis agent for the GenAI IDP system.
-      
+
       Use the analyze_errors tool to investigate issues. ALWAYS format your 
       response with exactly these three sections in this order:
-      
+
       ## Root Cause
       Identify the specific underlying technical reason why the error occurred.
-      
+
       ## Recommendations
       Provide specific, actionable steps to resolve the issue. Limit to top 
       three recommendations only.
-      
+
       <details>
       <summary><strong>Evidence</strong></summary>
       Format log entries with their source information...
@@ -387,22 +418,25 @@ agents:
 
 ### Root Cause Analysis
 
-The Root Cause section identifies **the underlying technical reason** for the failure, not just symptoms.
+The Root Cause section identifies **the underlying technical reason** for the
+failure, not just symptoms.
 
 **Good Root Cause Examples**:
+
 ```
-✓ "Bedrock model returned ValidationException due to malformed JSON in the 
-   extraction prompt, caused by unescaped special characters in attribute 
+✓ "Bedrock model returned ValidationException due to malformed JSON in the
+   extraction prompt, caused by unescaped special characters in attribute
    descriptions"
 
-✓ "Lambda function timeout after 900 seconds during assessment processing, 
+✓ "Lambda function timeout after 900 seconds during assessment processing,
    triggered by processing a document with 247 pages exceeding memory limits"
 
-✓ "Access denied error when reading OCR results from S3, caused by missing 
+✓ "Access denied error when reading OCR results from S3, caused by missing
    kms:Decrypt permission on the customer-managed encryption key"
 ```
 
 **Poor Root Cause Examples** (too vague):
+
 ```
 ✗ "The document failed to process"
 ✗ "There was an error in the system"
@@ -451,26 +485,26 @@ Recommendations:
 The Evidence section provides **verifiable log data** supporting the analysis.
 
 **Structure**:
+
 ```html
 <details>
-<summary><strong>Evidence</strong></summary>
+  <summary><strong>Evidence</strong></summary>
 
-**Log Group:**  
-/aws-stack-name/lambda/ExtractionFunction
-
-**Log Stream:**  
-2025/01/03/[$LATEST]abc123def456
-
-**Events:**
+  **Log Group:** /aws-stack-name/lambda/ExtractionFunction **Log Stream:**
+  2025/01/03/[$LATEST]abc123def456 **Events:**
+</details>
 ```
-[ERROR] 2025-01-03T15:42:13.456Z RequestId: xyz-789 
-ValidationException: JSON parsing error at line 42
+
+[ERROR] 2025-01-03T15:42:13.456Z RequestId: xyz-789 ValidationException: JSON
+parsing error at line 42
+
 ```
 
 </details>
 ```
 
 **Reading Evidence**:
+
 1. **Log Group**: Identifies which Lambda function encountered the error
 2. **Log Stream**: Provides exact execution instance for deep-dive investigation
 3. **Events**: Shows actual error messages with timestamps
@@ -495,9 +529,10 @@ what happened          # System-wide
 ```
 
 **Pattern Detection Logic**:
+
 ```
 If query matches "document:\s*([^\s]+)" → Document-Specific Analysis
-If query matches "file:\s*([^\s]+)" → Document-Specific Analysis  
+If query matches "file:\s*([^\s]+)" → Document-Specific Analysis
 If query matches "ObjectKey:\s*([^\s]+)" → Document-Specific Analysis
 Otherwise → System-Wide Analysis
 ```
@@ -518,6 +553,7 @@ flowchart TD
 ```
 
 **Prioritization Strategy**:
+
 1. **ERROR**: Highest priority, captures 5 events
 2. **Exception**: Important errors, captures 3 events
 3. **ValidationException**: Specific validation issues, 2 events
@@ -525,6 +561,7 @@ flowchart TD
 5. **Timeout**: Performance issues, 1 event
 
 **Context Management**:
+
 - Respects `max_log_events` parameter as total limit
 - Uses adaptive sampling across patterns
 - Deduplicates similar error messages
@@ -537,21 +574,25 @@ System-wide analysis categorizes errors for pattern identification:
 **Category Definitions**:
 
 1. **validation_errors**
+
    - Keywords: "validation", "invalid"
    - Indicates data quality or format issues
    - Often fixable through configuration
 
 2. **processing_errors**
+
    - Keywords: "exception", "error"
    - Core processing failures
    - May require code fixes
 
 3. **timeout_errors**
+
    - Keywords: "timeout"
    - Performance/resource issues
    - Adjustable through memory/timeout settings
 
 4. **access_errors**
+
    - Keywords: "access", "denied"
    - Permission problems
    - Requires IAM policy updates
@@ -561,6 +602,7 @@ System-wide analysis categorizes errors for pattern identification:
    - Infrastructure or service issues
 
 **Category Summary Example**:
+
 ```json
 {
   "error_categories": {
@@ -587,15 +629,16 @@ stateDiagram-v2
     Pending --> Processing: Agent Starts
     Processing --> Completed: Success
     Processing --> Failed: Error
-    
+
     Processing --> Stored: User Closes Modal
     Stored --> Processing: User Reopens Modal
-    
+
     Completed --> [*]: User Closes
     Failed --> [*]: User Closes
 ```
 
 **How It Works**:
+
 1. **Job Creation**: Modal creates job with unique `jobId`
 2. **Parent Tracking**: Component stores job state in parent
 3. **Modal Close**: Job continues running in background
@@ -603,6 +646,7 @@ stateDiagram-v2
 5. **Status Updates**: Real-time updates via GraphQL subscription
 
 **User Experience**:
+
 - Users can close modal without losing analysis
 - Reopening shows current progress or final results
 - No need to re-submit for in-progress or completed jobs
@@ -615,6 +659,7 @@ stateDiagram-v2
 #### ✓ Ideal Use Cases
 
 1. **Document Processing Failures**
+
    ```
    Scenario: Specific document failed with FAILED status
    Query: "document: customer_form_2024.pdf"
@@ -622,6 +667,7 @@ stateDiagram-v2
    ```
 
 2. **Recurring Error Patterns**
+
    ```
    Scenario: Multiple documents failing with similar errors
    Query: "What errors occurred in the last 6 hours?"
@@ -629,6 +675,7 @@ stateDiagram-v2
    ```
 
 3. **Performance Investigation**
+
    ```
    Scenario: Documents timing out during processing
    Query: "Show me timeout errors in the last day"
@@ -636,6 +683,7 @@ stateDiagram-v2
    ```
 
 4. **Post-Deployment Validation**
+
    ```
    Scenario: New configuration deployed, checking for issues
    Query: "Recent processing errors"
@@ -704,8 +752,9 @@ Find errors for file: x.pdf and system  # Mixed intents
 #### 1. Focus on Root Cause, Not Symptoms
 
 **Example Analysis**:
+
 ```
-Root Cause: Lambda function exhausted 4096 MB memory limit while processing 
+Root Cause: Lambda function exhausted 4096 MB memory limit while processing
 a 150-page document with high-resolution images during OCR conversion
 
 Symptoms (don't focus on these):
@@ -714,7 +763,8 @@ Symptoms (don't focus on these):
 - Document stuck in PROCESSING status
 ```
 
-**Action**: Address the root cause (memory limit) rather than symptoms (timeout).
+**Action**: Address the root cause (memory limit) rather than symptoms
+(timeout).
 
 #### 2. Prioritize Top Recommendations
 
@@ -782,10 +832,10 @@ Tune based on analysis type:
 parameters:
   # Development/testing - need detailed context
   max_log_events: 20
-  
+
   # Production monitoring - balance detail and cost
   max_log_events: 5  # Default
-  
+
   # Quick health checks - minimize cost
   max_log_events: 3
 ```
@@ -798,10 +848,10 @@ Set default based on deployment frequency:
 parameters:
   # Frequent deployments (multiple per day)
   time_range_hours_default: 6
-  
+
   # Daily deployments
   time_range_hours_default: 24  # Default
-  
+
   # Weekly deployments
   time_range_hours_default: 72
 ```
@@ -813,14 +863,16 @@ parameters:
 **Symptom**: Error message "Error-Analyzer-Agent-v1 agent is not available"
 
 **Causes**:
+
 1. Agent configuration not deployed
 2. Stack configuration outdated
 3. Agent ID mismatch
 
 **Resolution**:
+
 ```
 1. Check template.yaml includes agents.error_analyzer section
-2. Verify configuration deployed: 
+2. Verify configuration deployed:
    aws cloudformation describe-stacks --stack-name <stack-name>
 3. Check available agents in Web UI Configuration panel
 4. Redeploy stack if configuration missing
@@ -831,21 +883,23 @@ parameters:
 **Symptom**: Job status shows FAILED or times out
 
 **Causes**:
+
 1. Lambda function timeout (15 min limit)
 2. Insufficient memory
 3. Invalid permissions
 4. Bedrock throttling
 
 **Resolution**:
+
 ```
 1. Check CloudWatch Logs for agent Lambda function:
    /aws/<stack-name>/lambda/AgentFunction
-   
+
 2. Look for specific error messages:
    - "Task timed out" → Increase memory or reduce query scope
    - "AccessDeniedException" → Check IAM permissions
    - "ThrottlingException" → Wait and retry
-   
+
 3. For document-specific queries, ensure document exists:
    - Verify ObjectKey is correct
    - Check document in DynamoDB TrackingTable
@@ -856,18 +910,20 @@ parameters:
 **Symptom**: Analysis missing Root Cause or Recommendations sections
 
 **Causes**:
+
 1. Model output formatting issue
 2. System prompt not enforced
 3. Token limit exceeded
 
 **Resolution**:
+
 ```
 1. Verify system_prompt includes formatting requirements:
    "ALWAYS format your response with exactly these three sections"
-   
+
 2. Check model_id is using recommended Claude Sonnet 4:
    us.anthropic.claude-sonnet-4-20250514-v1:0
-   
+
 3. If token limit reached, reduce max_log_events or time range
 ```
 
@@ -876,27 +932,29 @@ parameters:
 **Symptom**: "Access denied" or "Permission denied" errors
 
 **Causes**:
+
 1. Missing CloudWatch Logs permissions
 2. DynamoDB access denied
 3. KMS key permissions
 
 **Resolution**:
+
 ```
 IAM Permissions Required:
 - CloudWatch Logs:
   * logs:FilterLogEvents
   * logs:DescribeLogGroups
   * logs:DescribeLogStreams
-  
+
 - DynamoDB:
   * dynamodb:GetItem
   * dynamodb:Query
   * dynamodb:Scan
-  
+
 - KMS (if using customer-managed keys):
   * kms:Decrypt
   * kms:DescribeKey
-  
+
 Check Lambda execution role has these permissions.
 ```
 
@@ -905,11 +963,13 @@ Check Lambda execution role has these permissions.
 **Symptom**: Evidence section is empty or missing
 
 **Causes**:
+
 1. No matching log events in time range
 2. CloudWatch log retention expired
 3. Incorrect log group names
 
 **Resolution**:
+
 ```
 1. Increase time range: "Show errors in the last week"
 2. Check log retention in CloudWatch console
@@ -925,6 +985,7 @@ Check Lambda execution role has these permissions.
 #### AppSync GraphQL API
 
 **Mutations**:
+
 ```graphql
 mutation SubmitAgentQuery {
   submitAgentQuery(
@@ -938,6 +999,7 @@ mutation SubmitAgentQuery {
 ```
 
 **Queries**:
+
 ```graphql
 query GetAgentJobStatus($jobId: ID!) {
   getAgentJobStatus(jobId: $jobId) {
@@ -951,6 +1013,7 @@ query GetAgentJobStatus($jobId: ID!) {
 ```
 
 **Subscriptions**:
+
 ```graphql
 subscription OnAgentJobComplete($jobId: ID!) {
   onAgentJobComplete(jobId: $jobId) {
@@ -963,6 +1026,7 @@ subscription OnAgentJobComplete($jobId: ID!) {
 #### CloudWatch Logs Integration
 
 **Log Group Discovery**:
+
 ```python
 # Pattern for stack log groups
 log_group_pattern = f"/{stack_name}/lambda/"
@@ -976,6 +1040,7 @@ log_group_pattern = f"/{stack_name}/lambda/"
 ```
 
 **Log Filtering**:
+
 ```python
 # Document-specific filter
 filter_pattern = f'"ObjectKey" = "{document_id}" "ERROR"'
@@ -987,6 +1052,7 @@ patterns = ["ERROR", "Exception", "ValidationException", "Failed", "Timeout"]
 #### DynamoDB Tracking Integration
 
 **Table Schema** (relevant fields):
+
 ```python
 {
   "ObjectKey": "uploads/document.pdf",    # Partition key
@@ -999,6 +1065,7 @@ patterns = ["ERROR", "Exception", "ValidationException", "Failed", "Timeout"]
 ```
 
 **Query Patterns**:
+
 ```python
 # Find document by ObjectKey
 response = table.get_item(Key={"ObjectKey": document_id})
@@ -1016,6 +1083,7 @@ response = table.scan(
 #### Step Functions Integration
 
 **Execution Context**:
+
 ```python
 # Extract execution ID from DynamoDB
 execution_arn = "arn:aws:states:us-east-1:123456789012:execution:StateMachine:abc-123"
@@ -1029,30 +1097,33 @@ filter_pattern = f'"execution_id" = "{execution_id}"'
 
 #### analyze_errors (Main Router)
 
-**Location**: `lib/idp_common_pkg/idp_common/agents/error_analyzer/tools/error_analysis_tool.py`
+**Location**:
+`lib/idp_common_pkg/idp_common/agents/error_analyzer/tools/error_analysis_tool.py`
 
 **Function Signature**:
+
 ```python
 @tool
 def analyze_errors(query: str, time_range_hours: int = 1) -> Dict[str, Any]:
     """
     Intelligent error analysis with precise query classification.
-    
+
     Args:
         query: User's error analysis query
         time_range_hours: Hours to look back (default: 1, uses config default)
-    
+
     Returns:
         Dict containing analysis results or error information
     """
 ```
 
 **Classification Logic**:
+
 ```python
 def _classify_query_intent(query: str) -> Tuple[str, str]:
     """
     Classify query as document-specific vs general system analysis.
-    
+
     Returns:
         Tuple of (intent_type, document_id)
         - intent_type: "document_specific" or "general_analysis"
@@ -1063,22 +1134,24 @@ def _classify_query_intent(query: str) -> Tuple[str, str]:
         r"file:\s*([^\s]+)",
         r"ObjectKey:\s*([^\s]+)",
     ]
-    
+
     for pattern in specific_doc_patterns:
         match = re.search(pattern, query, re.IGNORECASE)
         if match:
             return ("document_specific", match.group(1).strip())
-    
+
     return ("general_analysis", "")
 ```
 
 #### analyze_document_failure
 
-**Location**: `lib/idp_common_pkg/idp_common/agents/error_analyzer/tools/document_analysis_tool.py`
+**Location**:
+`lib/idp_common_pkg/idp_common/agents/error_analyzer/tools/document_analysis_tool.py`
 
 **Purpose**: Document-specific failure analysis
 
 **Key Operations**:
+
 1. Retrieves document context from DynamoDB
 2. Searches CloudWatch logs filtered by ObjectKey
 3. Extracts Lambda request IDs for tracing
@@ -1086,11 +1159,13 @@ def _classify_query_intent(query: str) -> Tuple[str, str]:
 
 #### analyze_recent_system_errors
 
-**Location**: `lib/idp_common_pkg/idp_common/agents/error_analyzer/tools/general_analysis_tool.py`
+**Location**:
+`lib/idp_common_pkg/idp_common/agents/error_analyzer/tools/general_analysis_tool.py`
 
 **Purpose**: System-wide error pattern analysis
 
 **Key Operations**:
+
 1. Scans DynamoDB for recent failures
 2. Multi-pattern CloudWatch log search
 3. Error categorization and statistics
@@ -1099,11 +1174,13 @@ def _classify_query_intent(query: str) -> Tuple[str, str]:
 ### Performance Considerations
 
 **CloudWatch Logs Queries**:
+
 - Each query scans specified time range across log groups
 - Longer time ranges increase query latency
 - Max 10,000 events per FilterLogEvents call
 
 **Cost Optimization**:
+
 ```python
 # Efficient queries
 max_log_events = 5           # Minimal context window usage
@@ -1115,6 +1192,7 @@ time_range_hours = 168       # Full week scan
 ```
 
 **Token Usage**:
+
 - System prompt: ~800 tokens
 - Log events: ~100-200 tokens each
 - Analysis response: ~500-1000 tokens
@@ -1122,9 +1200,11 @@ time_range_hours = 168       # Full week scan
 
 ## Related Documentation
 
-- **[Troubleshooting Guide](troubleshooting.md)**: General troubleshooting for common issues (manual steps)
+- **[Troubleshooting Guide](troubleshooting.md)**: General troubleshooting for
+  common issues (manual steps)
   - Use the Error Analyzer for automated diagnosis
-  - Refer to Troubleshooting Guide for manual resolution steps, performance tuning, and infrastructure issues
+  - Refer to Troubleshooting Guide for manual resolution steps, performance
+    tuning, and infrastructure issues
 - **[Monitoring](monitoring.md)**: CloudWatch dashboards and metrics
 - **[Web UI](web-ui.md)**: User interface features and navigation
 - **[Architecture](architecture.md)**: Overall system architecture
@@ -1133,12 +1213,14 @@ time_range_hours = 168       # Full week scan
 ## Error Analyzer vs Manual Troubleshooting
 
 **Use Error Analyzer for:**
+
 - Document processing failures (root cause analysis)
 - Recent error patterns across the system
 - Automated log correlation and diagnosis
 - Quick troubleshooting with AI-powered recommendations
 
 **Use Manual Troubleshooting Guide for:**
+
 - Infrastructure and deployment issues
 - Performance optimization and tuning
 - Security and authentication problems
@@ -1150,6 +1232,7 @@ time_range_hours = 168       # Full week scan
 ### How does the Error Analyzer differ from CloudWatch Insights?
 
 **Error Analyzer**:
+
 - AI-powered root cause identification
 - Automated correlation across services
 - Natural language query interface
@@ -1157,6 +1240,7 @@ time_range_hours = 168       # Full week scan
 - Integrated with IDP workflow
 
 **CloudWatch Insights**:
+
 - Manual query writing required
 - Single log group analysis
 - Technical query language
@@ -1172,11 +1256,13 @@ Yes, the system prompt is fully customizable in the configuration:
 3. Edit "Error Analysis Agent" → "system_prompt"
 4. Save configuration
 
-**Caution**: Modifying the system prompt may affect output formatting and quality.
+**Caution**: Modifying the system prompt may affect output formatting and
+quality.
 
 ### How many concurrent analysis jobs can run?
 
 The Error Analyzer supports:
+
 - **Multiple users**: Each can have active jobs
 - **Job per document**: One active job per user per document
 - **System-wide queries**: Unlimited concurrent queries
@@ -1185,6 +1271,7 @@ The Error Analyzer supports:
 ### What happens if analysis times out?
 
 **Timeout Handling**:
+
 1. Lambda has 15-minute timeout
 2. Job status set to FAILED
 3. Partial results (if any) are saved
@@ -1196,6 +1283,7 @@ The Error Analyzer supports:
 ### Can I export analysis results?
 
 **Export Options**:
+
 1. **Copy from UI**: Select and copy formatted text
 2. **API Access**: Use `getAgentJobStatus` query
 3. **CloudWatch Logs**: Agent logs contain full results
@@ -1204,6 +1292,7 @@ The Error Analyzer supports:
 ### How long are analysis results retained?
 
 **Retention Policy**:
+
 - **In-memory**: Active jobs only
 - **DynamoDB**: Not persisted (stateless)
 - **CloudWatch Logs**: Per log group retention (default: 7-90 days)
@@ -1212,6 +1301,7 @@ The Error Analyzer supports:
 ### Does the analyzer work with custom Lambda functions?
 
 Yes, if custom Lambda functions:
+
 1. Write to CloudWatch Logs with stack-based log group names
 2. Include ObjectKey in log messages
 3. Follow standard error logging patterns
@@ -1256,10 +1346,12 @@ The Error Analyzer is a powerful AI-driven troubleshooting tool that:
 ✓ **Supports** both document-specific and system-wide analysis
 
 For optimal results:
+
 - Use Claude Sonnet 4 model for complex errors
 - Be specific with document IDs in queries
 - Focus on root causes, not symptoms
 - Verify recommendations with evidence
 - Adjust configuration based on deployment patterns
 
-The Error Analyzer significantly reduces troubleshooting time and improves operational efficiency for GenAI IDP deployments.
+The Error Analyzer significantly reduces troubleshooting time and improves
+operational efficiency for GenAI IDP deployments.

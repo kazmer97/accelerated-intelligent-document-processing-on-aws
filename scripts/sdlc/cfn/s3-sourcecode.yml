@@ -1,8 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'S3 Bucket for initial deployment'
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "S3 Bucket for initial deployment"
 
 Parameters:
   BucketName:
@@ -12,7 +12,7 @@ Parameters:
 
 Resources:
   InitialInstallBucket:
-    Type: 'AWS::S3::Bucket'
+    Type: "AWS::S3::Bucket"
     Metadata:
       cfn_nag:
         rules_to_suppress:

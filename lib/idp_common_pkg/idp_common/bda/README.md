@@ -3,11 +3,13 @@ SPDX-License-Identifier: MIT-0
 
 # IDP Bedrock Data Automation (BDA) Module
 
-This module provides functionality for interacting with Amazon Bedrock Data Automation (BDA) for document processing and information extraction.
+This module provides functionality for interacting with Amazon Bedrock Data
+Automation (BDA) for document processing and information extraction.
 
 ## Overview
 
-The BDA module enables seamless integration with Amazon Bedrock Data Automation services, allowing you to:
+The BDA module enables seamless integration with Amazon Bedrock Data Automation
+services, allowing you to:
 
 - Invoke BDA jobs asynchronously
 - Monitor job status and retrieve results
@@ -18,7 +20,8 @@ The BDA module enables seamless integration with Amazon Bedrock Data Automation 
 
 - **BdaService**: Main service class for interacting with BDA
 - **BdaInvocation**: Data class for handling BDA job results
-- **CloudFormation Templates**: Templates for creating BDA projects and blueprints
+- **CloudFormation Templates**: Templates for creating BDA projects and
+  blueprints
 
 ## Usage
 
@@ -92,7 +95,8 @@ The BdaService can be configured with:
 
 - `output_s3_uri`: S3 URI where BDA job results will be stored
 - `dataAutomationProjectArn`: Optional ARN of a BDA project
-- `dataAutomationProfileArn`: Optional ARN of a BDA profile (defaults to standard profile)
+- `dataAutomationProfileArn`: Optional ARN of a BDA profile (defaults to
+  standard profile)
 
 ```python
 bda_service = BdaService(
@@ -152,8 +156,10 @@ For optimal performance with BDA:
 
 1. Use asynchronous invocation for large batches of documents
 2. Monitor job status with appropriate polling intervals
-3. Consider using BDA projects for consistent processing across multiple documents
+3. Consider using BDA projects for consistent processing across multiple
+   documents
 
 ## Thread Safety
 
-The BDA service is designed to be thread-safe, supporting concurrent processing of multiple documents in parallel workloads.
+The BDA service is designed to be thread-safe, supporting concurrent processing
+of multiple documents in parallel workloads.

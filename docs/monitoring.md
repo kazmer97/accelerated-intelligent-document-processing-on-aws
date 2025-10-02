@@ -3,7 +3,8 @@ SPDX-License-Identifier: MIT-0
 
 # Monitoring and Logging
 
-The GenAIIDP solution provides comprehensive monitoring through Amazon CloudWatch to give you visibility into the document processing pipeline.
+The GenAIIDP solution provides comprehensive monitoring through Amazon
+CloudWatch to give you visibility into the document processing pipeline.
 
 ## CloudWatch Dashboard
 
@@ -13,7 +14,8 @@ The solution automatically creates an integrated dashboard that displays:
 
 - **End-to-End Processing Time**: Total time from document upload to completion
 - **Step Function Execution Duration**: Time spent in workflow orchestration
-- **Lambda Function Latency**: Processing time per function (OCR, Classification, Extraction)
+- **Lambda Function Latency**: Processing time per function (OCR,
+  Classification, Extraction)
 - **Queue Wait Time**: Time documents spend in processing queues
 - **Model Inference Time**: Bedrock model response latencies
 
@@ -31,7 +33,8 @@ The solution automatically creates an integrated dashboard that displays:
 
 ### Error Tracking
 
-- **Workflow Failures**: Step Function execution failures with error categorization
+- **Workflow Failures**: Step Function execution failures with error
+  categorization
 - **Lambda Timeouts**: Function timeout events and duration analysis
 - **Model Throttling**: Bedrock throttling events and retry patterns
 - **Dead Letter Queue Messages**: Failed messages requiring manual intervention
@@ -51,24 +54,28 @@ The solution creates centralized logging across all components:
 - `/aws/lambda/TrackingFunction`: Document tracking and status logs
 - `/aws/appsync/GraphQLAPI`: Web UI API access logs
 
-All logs include correlation IDs for tracing individual document processing journeys.
+All logs include correlation IDs for tracing individual document processing
+journeys.
 
 ## Pattern-Specific Monitoring
 
 Each pattern includes additional monitoring tailored to its specific workflow:
 
 ### Pattern 1: Bedrock Data Automation (BDA)
+
 - BDA project execution metrics
 - API usage and throttling
 - Media processor performance
 
 ### Pattern 2: Textract + Bedrock
+
 - Textract OCR performance
 - Bedrock model usage
 - Classification confidence distribution
 - Extraction completeness metrics
 
 ### Pattern 3: Textract + UDOP + Bedrock
+
 - SageMaker endpoint performance
 - UDOP model latency and throughput
 - GPU utilization metrics
@@ -104,7 +111,8 @@ ErrorRateAlarm:
 
 ## Log Insights Queries
 
-The solution includes predefined CloudWatch Log Insights queries for common analysis tasks:
+The solution includes predefined CloudWatch Log Insights queries for common
+analysis tasks:
 
 ### Error Analysis
 
@@ -146,9 +154,12 @@ Key metrics are available with these dimensions:
 
 The dashboard includes performance benchmark comparisons:
 
-- **Current vs. Historical Performance**: Compare current metrics against previous periods
-- **Pattern Comparison**: Side-by-side comparison of different processing patterns
-- **Model Performance**: Comparison of different Bedrock models for similar tasks
+- **Current vs. Historical Performance**: Compare current metrics against
+  previous periods
+- **Pattern Comparison**: Side-by-side comparison of different processing
+  patterns
+- **Model Performance**: Comparison of different Bedrock models for similar
+  tasks
 
 ## Operational Monitoring
 
@@ -158,7 +169,8 @@ The solution provides operational metrics for infrastructure health:
 - **Throttling Events**: Monitor service limits and throttling
 - **DynamoDB Capacity**: Track consumed read/write capacity units
 - **S3 Request Rates**: Monitor bucket operation rates and latency
-- **Step Functions Execution Metrics**: Track state transitions and execution counts
+- **Step Functions Execution Metrics**: Track state transitions and execution
+  counts
 
 ## Cost Monitoring
 
@@ -183,6 +195,7 @@ You can create custom dashboards focused on specific aspects:
 To export metrics for external analysis:
 
 1. Use CloudWatch Metric Streams to send metrics to:
+
    - Amazon Kinesis Data Firehose
    - Third-party monitoring tools
    - Custom analytics solutions

@@ -3,25 +3,40 @@ SPDX-License-Identifier: MIT-0
 
 # Criteria Validation Service
 
-The Criteria Validation Service provides sophisticated document validation against dynamic business rules using Large Language Models (LLMs). Designed primarily for healthcare/insurance prior authorization workflows, this service can be adapted for any scenario requiring document compliance validation against configurable criteria.
+The Criteria Validation Service provides sophisticated document validation
+against dynamic business rules using Large Language Models (LLMs). Designed
+primarily for healthcare/insurance prior authorization workflows, this service
+can be adapted for any scenario requiring document compliance validation against
+configurable criteria.
 
 ## Overview
 
-The criteria validation service processes user documents, evaluates them against configurable business rules/criteria questions, and generates structured validation responses with recommendations (Pass/Fail/Information Not Found). It provides enterprise-grade capabilities including asynchronous processing, intelligent text chunking, multi-file processing with summarization, and comprehensive cost and performance tracking.
+The criteria validation service processes user documents, evaluates them against
+configurable business rules/criteria questions, and generates structured
+validation responses with recommendations (Pass/Fail/Information Not Found). It
+provides enterprise-grade capabilities including asynchronous processing,
+intelligent text chunking, multi-file processing with summarization, and
+comprehensive cost and performance tracking.
 
 ### Key Capabilities
 
 - **Dynamic Business Rules**: Configure criteria questions without code changes
-- **Asynchronous Processing**: Handle multiple criteria types and questions concurrently
-- **Intelligent Text Chunking**: Automatically process large documents with context preservation
-- **Multi-File Support**: Process multiple user history files with intelligent summarization
-- **Comprehensive Tracking**: Token usage, cost tracking, and detailed timing metrics
+- **Asynchronous Processing**: Handle multiple criteria types and questions
+  concurrently
+- **Intelligent Text Chunking**: Automatically process large documents with
+  context preservation
+- **Multi-File Support**: Process multiple user history files with intelligent
+  summarization
+- **Comprehensive Tracking**: Token usage, cost tracking, and detailed timing
+  metrics
 - **Robust Error Handling**: Graceful degradation with fallback responses
-- **Strong Data Validation**: Pydantic-based input/output validation with automatic data cleaning
+- **Strong Data Validation**: Pydantic-based input/output validation with
+  automatic data cleaning
 
 ### Primary Use Cases
 
-- **Healthcare Prior Authorization**: Validate medical requests against insurance criteria
+- **Healthcare Prior Authorization**: Validate medical requests against
+  insurance criteria
 - **Compliance Validation**: Ensure documents meet regulatory requirements
 - **Business Rule Enforcement**: Automate document approval workflows
 - **Quality Assurance**: Validate document completeness against checklists
@@ -43,7 +58,8 @@ Document Upload → Text Extraction → Criteria Processing → Validation Resul
 
 ### Core Components
 
-1. **CriteriaValidationService**: Main service orchestrating the validation workflow
+1. **CriteriaValidationService**: Main service orchestrating the validation
+   workflow
 2. **Async Processing Engine**: Handles concurrent processing with rate limiting
 3. **Text Chunking System**: Intelligently splits large documents with overlap
 4. **LLM Integration**: Seamless integration with Amazon Bedrock models
@@ -54,8 +70,10 @@ Document Upload → Text Extraction → Criteria Processing → Validation Resul
 
 The criteria validation service integrates seamlessly with the IDP accelerator:
 
-- **Common Bedrock Client**: Uses `idp_common.bedrock.invoke_model` for consistent LLM interactions
-- **Unified Metering**: Automatic token usage tracking with `utils.merge_metering_data`
+- **Common Bedrock Client**: Uses `idp_common.bedrock.invoke_model` for
+  consistent LLM interactions
+- **Unified Metering**: Automatic token usage tracking with
+  `utils.merge_metering_data`
 - **S3 Operations**: Uses `idp_common.s3` for standardized file operations
 - **Configuration Compatibility**: Works with `idp_common.get_config()`
 
@@ -104,17 +122,17 @@ validation_config = {
     "top_k": 5,
     "top_p": 0.1,
     "max_tokens": 4096,
-    
+
     # S3 Storage Configuration
     "request_bucket": "user-history-bucket",
     "request_history_prefix": "prior-auth",
-    "criteria_bucket": "criteria-bucket", 
+    "criteria_bucket": "criteria-bucket",
     "output_bucket": "results-bucket",  # Optional
-    
+
     # Processing Configuration
     "criteria_types": ["administration_requirements", "medical_necessity"],
     "recommendation_options": "Pass/Fail/Information Not Found",
-    
+
     # Async Processing Controls
     "criteria_validation": {
         "semaphore": 5,  # Concurrent request limit
@@ -122,7 +140,7 @@ validation_config = {
         "token_size": 4,  # Average chars per token
         "overlap_percentage": 10  # Chunk overlap %
     },
-    
+
     # Required Prompts
     "system_prompt": "You are an expert at evaluating healthcare criteria...",
     "task_prompt": "Evaluate the following criteria: {question}..."
@@ -132,18 +150,21 @@ validation_config = {
 ### Configuration Parameters Reference
 
 #### Processing Controls
+
 - **semaphore**: Controls concurrent LLM requests (default: 5)
 - **max_chunk_size**: Maximum tokens per text chunk (default: 10,000)
 - **token_size**: Average characters per token for estimation (default: 4)
 - **overlap_percentage**: Percentage overlap between chunks (default: 10%)
 
 #### Model Parameters
+
 - **temperature**: LLM temperature for deterministic responses (default: 0.0)
 - **top_k**: Top-k sampling parameter (default: 5)
 - **top_p**: Top-p sampling parameter (default: 0.1)
 - **max_tokens**: Optional maximum tokens in response
 
 #### Storage Configuration
+
 - **request_bucket**: S3 bucket containing user history files
 - **request_history_prefix**: Prefix for organizing request data
 - **criteria_bucket**: S3 bucket containing criteria definitions
@@ -163,6 +184,7 @@ s3://{request_bucket}/{request_history_prefix}-{request_id}/extracted_text/
 ```
 
 **Requirements:**
+
 - Files must have `.txt` extension
 - UTF-8 encoding required
 - Automatically chunked if exceeding token limits
@@ -177,18 +199,20 @@ s3://{criteria_bucket}/{criteria_type}.json
 ```
 
 **Format:**
+
 ```json
 {
-    "criteria": [
-        "Will the therapy be administered under qualified medical supervision?",
-        "Is the facility equipped to handle potential emergency situations?", 
-        "Has the physician determined the appropriate dosage and schedule?",
-        "Are there documented contraindications or drug interactions?"
-    ]
+  "criteria": [
+    "Will the therapy be administered under qualified medical supervision?",
+    "Is the facility equipped to handle potential emergency situations?",
+    "Has the physician determined the appropriate dosage and schedule?",
+    "Are there documented contraindications or drug interactions?"
+  ]
 }
 ```
 
 **Best Practices for Criteria Questions:**
+
 - Write specific, answerable questions
 - Focus on binary Pass/Fail outcomes when possible
 - Ensure questions can be answered from typical user history
@@ -207,20 +231,20 @@ from idp_common.criteria_validation import CriteriaValidationService
 
 async def validate_multiple_requests():
     service = CriteriaValidationService(config=config)
-    
+
     # Process multiple requests concurrently
     tasks = [
         service.validate_request_async(request_id, config)
         for request_id in ["req1", "req2", "req3"]
     ]
-    
+
     # Wait for all to complete
     results = await asyncio.gather(*tasks)
-    
+
     # Aggregate metrics
     total_tokens = sum(r.metering.get('total_tokens', 0) for r in results)
     print(f"Total tokens used: {total_tokens}")
-    
+
     return results
 
 # Run async processing
@@ -236,10 +260,10 @@ validation_config.update({
     "summary": {
         "system_prompt": "You are an expert at summarizing validation responses...",
         "task_prompt": """Summarize the following responses for question: {question}
-        
+
         Initial Responses: {initial_response}
         Criteria Type: {criteria_type}
-        
+
         Provide consolidated recommendation...""",
         "temperature": 0.0
     }
@@ -255,7 +279,7 @@ Customize prompts for specific use cases:
 healthcare_system_prompt = """
 You are a specialized healthcare insurance evaluator with expertise in:
 - Medical necessity criteria
-- Treatment authorization protocols  
+- Treatment authorization protocols
 - Clinical guideline interpretation
 - Prior authorization requirements
 
@@ -284,7 +308,7 @@ Response Format:
   "criteria_type": "{criteria_type}",
   "source_file": ["{source_filepath}"],
   "question": "question text",
-  "Recommendation": "Pass/Fail/Information Not Found", 
+  "Recommendation": "Pass/Fail/Information Not Found",
   "Reasoning": "detailed explanation with citations"
 }}
 </instructions>
@@ -299,11 +323,11 @@ Each validation generates a structured response:
 
 ```json
 {
-    "criteria_type": "administration_requirements",
-    "source_file": ["s3://bucket/extracted_text/medical_history.txt"],
-    "question": "Is the facility equipped to handle emergencies?",
-    "Recommendation": "Pass",
-    "Reasoning": "The document confirms that Memorial Hospital Infusion Center has 24/7 emergency support, trained nursing staff, and emergency response equipment including epinephrine for anaphylaxis treatment."
+  "criteria_type": "administration_requirements",
+  "source_file": ["s3://bucket/extracted_text/medical_history.txt"],
+  "question": "Is the facility equipped to handle emergencies?",
+  "Recommendation": "Pass",
+  "Reasoning": "The document confirms that Memorial Hospital Infusion Center has 24/7 emergency support, trained nursing staff, and emergency response equipment including epinephrine for anaphylaxis treatment."
 }
 ```
 
@@ -351,6 +375,7 @@ Large documents are intelligently chunked with overlap for context preservation:
 ```
 
 **Chunking Process:**
+
 1. Estimate tokens using `len(text) // token_size`
 2. If exceeding `max_chunk_size`, split into overlapping chunks
 3. Each chunk overlaps by `overlap_percentage` with the next
@@ -370,7 +395,7 @@ Large documents are intelligently chunked with overlap for context preservation:
 ### Cost Optimization Strategies
 
 1. **Token Monitoring**: Track usage per criteria type for cost attribution
-2. **Chunk Size Tuning**: Balance accuracy vs. token consumption  
+2. **Chunk Size Tuning**: Balance accuracy vs. token consumption
 3. **Model Selection**: Choose appropriate model for accuracy/cost balance
 4. **Summarization Strategy**: Use only when processing multiple files
 5. **Criteria Optimization**: Write efficient, focused criteria questions
@@ -439,6 +464,7 @@ except Exception as e:
 ### Common Issues and Solutions
 
 #### No Text Files Found
+
 ```
 Error: "No text files found for request {request_id}"
 Solution: Verify file locations and .txt extension
@@ -446,15 +472,17 @@ Expected: s3://{bucket}/{prefix}-{request_id}/extracted_text/*.txt
 ```
 
 #### JSON Parsing Failures
+
 ```
 Symptoms: "Information Not Found" responses with parsing errors
-Solutions: 
+Solutions:
 - Review prompts for clear JSON format instructions
 - Use temperature = 0.0 for deterministic responses
 - Add example JSON structure in prompts
 ```
 
 #### Rate Limiting Issues
+
 ```
 Symptoms: HTTP 429 errors or slow processing
 Solutions:
@@ -464,6 +492,7 @@ Solutions:
 ```
 
 #### High Token Costs
+
 ```
 Solutions for cost optimization:
 - Reduce max_chunk_size (e.g., from 10000 to 8000)
@@ -482,7 +511,7 @@ logging.getLogger('idp_common.criteria_validation').setLevel(logging.DEBUG)
 
 # Key debug information logged:
 # - Token metrics before/after merge
-# - Chunk processing details  
+# - Chunk processing details
 # - Response parsing steps
 # - Timing information
 # - S3 operations
@@ -500,30 +529,35 @@ logging.getLogger('idp_common.criteria_validation').setLevel(logging.DEBUG)
 ### Criteria Design Principles
 
 1. **Specific Questions**: Write clear, answerable criteria questions
+
    ```
    Good: "Is the facility equipped with emergency response equipment?"
    Poor: "Is the facility adequate?"
    ```
 
 2. **Binary Decisions**: Design for clear Pass/Fail outcomes when possible
+
    ```
    Good: "Has the physician documented contraindications?"
    Poor: "What are the physician's thoughts on contraindications?"
    ```
 
-3. **Context Requirements**: Ensure questions can be answered from typical user history
+3. **Context Requirements**: Ensure questions can be answered from typical user
+   history
 4. **Regular Updates**: Review and update criteria based on business needs
 
 ### Processing Optimization
 
 1. **Batch Processing**: Process multiple requests together when possible
-2. **Result Caching**: Cache results for identical requests to avoid reprocessing
+2. **Result Caching**: Cache results for identical requests to avoid
+   reprocessing
 3. **Monitoring Setup**: Implement comprehensive monitoring and alerting
 4. **Testing Strategy**: Regular testing with representative data
 
 ### Production Deployment
 
-1. **Scaling Configuration**: 
+1. **Scaling Configuration**:
+
    ```python
    # Production settings
    "criteria_validation": {
@@ -547,14 +581,14 @@ healthcare_config = {
     "model_id": "us.anthropic.claude-3-5-sonnet-20240620-v1:0",
     "criteria_types": [
         "medical_necessity",
-        "administration_requirements", 
+        "administration_requirements",
         "coverage_criteria",
         "safety_protocols"
     ],
     "system_prompt": """You are a healthcare insurance evaluator specializing in prior authorization reviews. Evaluate each criterion based on medical evidence, clinical guidelines, and insurance policy requirements.""",
     "recommendation_options": """
     Pass: Criterion is fully met with supporting documentation
-    Fail: Criterion is not met or requires additional information  
+    Fail: Criterion is not met or requires additional information
     Information Not Found: Insufficient data in user history to make determination
     """
 }
@@ -571,11 +605,11 @@ compliance_config = {
     "criteria_types": ["regulatory_requirements", "documentation_standards"],
     "system_prompt": """You are a compliance specialist evaluating document adherence to regulatory standards. Focus on completeness, accuracy, and compliance with established guidelines.""",
     "task_prompt": """Review the document against this compliance requirement:
-    
+
     Requirement: {question}
     Category: {criteria_type}
     Document Content: {content}
-    
+
     Determine if the document meets the requirement and provide specific citations."""
 }
 ```
@@ -583,7 +617,7 @@ compliance_config = {
 ### Quality Assurance Workflow
 
 ```python
-# Quality assurance configuration  
+# Quality assurance configuration
 qa_config = {
     "criteria_types": ["completeness_check", "accuracy_validation"],
     "system_prompt": """You are a quality assurance specialist reviewing documents for completeness and accuracy. Identify missing information and potential errors.""",
@@ -600,25 +634,33 @@ qa_config = {
 
 - **Document Model Integration**: Direct integration with IDP Document instances
 - **Confidence Scoring**: Confidence levels for recommendations with thresholds
-- **Custom Validation Rules**: Programmable validation logic beyond LLM evaluation
+- **Custom Validation Rules**: Programmable validation logic beyond LLM
+  evaluation
 - **Real-time API Endpoints**: REST API for real-time validation requests
 - **Enhanced Caching**: Intelligent caching based on content similarity
 
 ### Advanced Capabilities Under Consideration
 
 - **Multi-Modal Support**: Integration of document images with text analysis
-- **Feedback Loop Integration**: Learning from validation corrections and user feedback
+- **Feedback Loop Integration**: Learning from validation corrections and user
+  feedback
 - **Custom Model Support**: Support for domain-specific fine-tuned models
 - **Workflow Integration**: Integration with business process management systems
-- **Audit Trail Enhancement**: Comprehensive audit logging for regulatory compliance
+- **Audit Trail Enhancement**: Comprehensive audit logging for regulatory
+  compliance
 
 ## Related Documentation
 
-- [Configuration Guide](./configuration.md) - General IDP configuration management
-- [Extraction Documentation](./extraction.md) - Information extraction capabilities
+- [Configuration Guide](./configuration.md) - General IDP configuration
+  management
+- [Extraction Documentation](./extraction.md) - Information extraction
+  capabilities
 - [Monitoring Guide](./monitoring.md) - System monitoring and alerting
 - [Troubleshooting Guide](./troubleshooting.md) - Common issues and solutions
 
 ---
 
-The Criteria Validation Service provides a powerful foundation for implementing business rule validation workflows using AI. Its flexible configuration system, robust error handling, and comprehensive monitoring make it suitable for production deployments across various industries and use cases.
+The Criteria Validation Service provides a powerful foundation for implementing
+business rule validation workflows using AI. Its flexible configuration system,
+robust error handling, and comprehensive monitoring make it suitable for
+production deployments across various industries and use cases.

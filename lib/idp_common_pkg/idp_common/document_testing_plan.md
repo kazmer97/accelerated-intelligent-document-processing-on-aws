@@ -5,13 +5,18 @@ SPDX-License-Identifier: MIT-0
 
 ## Overview
 
-This testing plan outlines the strategy to validate the unified Document class implementation that combines features from both the main IDP Document class and the KIE Document class. The goal is to ensure the refactored Document class maintains all existing functionality while incorporating improvements in validation, type safety, and resource management.
+This testing plan outlines the strategy to validate the unified Document class
+implementation that combines features from both the main IDP Document class and
+the KIE Document class. The goal is to ensure the refactored Document class
+maintains all existing functionality while incorporating improvements in
+validation, type safety, and resource management.
 
 ## Test Categories
 
 ### 1. Unit Tests
 
 #### Basic Functionality
+
 - [ ] Test Document initialization with minimal parameters
 - [ ] Test Document initialization with all parameters
 - [ ] Verify default values are set correctly
@@ -19,6 +24,7 @@ This testing plan outlines the strategy to validate the unified Document class i
 - [ ] Verify validation rules on field values
 
 #### URI Handling
+
 - [ ] Test S3 URI parsing and validation
 - [ ] Test local file URI parsing and validation
 - [ ] Verify URI template placeholder substitution
@@ -26,6 +32,7 @@ This testing plan outlines the strategy to validate the unified Document class i
 - [ ] Test invalid URI handling and error messages
 
 #### Serialization/Deserialization
+
 - [ ] Test to/from_dict conversion for simple documents
 - [ ] Test to/from_dict conversion for complex documents with pages and sections
 - [ ] Test to/from_json serialization
@@ -33,12 +40,14 @@ This testing plan outlines the strategy to validate the unified Document class i
 - [ ] Verify backward compatibility with old serialized documents
 
 #### Lazy Loading
+
 - [ ] Test cached_property behavior for heavy resources
 - [ ] Verify resources are loaded only when accessed
 - [ ] Test cleanup of cached resources
 - [ ] Measure memory usage with lazy vs. eager loading
 
 #### State Management
+
 - [ ] Test status transitions
 - [ ] Test timing fields update correctly
 - [ ] Test error collection and reporting
@@ -46,24 +55,28 @@ This testing plan outlines the strategy to validate the unified Document class i
 ### 2. Integration Tests
 
 #### OCR Service Integration
-- [ ] Test Document with OCR service 
+
+- [ ] Test Document with OCR service
 - [ ] Verify page creation and population
 - [ ] Test handling of OCR metadata
 - [ ] Verify image and text URIs are stored correctly
 
 #### Classification Service Integration
+
 - [ ] Test Document with classification service
 - [ ] Verify section creation based on classifications
 - [ ] Test confidence scoring
 - [ ] Verify multipage classification
 
 #### Extraction Service Integration
+
 - [ ] Test Document with extraction service
 - [ ] Verify attribute extraction and storage
 - [ ] Test section-based extraction
 - [ ] Verify extraction URIs are stored correctly
 
 #### Evaluation Service Integration
+
 - [ ] Test Document with evaluation service
 - [ ] Verify metrics calculation and storage
 - [ ] Test comparison logic
@@ -96,11 +109,13 @@ This testing plan outlines the strategy to validate the unified Document class i
 ## Testing Infrastructure
 
 ### Test Environment
+
 - Local development environment
 - CI/CD pipeline
 - AWS environment for S3 integration tests
 
 ### Test Data
+
 - Sample PDFs of various sizes and complexities
 - Predefined OCR results
 - Classification fixtures
@@ -108,6 +123,7 @@ This testing plan outlines the strategy to validate the unified Document class i
 - Evaluation fixtures
 
 ### Test Automation
+
 - PyTest for unit and integration tests
 - Performance benchmarking with pytest-benchmark
 - Mocking S3 with moto
@@ -116,21 +132,25 @@ This testing plan outlines the strategy to validate the unified Document class i
 ## Test Implementation Strategy
 
 1. **Setup Test Framework**
+
    - [ ] Set up PyTest with appropriate fixtures
    - [ ] Create mocks for AWS services
    - [ ] Establish test data repository
 
 2. **Implement Core Tests**
+
    - [ ] Start with basic initialization and validation tests
    - [ ] Add serialization tests
    - [ ] Implement service integration tests
 
 3. **Implement Migration Tests**
+
    - [ ] Create fixtures representing old Document instances
    - [ ] Test conversion logic
    - [ ] Verify backward compatibility
 
 4. **Performance Testing**
+
    - [ ] Establish baseline with current implementation
    - [ ] Compare with new implementation
    - [ ] Optimize based on results
@@ -159,10 +179,10 @@ This testing plan outlines the strategy to validate the unified Document class i
 
 ## Risks and Mitigations
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| Breaking changes to API | High | Medium | Thorough interface testing, backward compatibility layer |
-| Performance degradation | High | Low | Performance benchmarking, optimization phase |
-| Missed edge cases | Medium | Medium | Comprehensive test suite, code reviews |
-| S3 integration issues | Medium | Low | Mocking S3 for tests, separate integration test suite |
-| Migration issues | High | Medium | Extensive migration testing, rollback plan |
+| Risk                    | Impact | Likelihood | Mitigation                                               |
+| ----------------------- | ------ | ---------- | -------------------------------------------------------- |
+| Breaking changes to API | High   | Medium     | Thorough interface testing, backward compatibility layer |
+| Performance degradation | High   | Low        | Performance benchmarking, optimization phase             |
+| Missed edge cases       | Medium | Medium     | Comprehensive test suite, code reviews                   |
+| S3 integration issues   | Medium | Low        | Mocking S3 for tests, separate integration test suite    |
+| Migration issues        | High   | Medium     | Extensive migration testing, rollback plan               |

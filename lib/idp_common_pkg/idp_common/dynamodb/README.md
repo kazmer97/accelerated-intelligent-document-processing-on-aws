@@ -1,10 +1,13 @@
 # DynamoDB Module - Direct DynamoDB Integration
 
-The `dynamodb` module provides direct DynamoDB integration for the IDP Common package, allowing Lambda functions to interact with the TrackingTable without going through AppSync GraphQL API.
+The `dynamodb` module provides direct DynamoDB integration for the IDP Common
+package, allowing Lambda functions to interact with the TrackingTable without
+going through AppSync GraphQL API.
 
 ## Overview
 
-This module is designed to replace AppSync dependencies in Lambda functions while maintaining the same functionality and data structures. It provides:
+This module is designed to replace AppSync dependencies in Lambda functions
+while maintaining the same functionality and data structures. It provides:
 
 - Direct DynamoDB operations using boto3
 - Document CRUD operations matching AppSync schema
@@ -17,6 +20,7 @@ This module is designed to replace AppSync dependencies in Lambda functions whil
 ### DynamoDBClient
 
 Low-level client for DynamoDB operations:
+
 - `put_item()` - Insert items
 - `update_item()` - Update existing items
 - `get_item()` - Retrieve items by key
@@ -27,6 +31,7 @@ Low-level client for DynamoDB operations:
 ### DocumentDynamoDBService
 
 High-level service for document operations:
+
 - `create_document()` - Create new documents with list partitioning
 - `update_document()` - Update existing documents
 - `get_document()` - Retrieve documents by object key
@@ -99,6 +104,7 @@ hourly_docs = service.list_documents_date_hour(
 The module maintains full compatibility with the existing AppSync schema:
 
 ### Document Table Structure
+
 - **PK**: `doc#{ObjectKey}` - Primary partition key
 - **SK**: `none` - Sort key (always "none" for documents)
 - **ObjectKey**: Document identifier
@@ -109,6 +115,7 @@ The module maintains full compatibility with the existing AppSync schema:
 - **TTL**: ExpiresAfter timestamp
 
 ### List Partition Structure
+
 - **PK**: `list#{date}#s#{shard}` - Time-based partition key
 - **SK**: `ts#{timestamp}#id#{ObjectKey}` - Sort key for chronological ordering
 - **ObjectKey**: Document identifier
@@ -140,19 +147,21 @@ The module uses these environment variables:
 To migrate from AppSync to direct DynamoDB:
 
 1. Replace imports:
+
    ```python
    # Old
    from idp_common.appsync import DocumentAppSyncService
-   
+
    # New
    from idp_common.dynamodb import DocumentDynamoDBService
    ```
 
 2. Update service initialization:
+
    ```python
    # Old
    service = DocumentAppSyncService(api_url=appsync_url)
-   
+
    # New
    service = DocumentDynamoDBService(table_name=table_name)
    ```
@@ -169,12 +178,15 @@ To migrate from AppSync to direct DynamoDB:
 
 - **Transactions**: Document creation uses DynamoDB transactions for consistency
 - **Sharding**: List partitions are sharded by time to distribute load
-- **Pagination**: All list operations support pagination via `exclusive_start_key`
-- **Filtering**: Date-based filtering uses efficient query operations when possible
+- **Pagination**: All list operations support pagination via
+  `exclusive_start_key`
+- **Filtering**: Date-based filtering uses efficient query operations when
+  possible
 
 ## Logging
 
 The module provides detailed logging at DEBUG and INFO levels:
+
 - Operation success/failure
 - Performance metrics
 - Data conversion warnings

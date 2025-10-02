@@ -1,15 +1,22 @@
 # IDP Common Agents Module
 
-This module provides agent-based functionality using the Strands framework for the GenAI IDP Accelerator. All agents are built on top of Strands agents and tools, providing intelligent document processing capabilities.
+This module provides agent-based functionality using the Strands framework for
+the GenAI IDP Accelerator. All agents are built on top of Strands agents and
+tools, providing intelligent document processing capabilities.
 
 ## Overview
 
-The agents module is designed to support multiple types of intelligent agents while maintaining consistency and reusability across the IDP accelerator. Currently implemented:
+The agents module is designed to support multiple types of intelligent agents
+while maintaining consistency and reusability across the IDP accelerator.
+Currently implemented:
 
-- **Analytics Agent**: Natural language to SQL/visualization conversion with secure code execution
-- **External MCP Agent**: Connects to external MCP servers to provide additional tools and capabilities
+- **Analytics Agent**: Natural language to SQL/visualization conversion with
+  secure code execution
+- **External MCP Agent**: Connects to external MCP servers to provide additional
+  tools and capabilities
 - **Dummy Agent**: Simple development agent with calculator tool for testing
-- **Common Utilities**: Shared configuration, monitoring, and utilities for all agent types
+- **Common Utilities**: Shared configuration, monitoring, and utilities for all
+  agent types
 
 ## Architecture
 
@@ -58,27 +65,37 @@ idp_common/agents/
 ## Design Principles
 
 ### 1. Strands-First Approach
-All agents use the Strands framework directly without unnecessary abstraction layers. This provides:
+
+All agents use the Strands framework directly without unnecessary abstraction
+layers. This provides:
+
 - Excellent tool abstractions via `@tool` decorator
 - Built-in agent management and conversation handling
 - Consistent patterns across all agent types
 
 ### 2. Simple Factory Pattern
+
 Each agent type follows a simple pattern:
+
 - `agent.py` - Factory function to create configured Strands agents
 - `config.py` - Simple configuration management
 - `tools/` - Strands tools specific to that agent type
 - `assets/` - Static assets like prompts, schemas, etc.
 
 ### 3. Security-First Design
+
 Agents are designed with security as a primary concern:
-- **Sandboxed Code Execution**: Uses AWS Bedrock AgentCore for secure Python execution
+
+- **Sandboxed Code Execution**: Uses AWS Bedrock AgentCore for secure Python
+  execution
 - **Data Isolation**: Query results are transferred securely between services
 - **Minimal Permissions**: Each agent requests only necessary AWS permissions
 - **Audit Trail**: Comprehensive logging and monitoring for security reviews
 
 ### 4. IDP Integration
+
 Agents are designed to integrate seamlessly with the IDP accelerator:
+
 - Environment variable configuration for Lambda deployment
 - AWS service integration (Athena, S3, AgentCore, etc.)
 - Consistent logging patterns
@@ -88,33 +105,45 @@ Agents are designed to integrate seamlessly with the IDP accelerator:
 
 ### AgentCore Integration
 
-The analytics agent uses **AWS Bedrock AgentCore** for secure Python code execution. This is a critical security decision that ensures:
+The analytics agent uses **AWS Bedrock AgentCore** for secure Python code
+execution. This is a critical security decision that ensures:
 
 - **Sandboxed Environment**: Python code runs in an isolated, secure sandbox
 - **No Direct File System Access**: Code cannot access the Lambda file system
-- **Controlled Data Transfer**: Query results are securely transferred via S3 and AgentCore APIs
-- **Session Management**: Code interpreter sessions are properly managed and cleaned up
+- **Controlled Data Transfer**: Query results are securely transferred via S3
+  and AgentCore APIs
+- **Session Management**: Code interpreter sessions are properly managed and
+  cleaned up
 
 ### Data Flow Security
 
 1. **Query Execution**: SQL queries run against Athena with results stored in S3
 2. **Secure Transfer**: Agent downloads CSV results from S3 using boto3
-3. **Sandbox Injection**: CSV data is written to the AgentCore sandbox using the `writeFiles` API
+3. **Sandbox Injection**: CSV data is written to the AgentCore sandbox using the
+   `writeFiles` API
 4. **Code Execution**: Python visualization code runs in the isolated sandbox
-5. **Result Extraction**: Generated plots/tables are returned as JSON through AgentCore APIs
+5. **Result Extraction**: Generated plots/tables are returned as JSON through
+   AgentCore APIs
 
-This architecture ensures that arbitrary Python code (used for generating plots and tables) never executes in the Lambda environment, providing a secure foundation for future application security reviews.
+This architecture ensures that arbitrary Python code (used for generating plots
+and tables) never executes in the Lambda environment, providing a secure
+foundation for future application security reviews.
 
 ## Usage
 
 ### Analytics Agent
 
-The analytics agent provides natural language to SQL/visualization conversion with four main tools:
+The analytics agent provides natural language to SQL/visualization conversion
+with four main tools:
 
-1. **Athena Query Tool** (`athena_tool.py`): Executes SQL queries against AWS Athena
-2. **Database Info Tool** (`get_database_info_tool.py`): Provides database schema information
-3. **Code Sandbox Writer** (`code_interpreter_tools.py`): Securely transfers query results to sandbox
-4. **Python Executor** (`code_interpreter_tools.py`): Executes visualization code in secure sandbox
+1. **Athena Query Tool** (`athena_tool.py`): Executes SQL queries against AWS
+   Athena
+2. **Database Info Tool** (`get_database_info_tool.py`): Provides database
+   schema information
+3. **Code Sandbox Writer** (`code_interpreter_tools.py`): Securely transfers
+   query results to sandbox
+4. **Python Executor** (`code_interpreter_tools.py`): Executes visualization
+   code in secure sandbox
 
 ```python
 from idp_common.agents.analytics import create_analytics_agent, get_analytics_config
@@ -124,9 +153,9 @@ config = get_analytics_config()
 
 # Create the agent with monitoring context
 agent = create_analytics_agent(
-    config, 
-    session=boto3.Session(), 
-    job_id="analytics-job-123", 
+    config,
+    session=boto3.Session(),
+    job_id="analytics-job-123",
     user_id="user-456"
 )
 
@@ -136,23 +165,28 @@ response = agent("How many documents were processed last week?")
 
 ### External MCP Agent
 
-The External MCP Agent connects to external MCP (Model Context Protocol) servers to provide additional tools and capabilities. This agent enables integration with third-party services and custom tools hosted outside the IDP system.
+The External MCP Agent connects to external MCP (Model Context Protocol) servers
+to provide additional tools and capabilities. This agent enables integration
+with third-party services and custom tools hosted outside the IDP system.
 
 **Key Features:**
+
 - **Cross-Account Support**: MCP servers can be hosted in separate AWS accounts
 - **OAuth Authentication**: Uses AWS Cognito for secure authentication
-- **Dynamic Tool Discovery**: Automatically discovers and integrates available MCP tools
-- **Context Management**: Maintains MCP client connections throughout agent lifecycle
+- **Dynamic Tool Discovery**: Automatically discovers and integrates available
+  MCP tools
+- **Context Management**: Maintains MCP client connections throughout agent
+  lifecycle
 
-**Configuration:**
-The agent requires credentials stored in AWS Secrets Manager at `{StackName}/external-mcp-agents/credentials` as a JSON array:
+**Configuration:** The agent requires credentials stored in AWS Secrets Manager
+at `{StackName}/external-mcp-agents/credentials` as a JSON array:
 
 ```json
 [
   {
     "mcp_url": "https://your-first-mcp-server.com/mcp",
     "cognito_user_pool_id": "us-east-1_XXXXXXXXX",
-    "cognito_client_id": "xxxxxxxxxxxxxxxxxxxxxxxxxx", 
+    "cognito_client_id": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
     "cognito_username": "<your first user here>",
     "cognito_password": "<your first password here>",
     "agent_name": "My Custom Calculator Agent",
@@ -161,7 +195,7 @@ The agent requires credentials stored in AWS Secrets Manager at `{StackName}/ext
   {
     "mcp_url": "https://your-second-mcp-server.com/mcp",
     "cognito_user_pool_id": "us-east-1_YYYYYYYYY",
-    "cognito_client_id": "yyyyyyyyyyyyyyyyyyyyyyyyyy", 
+    "cognito_client_id": "yyyyyyyyyyyyyyyyyyyyyyyyyy",
     "cognito_username": "<your second user here>",
     "cognito_password": "<your second password here>"
   }
@@ -169,10 +203,13 @@ The agent requires credentials stored in AWS Secrets Manager at `{StackName}/ext
 ```
 
 **Optional Fields:**
+
 - `agent_name`: Custom name for the agent (defaults to "External MCP Agent {N}")
-- `agent_description`: Custom description (tool information is automatically appended)
+- `agent_description`: Custom description (tool information is automatically
+  appended)
 
 **Usage:**
+
 ```python
 from idp_common.agents.factory import agent_factory
 
@@ -185,13 +222,17 @@ with agent_factory.create_agent(
 ```
 
 **Security:**
+
 - Uses streamable HTTP transport with OAuth bearer tokens
 - Credentials managed through AWS Secrets Manager
 - MCP client context properly managed to prevent connection leaks
 
-For detailed setup instructions, see [Custom MCP Agent Documentation](../../docs/custom-MCP-agent.md).
+For detailed setup instructions, see
+[Custom MCP Agent Documentation](../../docs/custom-MCP-agent.md).
 
-For guidance on deploying your own MCP servers with Cognito authentication, see the [AWS Bedrock Agent Core MCP Documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-mcp.html).
+For guidance on deploying your own MCP servers with Cognito authentication, see
+the
+[AWS Bedrock Agent Core MCP Documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-mcp.html).
 
 ### Response Parsing
 
@@ -230,7 +271,7 @@ from idp_common.agents.common.monitoring import AgentMonitor
 
 # Create agent with monitoring
 agent_monitor = AgentMonitor(
-    log_level=logging.INFO, 
+    log_level=logging.INFO,
     enable_detailed_logging=True
 )
 agent.hooks.add_hook(agent_monitor)
@@ -246,7 +287,7 @@ from idp_common.agents.common.dynamodb_logger import DynamoDBMessageTracker
 
 # Add message persistence
 message_tracker = DynamoDBMessageTracker(
-    job_id="analytics-job-123", 
+    job_id="analytics-job-123",
     user_id="user-456"
 )
 agent.hooks.add_hook(message_tracker)
@@ -257,6 +298,7 @@ agent.hooks.add_hook(message_tracker)
 To add a new agent type (e.g., `document_analysis`):
 
 1. **Create the directory structure**:
+
    ```
    idp_common/agents/document_analysis/
    ├── __init__.py
@@ -268,10 +310,11 @@ To add a new agent type (e.g., `document_analysis`):
    ```
 
 2. **Implement the factory function** (`agent.py`):
+
    ```python
    from strands import Agent
    from .tools import your_tool1, your_tool2, your_tool3
-   
+
    def create_document_analysis_agent(config, session, **kwargs):
        tools = [your_tool1, your_tool2, your_tool3]
        system_prompt = "Your agent prompt here..."
@@ -279,17 +322,19 @@ To add a new agent type (e.g., `document_analysis`):
    ```
 
 3. **Add configuration management** (`config.py`):
+
    ```python
    from ..common.config import get_environment_config
-   
+
    def get_document_analysis_config():
        return get_environment_config(["REQUIRED_ENV_VAR"])
    ```
 
 4. **Create Strands tools** (`tools/`):
+
    ```python
    from strands import tool
-   
+
    @tool
    def your_tool(input_param: str) -> dict:
        # Tool implementation
@@ -311,16 +356,19 @@ The `testing/` directory provides utilities for testing agents locally:
 - **Response Analysis**: Parse and validate agent responses
 - **AgentCore Integration**: Test code interpreter functionality
 
-See [`testing/README.md`](./testing/README.md) for detailed testing instructions.
+See [`testing/README.md`](./testing/README.md) for detailed testing
+instructions.
 
 ## Dependencies
 
 ### Core Dependencies
+
 - `strands-agents>=1.0.0` - Core agent framework
 - `boto3` - AWS service integration
 - `bedrock-agentcore` - Secure code execution sandbox
 
 ### Analytics-Specific Dependencies
+
 - `pandas>=2.0.0` - Data manipulation (used in sandbox)
 
 ### Required AWS Permissions
@@ -355,7 +403,9 @@ For analytics agents, the following IAM permissions are required:
 ```
 
 ### Optional Dependencies
+
 Install specific agent dependencies as needed:
+
 ```bash
 # For analytics agents
 pip install "idp_common[agents,analytics]"
@@ -375,24 +425,25 @@ from idp_common.agents.analytics import create_analytics_agent, get_analytics_co
 def handler(event, context):
     # Change to /tmp for AgentCore compatibility
     os.chdir('/tmp')
-    
+
     config = get_analytics_config()  # Loads from environment variables
     agent = create_analytics_agent(
-        config, 
+        config,
         session=boto3.Session(),
         job_id=event.get("jobId"),
         user_id=event.get("userId")
     )
-    
+
     query = event.get("query")
     response = agent(query)
-    
+
     return {"response": response}
 ```
 
 ### Lambda Environment Considerations
 
-- **Working Directory**: Change to `/tmp` before creating agents (AgentCore requirement)
+- **Working Directory**: Change to `/tmp` before creating agents (AgentCore
+  requirement)
 - **Session Management**: AgentCore sessions are automatically cleaned up
 - **Memory Requirements**: Analytics agents require at least 1024MB memory
 - **Timeout**: Set appropriate timeout (900s recommended for complex queries)
@@ -406,7 +457,8 @@ The framework is designed to easily support additional agent types:
 - **Quality Assurance**: Validation and quality checking
 - **Custom Agents**: Customer-specific implementations
 
-Each would follow the same simple pattern established by the analytics agent, with appropriate security considerations for their specific use cases.
+Each would follow the same simple pattern established by the analytics agent,
+with appropriate security considerations for their specific use cases.
 
 ## Contributing
 
@@ -424,6 +476,7 @@ When adding new agents or modifying existing ones:
 ## Support
 
 For questions about the agents module:
+
 - Check the testing utilities in `testing/`
 - Review existing agent implementations
 - Consult the main IDP documentation

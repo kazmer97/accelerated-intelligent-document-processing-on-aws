@@ -3,22 +3,26 @@ SPDX-License-Identifier: MIT-0
 
 # Document Knowledge Base Query
 
-The GenAIIDP solution includes an integrated Document Knowledge Base query feature that enables you to interactively ask questions about your processed document collection using natural language. This feature leverages the processed data to create a searchable knowledge base.
-
+The GenAIIDP solution includes an integrated Document Knowledge Base query
+feature that enables you to interactively ask questions about your processed
+document collection using natural language. This feature leverages the processed
+data to create a searchable knowledge base.
 
 https://github.com/user-attachments/assets/991b4112-0fc9-4e4d-98ab-ef4e3cbae04a
-
-
 
 ## How It Works
 
 1. **Document Processing & Indexing**
+
    - Processed documents are automatically indexed in a vector database
    - Documents are chunked into semantic segments for efficient retrieval
    - Each chunk maintains reference to its source document
-   - **Ingestion Schedule**: Documents are ingested into the knowledge base every 30 minutes, so newly processed documents may not be immediately available for querying
+   - **Ingestion Schedule**: Documents are ingested into the knowledge base
+     every 30 minutes, so newly processed documents may not be immediately
+     available for querying
 
 2. **Interactive Query Interface**
+
    - Access through the Web UI via the "Knowledge Base" section
    - Ask natural language questions about your document collection
    - View responses with citations to source documents
@@ -32,67 +36,79 @@ https://github.com/user-attachments/assets/991b4112-0fc9-4e4d-98ab-ef4e3cbae04a
 
 ## Query Features
 
-- **Natural Language Understanding**: Ask questions in plain English rather than using keywords or query syntax
-- **Document Citations**: Responses include references to the specific documents used to generate answers
+- **Natural Language Understanding**: Ask questions in plain English rather than
+  using keywords or query syntax
+- **Document Citations**: Responses include references to the specific documents
+  used to generate answers
 - **Contextual Follow-ups**: Ask follow-up questions without repeating context
-- **Direct Document Links**: Click on document references to view the original source
-- **Markdown Formatting**: Responses support rich formatting for better readability
-- **Real-time Processing**: Get answers in seconds, even across large document collections
+- **Direct Document Links**: Click on document references to view the original
+  source
+- **Markdown Formatting**: Responses support rich formatting for better
+  readability
+- **Real-time Processing**: Get answers in seconds, even across large document
+  collections
 
 ## Architecture & Vector Storage Options
 
-The Knowledge Base feature supports two vector storage backends to optimize for different performance and cost requirements:
+The Knowledge Base feature supports two vector storage backends to optimize for
+different performance and cost requirements:
 
 ### Vector Store Comparison
 
-| Aspect | OpenSearch Serverless | S3 Vectors |
-|--------|----------------------|------------|
-| **Query Latency** | Sub-millisecond | Sub-second |
-| **Pricing Model** | Always On (continuous capacity costs) | On Demand (pay-per-query) |
-| **Storage Cost** | Higher | 40-60% lower |
-| **Best For** | Real-time applications | Cost-sensitive deployments |
-| **Features** | Full-text search, advanced filtering | Native S3 integration |
+| Aspect            | OpenSearch Serverless                 | S3 Vectors                 |
+| ----------------- | ------------------------------------- | -------------------------- |
+| **Query Latency** | Sub-millisecond                       | Sub-second                 |
+| **Pricing Model** | Always On (continuous capacity costs) | On Demand (pay-per-query)  |
+| **Storage Cost**  | Higher                                | 40-60% lower               |
+| **Best For**      | Real-time applications                | Cost-sensitive deployments |
+| **Features**      | Full-text search, advanced filtering  | Native S3 integration      |
 
 ### Choosing Your Vector Store
 
-- **OpenSearch Serverless** (Default): Choose for applications requiring ultra-fast retrieval and real-time performance
+- **OpenSearch Serverless** (Default): Choose for applications requiring
+  ultra-fast retrieval and real-time performance
 - **S3 Vectors**: Choose for cost optimization when query latency is acceptable
 
 ## Configuration
 
-The Document Knowledge Base Query feature can be configured during stack deployment:
+The Document Knowledge Base Query feature can be configured during stack
+deployment:
 
 ```yaml
 ShouldUseDocumentKnowledgeBase:
   Type: String
-  Default: "true"
+  Default: 'true'
   AllowedValues:
-    - "true"
-    - "false"
+    - 'true'
+    - 'false'
   Description: Enable/disable the Document Knowledge Base feature
 
 KnowledgeBaseVectorStore:
   Type: String
-  Default: "OPENSEARCH_SERVERLESS"
+  Default: 'OPENSEARCH_SERVERLESS'
   AllowedValues:
-    - "OPENSEARCH_SERVERLESS"
-    - "S3_VECTORS"
+    - 'OPENSEARCH_SERVERLESS'
+    - 'S3_VECTORS'
   Description: Vector storage backend for the knowledge base
 
 DocumentKnowledgeBaseModel:
   Type: String
-  Default: "us.amazon.nova-pro-v1:0"
-  Description: Bedrock model to use for knowledge base queries (e.g., "us.anthropic.claude-3-7-sonnet-20250219-v1:0")
+  Default: 'us.amazon.nova-pro-v1:0'
+  Description:
+    Bedrock model to use for knowledge base queries (e.g.,
+    "us.anthropic.claude-3-7-sonnet-20250219-v1:0")
 ```
 
 ### Supported Embedding Models
 
 Both vector store types support the same embedding models:
+
 - `amazon.titan-embed-text-v2:0` (default)
-- `cohere.embed-english-v3`  (disabled by default)
+- `cohere.embed-english-v3` (disabled by default)
 - `cohere.embed-multilingual-v3` (disabled by default)
 
 When the feature is enabled, the solution:
+
 - Creates the selected vector storage resources (OpenSearch or S3 Vectors)
 - Configures API endpoints for querying the knowledge base
 - Adds the query interface to the Web UI
@@ -131,21 +147,27 @@ When the feature is enabled, the solution:
 ## Best Practices
 
 1. **Be specific**: Clearly state what information you're looking for
-2. **Start broad, then narrow**: Begin with general questions before diving into specifics
+2. **Start broad, then narrow**: Begin with general questions before diving into
+   specifics
 3. **Use follow-ups**: Build on previous questions to explore topics in depth
 4. **Check citations**: Verify information by consulting the source documents
-5. **Refine questions**: If you don't get the expected answer, try rephrasing your question
+5. **Refine questions**: If you don't get the expected answer, try rephrasing
+   your question
 
 ## Performance Considerations
 
-- **Document Collection Size**: Performance may vary with very large document collections
+- **Document Collection Size**: Performance may vary with very large document
+  collections
 - **Query Complexity**: More complex queries may take longer to process
-- **Document Types**: Some document types may be indexed more effectively than others
-- **Model Selection**: Different Bedrock models offer different performance/accuracy tradeoffs
+- **Document Types**: Some document types may be indexed more effectively than
+  others
+- **Model Selection**: Different Bedrock models offer different
+  performance/accuracy tradeoffs
 
 ## Security Considerations
 
-The Knowledge Base feature maintains the security controls of the overall solution:
+The Knowledge Base feature maintains the security controls of the overall
+solution:
 
 - Access is restricted to authenticated users
 - Document visibility respects user permissions
@@ -155,10 +177,15 @@ The Knowledge Base feature maintains the security controls of the overall soluti
 ## Future Enhancements
 
 ### Potential Improvements & Community Contributions
-- **CloudFormation Support**: When S3 Vectors gains native CloudFormation support
+
+- **CloudFormation Support**: When S3 Vectors gains native CloudFormation
+  support
 - **Migration Tools**: Utilities to migrate between vector store types
-- **Hybrid Deployment**: Support for multiple Knowledge Bases with different vector stores
-- **Document Chunking Options**: The system currently uses default chunking strategies, with additional chunking methods available for optimization based on document types and use cases
+- **Hybrid Deployment**: Support for multiple Knowledge Bases with different
+  vector stores
+- **Document Chunking Options**: The system currently uses default chunking
+  strategies, with additional chunking methods available for optimization based
+  on document types and use cases
 - Performance optimization suggestions
 - Additional embedding model support
 - Enhanced monitoring and alerting

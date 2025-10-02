@@ -3,7 +3,8 @@ SPDX-License-Identifier: MIT-0
 
 # [Configuration Name] Configuration
 
-This directory contains a specialized configuration for [brief description of the use case] using the GenAI IDP Accelerator.
+This directory contains a specialized configuration for [brief description of
+the use case] using the GenAI IDP Accelerator.
 
 ## Pattern Association
 
@@ -13,15 +14,19 @@ This directory contains a specialized configuration for [brief description of th
 
 **Level**: [0-3] - [Level name]
 
-- **Testing Evidence**: [Describe the testing performed, including number and types of documents tested, performance metrics, etc.]
-- **Production Usage**: [If applicable, describe where and how this configuration has been used in production]
+- **Testing Evidence**: [Describe the testing performed, including number and
+  types of documents tested, performance metrics, etc.]
+- **Production Usage**: [If applicable, describe where and how this
+  configuration has been used in production]
 - **Known Limitations**: [List any known limitations or edge cases]
 
 ## Overview
 
-[Provide a comprehensive overview of the configuration, including its purpose, target document types, and key features]
+[Provide a comprehensive overview of the configuration, including its purpose,
+target document types, and key features]
 
-The [configuration name] configuration is designed to handle various types of [domain] documents, including:
+The [configuration name] configuration is designed to handle various types of
+[domain] documents, including:
 
 - [Document type 1]
 - [Document type 2]
@@ -32,7 +37,8 @@ The [configuration name] configuration is designed to handle various types of [d
 
 ### Document Classes
 
-The configuration defines [number] document classes, each with specific attributes to extract:
+The configuration defines [number] document classes, each with specific
+attributes to extract:
 
 - **[Class 1]**: [Brief description]
   - Extracts [attribute 1], [attribute 2], etc.
@@ -69,15 +75,18 @@ The configuration defines [number] document classes, each with specific attribut
 
 ### 1. [Difference Category 1]
 
-[Describe the key differences and improvements compared to the default configuration]
+[Describe the key differences and improvements compared to the default
+configuration]
 
 ### 2. [Difference Category 2]
 
-[Describe the key differences and improvements compared to the default configuration]
+[Describe the key differences and improvements compared to the default
+configuration]
 
 ### 3. [Difference Category 3]
 
-[Describe the key differences and improvements compared to the default configuration]
+[Describe the key differences and improvements compared to the default
+configuration]
 
 ## Sample Documents
 
@@ -89,14 +98,15 @@ This configuration includes sample documents in the `samples/` directory:
 
 ## Performance Metrics
 
-[Include relevant performance metrics such as accuracy, processing time, token usage, etc.]
+[Include relevant performance metrics such as accuracy, processing time, token
+usage, etc.]
 
-| Metric | Value | Notes |
-|--------|-------|-------|
+| Metric                  | Value   | Notes   |
+| ----------------------- | ------- | ------- |
 | Classification Accuracy | [value] | [notes] |
-| Extraction Accuracy | [value] | [notes] |
-| Processing Time | [value] | [notes] |
-| Token Usage | [value] | [notes] |
+| Extraction Accuracy     | [value] | [notes] |
+| Processing Time         | [value] | [notes] |
+| Token Usage             | [value] | [notes] |
 
 ## Usage Instructions
 
@@ -108,7 +118,8 @@ To use this configuration:
 
 ## Customization Guidance
 
-[Provide guidance on how to further customize this configuration for specific needs]
+[Provide guidance on how to further customize this configuration for specific
+needs]
 
 ## Contributors
 

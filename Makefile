@@ -14,7 +14,7 @@ test:
 	$(MAKE) -C lib/idp_common_pkg test
 
 # Run both linting and formatting in one command
-lint: ruff-lint format check-arn-partitions
+lint: ruff-lint format prettier check-arn-partitions
 
 # Run linting checks and fix issues automatically
 ruff-lint:
@@ -23,6 +23,17 @@ ruff-lint:
 # Format code according to project standards
 format:
 	ruff format
+
+# Format YAML, JSON, and Markdown files with prettier
+prettier:
+	@if command -v pre-commit >/dev/null 2>&1; then \
+		pre-commit run prettier --all-files; \
+	elif command -v npx >/dev/null 2>&1; then \
+		npx prettier --write "**/*.{yaml,yml,json,md}"; \
+	else \
+		echo -e "$(YELLOW)WARNING: Neither pre-commit nor npm/npx found. Skipping prettier formatting.$(NC)"; \
+		echo -e "$(YELLOW)Install with: pip install pre-commit OR npm install$(NC)"; \
+	fi
 
 # CI/CD version of lint that only checks but doesn't modify files
 # Used in CI pipelines to verify code quality without making changes
@@ -37,6 +48,15 @@ lint-cicd:
 		echo -e "$(RED)ERROR: Code formatting check failed!$(NC)"; \
 		echo -e "$(YELLOW)Please run 'make format' locally to fix these issues.$(NC)"; \
 		exit 1; \
+	fi
+	@if command -v pre-commit >/dev/null 2>&1; then \
+		if ! pre-commit run prettier --all-files; then \
+			echo -e "$(RED)ERROR: Prettier formatting check failed!$(NC)"; \
+			echo -e "$(YELLOW)Please run 'make prettier' locally to fix these issues.$(NC)"; \
+			exit 1; \
+		fi; \
+	else \
+		echo -e "$(YELLOW)WARNING: pre-commit not found. Skipping prettier check.$(NC)"; \
 	fi
 	@echo -e "$(GREEN)All code quality checks passed!$(NC)"
 

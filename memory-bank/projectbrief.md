@@ -4,7 +4,12 @@
 
 ## Overview
 
-The GenAI Intelligent Document Processing (GenAI IDP) Accelerator is a comprehensive document processing solution that uses a modular, 6-step pipeline architecture. Each module is designed to work independently while seamlessly integrating with others to provide end-to-end document processing capabilities including OCR, classification, extraction, summarization, evaluation, and assessment.
+The GenAI Intelligent Document Processing (GenAI IDP) Accelerator is a
+comprehensive document processing solution that uses a modular, 6-step pipeline
+architecture. Each module is designed to work independently while seamlessly
+integrating with others to provide end-to-end document processing capabilities
+including OCR, classification, extraction, summarization, evaluation, and
+assessment.
 
 ## Directory Structure
 
@@ -272,7 +277,7 @@ Directory structure:
     │               ├── extraction.yaml
     │               ├── ocr.yaml
     │               └── summarization.yaml
-  
+
 ```
 
 ## Module Relationship
@@ -294,7 +299,8 @@ graph TD
 
 ### 6-Step Modular Pipeline
 
-The solution follows a sequential processing pipeline where each step enriches the Document object:
+The solution follows a sequential processing pipeline where each step enriches
+the Document object:
 
 ```
 Step 0: Setup → Step 1: OCR → Step 2: Classification → Step 3: Extraction → Step 4: Assessment → Step 5: Summarization → Step 6: Evaluation
@@ -302,7 +308,8 @@ Step 0: Setup → Step 1: OCR → Step 2: Classification → Step 3: Extraction 
 
 ### Central Data Model
 
-All modules operate on a shared `Document` class that maintains state throughout the pipeline:
+All modules operate on a shared `Document` class that maintains state throughout
+the pipeline:
 
 ```python
 @dataclass
@@ -312,13 +319,13 @@ class Document:
     input_bucket: Optional[str] = None
     input_key: Optional[str] = None
     output_bucket: Optional[str] = None
-    
+
     # Processing state
     status: Status = Status.QUEUED
     num_pages: int = 0
     pages: Dict[str, Page] = field(default_factory=dict)
     sections: List[Section] = field(default_factory=list)
-    
+
     # Processing results
     evaluation_result: Any = None
     summarization_result: Any = None
@@ -357,21 +364,23 @@ idp_common/
 
 ### 1. OCR Processing (Step 1)
 
-**Primary Module:** `ocr/`
-**Service Class:** `OcrService`
+**Primary Module:** `ocr/` **Service Class:** `OcrService`
 
-**Purpose:** Converts PDF documents to machine-readable text using Amazon Textract
+**Purpose:** Converts PDF documents to machine-readable text using Amazon
+Textract
 
 **Configuration Example:**
+
 ```yaml
 ocr:
   features:
-    - name: "LAYOUT"    # Document structure analysis
-    - name: "TABLES"    # Table extraction
-    - name: "SIGNATURES" # Signature detection
+    - name: 'LAYOUT' # Document structure analysis
+    - name: 'TABLES' # Table extraction
+    - name: 'SIGNATURES' # Signature detection
 ```
 
 **Integration Process:**
+
 1. Takes input PDF from S3
 2. Converts pages to images with configurable DPI
 3. Processes with Textract using specified features
@@ -381,38 +390,40 @@ ocr:
    - `parsed_text_uri`: Markdown-formatted text
    - `text_confidence_uri`: Condensed confidence data for assessment
 
-**Dependencies:** 
+**Dependencies:**
+
 - `s3/` for file operations
 - `image/` for image processing
 - `utils/` for common operations
 
 ### 2. Classification (Step 2)
 
-**Primary Module:** `classification/`
-**Service Class:** `ClassificationService`
+**Primary Module:** `classification/` **Service Class:** `ClassificationService`
 
 **Purpose:** Identifies document types and creates logical document boundaries
 
 **Configuration Example:**
+
 ```yaml
 classification:
   model: us.amazon.nova-pro-v1:0
   temperature: 0.0
-  classificationMethod: textbasedHolisticClassification  # or multimodalPageLevelClassification
-  system_prompt: "You are a document classification expert..."
+  classificationMethod: textbasedHolisticClassification # or multimodalPageLevelClassification
+  system_prompt: 'You are a document classification expert...'
   task_prompt: |
     <document-types>
     {CLASS_NAMES_AND_DESCRIPTIONS}
     </document-types>
-    
+
     <<CACHEPOINT>>
-    
+
     <document-text>
     {DOCUMENT_TEXT}
     </document-text>
 ```
 
 **Integration Process:**
+
 1. Receives `Document` with OCR results from Step 1
 2. Analyzes document structure to identify boundaries
 3. Creates `Section` objects grouping related pages
@@ -421,40 +432,42 @@ classification:
    - **Page-level:** Classifies individual pages independently
 
 **Dependencies:**
+
 - `bedrock/` for LLM interactions
 - `config/` for document class definitions
 - `s3/` for retrieving OCR results
 
 ### 3. Extraction (Step 3)
 
-**Primary Module:** `extraction/`
-**Service Class:** `ExtractionService`
+**Primary Module:** `extraction/` **Service Class:** `ExtractionService`
 
 **Purpose:** Extracts structured data fields specific to each document class
 
 **Configuration Example:**
+
 ```yaml
 extraction:
   model: us.amazon.nova-pro-v1:0
   temperature: 0.0
-  system_prompt: "You are a document assistant. Respond only with JSON..."
+  system_prompt: 'You are a document assistant. Respond only with JSON...'
   task_prompt: |
     Extract the following attributes from this {DOCUMENT_CLASS} document:
-    
+
     {ATTRIBUTE_NAMES_AND_DESCRIPTIONS}
-    
+
     <<CACHEPOINT>>
-    
+
     <document-text>
     {DOCUMENT_TEXT}
     </document-text>
-    
+
     <document_image>
     {DOCUMENT_IMAGE}
     </document_image>
 ```
 
 **Attribute Types Supported:**
+
 ```yaml
 classes:
   - name: Bank Statement
@@ -462,14 +475,14 @@ classes:
       # Simple attribute
       - name: Account Number
         attributeType: simple
-        
+
       # Group attribute (nested structure)
       - name: Account Holder Address
         attributeType: group
         groupAttributes:
           - name: Street Number
           - name: City
-          
+
       # List attribute (arrays)
       - name: Transactions
         attributeType: list
@@ -480,6 +493,7 @@ classes:
 ```
 
 **Integration Process:**
+
 1. Processes each `Section` from classification results
 2. Applies class-specific extraction templates
 3. Supports multimodal analysis (text + images)
@@ -487,39 +501,41 @@ classes:
 5. Updates `Section.attributes` with extracted data
 
 **Dependencies:**
+
 - `bedrock/` for LLM interactions
 - `config/` for attribute definitions
 - `image/` for multimodal processing
 
 ### 4. Assessment (Step 4)
 
-**Primary Module:** `assessment/`
-**Service Class:** `AssessmentService`
+**Primary Module:** `assessment/` **Service Class:** `AssessmentService`
 
 **Purpose:** Evaluates confidence of extraction results using LLMs
 
 **Configuration Example:**
+
 ```yaml
 assessment:
   model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
   temperature: 0.0
   default_confidence_threshold: 0.9
-  system_prompt: "You are a document analysis assessment expert..."
+  system_prompt: 'You are a document analysis assessment expert...'
   task_prompt: |
     <extraction-results>
     {EXTRACTION_RESULTS}
     </extraction-results>
-    
+
     <document-image>
     {DOCUMENT_IMAGE}
     </document-image>
-    
+
     <ocr-text-confidence-results>
     {OCR_TEXT_CONFIDENCE}
     </ocr-text-confidence-results>
 ```
 
 **Assessment Output Formats:**
+
 ```json
 {
   "simple_attribute": {
@@ -527,17 +543,18 @@ assessment:
     "confidence_reason": "Clear text match with high OCR confidence"
   },
   "group_attribute": {
-    "sub_attribute_1": {"confidence": 0.90},
-    "sub_attribute_2": {"confidence": 0.75}
+    "sub_attribute_1": { "confidence": 0.9 },
+    "sub_attribute_2": { "confidence": 0.75 }
   },
   "list_attribute": [
-    {"item_attr_1": {"confidence": 0.95}},
-    {"item_attr_2": {"confidence": 0.88}}
+    { "item_attr_1": { "confidence": 0.95 } },
+    { "item_attr_2": { "confidence": 0.88 } }
   ]
 }
 ```
 
 **Integration Process:**
+
 1. Analyzes extraction results against source documents
 2. Provides per-attribute confidence scores (0.0-1.0)
 3. Includes explanatory reasoning for confidence levels
@@ -545,28 +562,29 @@ assessment:
 5. Integrates with evaluation module for quality metrics
 
 **Dependencies:**
+
 - `bedrock/` for LLM interactions
 - `extraction/` results for assessment
 - `ocr/` confidence data for analysis
 
 ### 5. Summarization (Step 5)
 
-**Primary Module:** `summarization/`
-**Service Class:** `SummarizationService`
+**Primary Module:** `summarization/` **Service Class:** `SummarizationService`
 
 **Purpose:** Creates human-readable summaries of processed documents
 
 **Configuration Example:**
+
 ```yaml
 summarization:
   model: us.anthropic.claude-3-7-sonnet-20250219-v1:0
   temperature: 0.0
-  system_prompt: "You are a document summarization expert..."
+  system_prompt: 'You are a document summarization expert...'
   task_prompt: |
     <document-text>
     {DOCUMENT_TEXT}
     </document-text>
-    
+
     Create a comprehensive summary with:
     1. Key information and main points
     2. Markdown formatting for readability
@@ -575,6 +593,7 @@ summarization:
 ```
 
 **Output Format:**
+
 ```json
 {
   "summary": "## Executive Summary\n\nThis bank statement for account [12345](#cite-1-page-1) covers the period...\n\n### References\n[Cite-1, Page-1]: Account Number: 12345"
@@ -582,6 +601,7 @@ summarization:
 ```
 
 **Integration Process:**
+
 1. Synthesizes all processing results into consumable summaries
 2. Maintains document structure with proper formatting
 3. Includes citations with page references
@@ -589,29 +609,33 @@ summarization:
 5. Updates `Document.summary_report_uri`
 
 **Dependencies:**
+
 - `bedrock/` for LLM interactions
 - All previous processing results
 - `s3/` for storing summary reports
 
 ### 6. Evaluation (Step 6)
 
-**Primary Module:** `evaluation/`
-**Service Class:** `EvaluationService`
+**Primary Module:** `evaluation/` **Service Class:** `EvaluationService`
 
-**Purpose:** Compares processing results against ground truth for accuracy assessment
+**Purpose:** Compares processing results against ground truth for accuracy
+assessment
 
 **Configuration Example:**
+
 ```yaml
 evaluation:
   llm_method:
     model: us.anthropic.claude-3-haiku-20240307-v1:0
     temperature: 0.0
-    system_prompt: "You are an evaluator that helps determine if predicted and expected values match..."
+    system_prompt:
+      'You are an evaluator that helps determine if predicted and expected
+      values match...'
     task_prompt: |
       For attribute "{ATTRIBUTE_NAME}":
       - Expected: {EXPECTED_VALUE}
       - Actual: {ACTUAL_VALUE}
-      
+
       Provide assessment as JSON:
       {
         "match": true/false,
@@ -621,6 +645,7 @@ evaluation:
 ```
 
 **Evaluation Methods:**
+
 - **EXACT:** Character-by-character comparison
 - **FUZZY:** Similarity matching with thresholds
 - **SEMANTIC:** Embedding-based semantic comparison
@@ -628,19 +653,20 @@ evaluation:
 - **LLM:** AI-powered semantic equivalence
 
 **Attribute Type Processing:**
+
 ```yaml
 # Simple attributes
 - name: Account Number
   evaluation_method: EXACT
-  
-# Group attributes  
+
+# Group attributes
 - name: Account Holder Address
   attributeType: group
   groupAttributes:
     - name: City
       evaluation_method: FUZZY
       evaluation_threshold: 0.9
-      
+
 # List attributes
 - name: Transactions
   attributeType: list
@@ -651,6 +677,7 @@ evaluation:
 ```
 
 **Integration Process:**
+
 1. Compares extraction results against baseline data
 2. Generates document, section, and attribute-level metrics
 3. Creates comprehensive evaluation reports with visual indicators
@@ -658,6 +685,7 @@ evaluation:
 5. Integrates with assessment confidence scores
 
 **Dependencies:**
+
 - `bedrock/` for LLM-based evaluation
 - `extraction/` results for comparison
 - `assessment/` confidence data
@@ -668,6 +696,7 @@ evaluation:
 ### Configuration Management (`config/`)
 
 **Modular Configuration System:**
+
 ```
 config/
 ├── main.yaml           # Overall pipeline settings
@@ -681,6 +710,7 @@ config/
 ```
 
 **Configuration Loading:**
+
 ```python
 from idp_common.config import get_config
 config = get_config()  # Automatically merges all YAML files
@@ -689,11 +719,13 @@ config = get_config()  # Automatically merges all YAML files
 ### Data Persistence
 
 **S3 Integration (`s3/`):**
+
 - Handles all file operations across modules
 - Provides utilities for JSON content retrieval
 - Manages S3 URI construction and parsing
 
 **Document State Management:**
+
 - Each module updates the central `Document` object
 - State persisted between processing steps
 - Full serialization/deserialization support
@@ -701,6 +733,7 @@ config = get_config()  # Automatically merges all YAML files
 ### Performance Monitoring (`metrics/`)
 
 **Comprehensive Tracking:**
+
 - Processing time per module
 - Token usage for LLM operations
 - Memory usage and resource utilization
@@ -709,6 +742,7 @@ config = get_config()  # Automatically merges all YAML files
 ### Image Processing (`image/`)
 
 **Shared Image Operations:**
+
 - Configurable image resizing and optimization
 - Aspect ratio preservation
 - Multi-format support (JPG, PNG, PDF)
@@ -725,7 +759,7 @@ class ServiceExample:
     def __init__(self, region: str, config: Dict[str, Any]):
         self.config = config
         self.region = region
-    
+
     def process_document(self, document: Document) -> Document:
         """Process document and return updated Document object"""
         # Service-specific processing
@@ -735,12 +769,15 @@ class ServiceExample:
 ### Service Dependencies
 
 **Dependency Chain:**
+
 ```
 OcrService → ClassificationService → ExtractionService → AssessmentService → SummarizationService → EvaluationService
 ```
 
 **Shared Dependencies:**
-- `bedrock/` - Used by Classification, Extraction, Assessment, Summarization, Evaluation
+
+- `bedrock/` - Used by Classification, Extraction, Assessment, Summarization,
+  Evaluation
 - `s3/` - Used by all services for file operations
 - `config/` - Used by all services for configuration
 - `metrics/` - Used by all services for performance tracking
@@ -795,7 +832,7 @@ classes:
         description: Primary account identifier
         attributeType: simple
         evaluation_method: EXACT
-        
+
       - name: Account Holder Address
         description: Complete address information
         attributeType: group
@@ -808,7 +845,7 @@ classes:
             evaluation_threshold: 0.9
           - name: State
             evaluation_method: EXACT
-            
+
       - name: Transactions
         description: List of all transactions
         attributeType: list
@@ -835,7 +872,8 @@ classes:
 2. **Update Document Object:** Always enrich the central Document object
 3. **Configuration-Driven:** Make behavior configurable through YAML
 4. **Error Handling:** Implement comprehensive error handling and logging
-5. **Resource Management:** Clean up resources and handle S3 operations efficiently
+5. **Resource Management:** Clean up resources and handle S3 operations
+   efficiently
 
 ### Integration Testing
 
@@ -843,4 +881,3 @@ classes:
 2. **Module Isolation:** Test individual modules independently
 3. **Configuration Validation:** Validate all configuration combinations
 4. **Performance Testing:** Monitor resource usage and processing times
-

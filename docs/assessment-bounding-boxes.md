@@ -1,10 +1,13 @@
 # Bounding Box Integration in Assessment Service
 
-This document describes the bounding box functionality integrated into the IDP Assessment Service, enabling spatial localization of extracted data fields within document images.
+This document describes the bounding box functionality integrated into the IDP
+Assessment Service, enabling spatial localization of extracted data fields
+within document images.
 
 ## Overview
 
-The Assessment Service now supports **optional bounding box extraction** as part of its confidence assessment workflow. When enabled, the service can:
+The Assessment Service now supports **optional bounding box extraction** as part
+of its confidence assessment workflow. When enabled, the service can:
 
 - Extract bounding box coordinates for each assessed field
 - Convert coordinates to UI-compatible geometry format
@@ -16,16 +19,21 @@ The Assessment Service now supports **optional bounding box extraction** as part
 ### Core Capabilities
 
 - **Optional Feature**: Disabled by default, enabled via configuration
-- **UI Compatible**: Outputs geometry format compatible with existing pattern-1 UI
+- **UI Compatible**: Outputs geometry format compatible with existing pattern-1
+  UI
 - **Multi-page Support**: Handles bounding boxes across multiple document pages
-- **Error Resilient**: Gracefully handles invalid or incomplete bounding box data
-- **Coordinate Normalization**: Converts from 0-1000 scale to 0-1 normalized coordinates
+- **Error Resilient**: Gracefully handles invalid or incomplete bounding box
+  data
+- **Coordinate Normalization**: Converts from 0-1000 scale to 0-1 normalized
+  coordinates
 
 ### Output Format
 
-When bounding boxes are enabled, the assessment output includes `geometry` arrays for all attribute types:
+When bounding boxes are enabled, the assessment output includes `geometry`
+arrays for all attribute types:
 
 **Simple Attributes:**
+
 ```json
 {
   "account_number": {
@@ -38,7 +46,7 @@ When bounding boxes are enabled, the assessment output includes `geometry` array
           "top": 0.375,
           "left": 0.447,
           "width": 0.059,
-          "height": 0.010
+          "height": 0.01
         },
         "page": 1
       }
@@ -48,6 +56,7 @@ When bounding boxes are enabled, the assessment output includes `geometry` array
 ```
 
 **Group Attributes (Nested):**
+
 ```json
 {
   "CompanyAddress": {
@@ -69,7 +78,7 @@ When bounding boxes are enabled, the assessment output includes `geometry` array
     },
     "ZipCode": {
       "confidence": 0.99,
-      "confidence_reason": "Clear text with high OCR confidence", 
+      "confidence_reason": "Clear text with high OCR confidence",
       "confidence_threshold": 0.9,
       "geometry": [
         {
@@ -88,6 +97,7 @@ When bounding boxes are enabled, the assessment output includes `geometry` array
 ```
 
 **List Attributes:**
+
 ```json
 {
   "Transactions": [
@@ -133,18 +143,19 @@ When bounding boxes are enabled, the assessment output includes `geometry` array
 
 ### Basic Configuration
 
-Add the `bounding_boxes` section to your assessment configuration and enhance your existing prompt template:
+Add the `bounding_boxes` section to your assessment configuration and enhance
+your existing prompt template:
 
 ```yaml
 assessment:
   enabled: true
   model: us.amazon.nova-pro-v1:0
   temperature: 0.0
-  
+
   # Enable bounding box extraction
   bounding_boxes:
     enabled: true
-  
+
   # Enhanced prompt template extending existing assessment sophistication
   task_prompt: |
     <background>
@@ -177,7 +188,7 @@ assessment:
     For each field, provide bounding box coordinates:
     - bbox: [x1, y1, x2, y2] coordinates in normalized 0-1000 scale
     - page: Page number where the field appears (starting from 1)
-    
+
     Coordinate system:
     - Use normalized scale 0-1000 for both x and y axes
     - x1, y1 = top-left corner of bounding box  
@@ -191,15 +202,16 @@ assessment:
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
+| Option                   | Type    | Default | Description                            |
+| ------------------------ | ------- | ------- | -------------------------------------- |
 | `bounding_boxes.enabled` | boolean | `false` | Enable/disable bounding box extraction |
 
 ## LLM Prompt Requirements
 
 ### Expected LLM Response Format
 
-The LLM must return assessment data in this format when bounding boxes are enabled:
+The LLM must return assessment data in this format when bounding boxes are
+enabled:
 
 ```json
 {
@@ -236,13 +248,13 @@ flowchart TD
     A[Assessment Service] --> B{Bounding Box Enabled?}
     B -->|No| C[Standard Assessment]
     B -->|Yes| D[Enhanced Assessment with Bounding Boxes]
-    
+
     D --> E[LLM Invocation with Images]
     E --> F[Parse LLM Response]
     F --> G[Extract Geometry Data]
     G --> H[Convert Coordinates]
     H --> I[Generate UI-Compatible Output]
-    
+
     C --> J[Final Assessment Result]
     I --> J
 ```
@@ -250,16 +262,21 @@ flowchart TD
 ### Core Methods
 
 #### `_is_bounding_box_enabled()`
+
 Checks configuration to determine if bounding box extraction is enabled.
 
 #### `_convert_bbox_to_geometry(bbox_coords, page_num)`
+
 Converts `[x1, y1, x2, y2]` coordinates to geometry format:
+
 - Normalizes from 0-1000 scale to 0-1
 - Converts corner coordinates to position + dimensions
 - Ensures proper coordinate ordering
 
 #### `_extract_geometry_from_assessment(assessment_data)`
+
 Processes LLM response to extract and convert bounding box data:
+
 - Validates bbox and page data completeness
 - Handles error cases gracefully
 - Removes raw bbox data from final output
@@ -307,13 +324,13 @@ explainability_info = extraction_data.get("explainability_info", [])
 
 if explainability_info:
     assessment_result = explainability_info[0]
-    
+
     for field_name, field_assessment in assessment_result.items():
         if "geometry" in field_assessment:
             geometry = field_assessment["geometry"][0]
             bbox = geometry["boundingBox"]
             page = geometry["page"]
-            
+
             print(f"{field_name} found on page {page}")
             print(f"Location: top={bbox['top']}, left={bbox['left']}")
             print(f"Size: width={bbox['width']}, height={bbox['height']}")
@@ -328,7 +345,8 @@ The geometry format is fully compatible with the existing pattern-1 UI:
 - **Page Support**: Page numbers for multi-page documents
 - **Array Structure**: Supports multiple bounding boxes per field
 
-The UI can immediately render bounding box overlays without additional processing.
+The UI can immediately render bounding box overlays without additional
+processing.
 
 ## Testing
 
@@ -338,6 +356,7 @@ Comprehensive unit tests are provided in:
 `lib/idp_common_pkg/tests/unit/assessment/test_bounding_box_integration.py`
 
 Test coverage includes:
+
 - Configuration validation
 - Coordinate conversion accuracy
 - Error handling for invalid data
@@ -356,25 +375,30 @@ python -m pytest tests/unit/assessment/test_bounding_box_integration.py -v
 ### Impact on Processing Time
 
 - **Minimal Overhead**: When disabled, no performance impact
-- **LLM Processing**: When enabled, may slightly increase inference time due to additional coordinate generation
+- **LLM Processing**: When enabled, may slightly increase inference time due to
+  additional coordinate generation
 - **Coordinate Conversion**: Negligible computational overhead
 
 ### Memory Usage
 
 - **Geometry Data**: Small additional memory footprint for coordinate storage
-- **Error Handling**: Graceful degradation prevents memory issues with invalid data
+- **Error Handling**: Graceful degradation prevents memory issues with invalid
+  data
 
 ## Migration and Compatibility
 
 ### Backward Compatibility
 
 - **Default Behavior**: Feature is disabled by default
-- **Existing Workflows**: No changes required to existing assessment configurations  
-- **Output Format**: Standard assessment results unchanged when feature is disabled
+- **Existing Workflows**: No changes required to existing assessment
+  configurations
+- **Output Format**: Standard assessment results unchanged when feature is
+  disabled
 
 ### Migration Steps
 
-1. **Update Configuration**: Add `bounding_boxes.enabled: true` to assessment config
+1. **Update Configuration**: Add `bounding_boxes.enabled: true` to assessment
+   config
 2. **Enhance Prompts**: Update prompt templates to request bounding box data
 3. **Test Integration**: Verify bounding box extraction with sample documents
 4. **Monitor Performance**: Validate processing time and accuracy
@@ -384,16 +408,19 @@ python -m pytest tests/unit/assessment/test_bounding_box_integration.py -v
 ### Common Issues
 
 #### No Bounding Boxes Generated
+
 - **Check Configuration**: Ensure `bounding_boxes.enabled: true`
 - **Verify Prompt**: Confirm prompt requests bbox data
 - **Check Logs**: Look for geometry extraction warnings
 
 #### Invalid Coordinates
+
 - **LLM Response**: Verify LLM returns valid `[x1, y1, x2, y2]` format
 - **Scale Validation**: Ensure coordinates are in 0-1000 range
 - **Page Numbers**: Confirm page numbers start from 1
 
 #### UI Display Issues
+
 - **Coordinate Format**: Verify geometry format matches UI expectations
 - **Page Mapping**: Ensure page numbers align with UI page indexing
 
@@ -411,17 +438,21 @@ logging.getLogger('idp_common.assessment.service').setLevel(logging.DEBUG)
 Potential future improvements include:
 
 1. **Multiple Bounding Boxes**: Support for fields spanning multiple locations
-2. **Confidence-Based Filtering**: Only generate bounding boxes for high-confidence fields
+2. **Confidence-Based Filtering**: Only generate bounding boxes for
+   high-confidence fields
 3. **Coordinate Validation**: Enhanced validation against document dimensions
 4. **Performance Optimization**: Caching and batch processing improvements
 
 ## Conclusion
 
-The bounding box integration provides powerful spatial localization capabilities while maintaining the robustness and reliability of the existing Assessment Service. The feature is designed to be:
+The bounding box integration provides powerful spatial localization capabilities
+while maintaining the robustness and reliability of the existing Assessment
+Service. The feature is designed to be:
 
 - **Optional and Non-Intrusive**
 - **UI-Compatible**
 - **Error-Resilient**
 - **Easy to Configure**
 
-This enhancement enables rich document annotation and visualization capabilities while preserving all existing functionality.
+This enhancement enables rich document annotation and visualization capabilities
+while preserving all existing functionality.

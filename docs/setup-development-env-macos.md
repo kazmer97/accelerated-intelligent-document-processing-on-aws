@@ -1,30 +1,43 @@
 # Development Environment Setup Guide on MacOS
-# Introduction
-This guide configures a comprehensive local development environment on macOS systems for the GenAI IDP accelerator.  
 
-Purpose: Delivers an automated, scripted installation of all required development tools optimized for Apple hardware, ensuring rapid setup with minimal manual configuration. This approach leverages native macOS performance while maintaining consistency with project requirements.  
+# Introduction
+
+This guide configures a comprehensive local development environment on macOS
+systems for the GenAI IDP accelerator.
+
+Purpose: Delivers an automated, scripted installation of all required
+development tools optimized for Apple hardware, ensuring rapid setup with
+minimal manual configuration. This approach leverages native macOS performance
+while maintaining consistency with project requirements.
 
 When to use this guide:  
 • You're setting up development on a Mac for the first time  
 • You're experiencing configuration issues with your current macOS setup  
 • You prefer automated installation over manual tool configuration  
-• You want to ensure exact tool versions match project specifications  
+• You want to ensure exact tool versions match project specifications
 
-# What you'll achieve: 
-A fully functional local development environment with Python 3.13, AWS CLI, Docker Desktop, VS Code with AI extensions, and integrated development tools - all configured through a single automated setup script. This document provides a step-by-step guide to setting up a development environment on macOS. It covers installing essential tools such as VS Code, Python 3.13.x, AWS CLI, SAM CLI, Node.js, Docker Desktop, Miniconda, Cline for VS Code, and Amazon Q in Terminal.
+# What you'll achieve:
+
+A fully functional local development environment with Python 3.13, AWS CLI,
+Docker Desktop, VS Code with AI extensions, and integrated development tools -
+all configured through a single automated setup script. This document provides a
+step-by-step guide to setting up a development environment on macOS. It covers
+installing essential tools such as VS Code, Python 3.13.x, AWS CLI, SAM CLI,
+Node.js, Docker Desktop, Miniconda, Cline for VS Code, and Amazon Q in Terminal.
 
 # Prerequisites
 
--   macOS 12+ (Monterey) recommended; Apple Silicon (M1/M2/M3) and Intel
-    are both supported.
+- macOS 12+ (Monterey) recommended; Apple Silicon (M1/M2/M3) and Intel are both
+  supported.
 
--   An admin account on the Mac (you may be prompted for your password).
+- An admin account on the Mac (you may be prompted for your password).
 
--   Stable internet connection.
+- Stable internet connection.
 
 ### **Clone the Repository**
 
 To get the sample project locally, run:
+
 ```bash
 git clone https://github.com/aws-solutions-library-samples/accelerated-intelligent-document-processing-on-aws.git
 ```
@@ -34,18 +47,18 @@ Change your directory to access the mac_setup.sh file
 # Quickstart (One-Command Script)
 
 If you prefer to automate everything, download the script and run:
-```bash 
+
+```bash
 chmod +x mac_setup.sh
 ./mac_setup.sh
 ```
-
 
 # Step-by-Step Instructions
 
 ## 1) Install Xcode Command Line Tools (and Rosetta, if needed)
 
-Xcode Command Line Tools provide compilers and essential build tools.
-Rosetta is required for some Intel-only tools on Apple Silicon.
+Xcode Command Line Tools provide compilers and essential build tools. Rosetta is
+required for some Intel-only tools on Apple Silicon.
 
 ```bash
 # Install Xcode Command Line Tools
@@ -58,7 +71,6 @@ if [[ "$(uname -m)" == "arm64" ]]; then
     fi
 fi
 ```
-
 
 ## 2) Install Homebrew
 
@@ -74,21 +86,20 @@ fi
 eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
 ```
 
-
 ## 3) Install Visual Studio Code
 
-You can install VS Code via Homebrew (recommended) or manually from
-Microsoft.
+You can install VS Code via Homebrew (recommended) or manually from Microsoft.
 
 ```bash
 \# Install VS Code via Homebrew Cask\
 brew install \--cask visual-studio-code
 ```
 
-
 ## 4) Python (pyenv + optional Miniconda)
 
-We'll install pyenv to manage Python versions and optionally Miniconda for data workflows. This replaces the Linux-specific alternatives/yum/dnf steps in your original script.
+We'll install pyenv to manage Python versions and optionally Miniconda for data
+workflows. This replaces the Linux-specific alternatives/yum/dnf steps in your
+original script.
 
 ```bash
 # Install pyenv and dependencies
@@ -128,7 +139,6 @@ brew install awscli
 aws --version
 ```
 
-
 ## 6) AWS SAM CLI
 
 Install SAM CLI from AWS Homebrew tap.
@@ -141,10 +151,10 @@ brew install aws-sam-cli
 sam --version
 ```
 
-
 ## 7) Node.js via nvm (Node 18 LTS)
 
-Use nvm to manage Node versions. This mirrors your Linux section but uses zsh-friendly profile updates.
+Use nvm to manage Node versions. This mirrors your Linux section but uses
+zsh-friendly profile updates.
 
 ```bash
 # Install nvm
@@ -165,11 +175,10 @@ node -v
 npm -v
 ```
 
-
-
 ## 8) Docker Desktop
 
-Docker Desktop is the recommended way to run containers on macOS. It includes a lightweight VM and provides Docker Engine & Compose.
+Docker Desktop is the recommended way to run containers on macOS. It includes a
+lightweight VM and provides Docker Engine & Compose.
 
 ```bash
 brew install --cask docker
@@ -179,10 +188,10 @@ brew install --cask docker
 # docker version
 ```
 
-
 ## 9) Open Interpreter (optional)
 
-Install with pip. You can later configure any model/provider you want (kept generic here).
+Install with pip. You can later configure any model/provider you want (kept
+generic here).
 
 ```bash
 python -m pip install --upgrade open-interpreter
@@ -190,11 +199,10 @@ python -m pip install --upgrade open-interpreter
 # Run with: interpreter
 ```
 
-
-
 ## 10) Shell Quality-of-Life Settings (zsh)
 
-On macOS, zsh is the default shell. We'll add a small include folder to keep the main ~/.zshrc tidy.
+On macOS, zsh is the default shell. We'll add a small include folder to keep the
+main ~/.zshrc tidy.
 
 ```bash
 # Create include directory for .zshrc snippets
@@ -235,7 +243,8 @@ EOF
 
 ## 11) Verify Your Setup
 
-- VS Code: Open it from Applications. Install extensions as needed (e.g., Python, Docker, AWS Toolkit).
+- VS Code: Open it from Applications. Install extensions as needed (e.g.,
+  Python, Docker, AWS Toolkit).
 - Python: run `python --version` and `pip3 --version`.
 - Node: run `node -v` and `npm -v`.
 - AWS CLI: run `aws --version`.
@@ -250,35 +259,54 @@ Install the required Python packages for the publish.py script:
 pip install boto3 rich PyYAML botocore setuptools docker
 ```
 
-> **Note**: The `docker` Python package is required for container-based Lambda deployments.
+# <<<<<<< HEAD
+
+> **Note**: The `docker` Python package is required for container-based Lambda
+> deployments.
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
 
 ## **13) Configure AWS CLI**
+
 ### Refer this link for AWS configure
-https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html  
+
+https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html
 
 ## **14) Run Publish Script**
 
 ### Using publish.py (Recommended)
 
 Test publish script help:
+
 ```bash
 python3 publish.py --help
 ```
 
-Test standard ZIP-based deployment:
+<<<<<<< HEAD Test build using publish.py: ======= Test standard ZIP-based
+deployment:
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
+
 ```bash
 python3 publish.py bucket_name build-test us-east-1
 ```
 
-Pattern-2 container images are built and pushed automatically when Pattern-2 changes are detected. Ensure Docker is running and you have ECR permissions.
+<<<<<<< HEAD **Troubleshooting Build Issues:** If the build fails, use the
+`--verbose` flag to see detailed error messages: ======= Pattern-2 container
+images are built and pushed automatically when Pattern-2 changes are detected.
+Ensure Docker is running and you have ECR permissions.
 
-**Troubleshooting Build Issues:**
-If the build fails, use the `--verbose` flag to see detailed error messages:
+**Troubleshooting Build Issues:** If the build fails, use the `--verbose` flag
+to see detailed error messages:
+
+> > > > > > > e9314b6b (Unified formatting for YAML, MD, JSON)
+
 ```bash
 python3 publish.py bucket_name build-test us-east-1 --verbose
 ```
 
 The verbose flag will show:
+
 - Exact SAM build commands being executed
 - Complete error output from failed builds
 - Python version compatibility issues
@@ -287,50 +315,67 @@ The verbose flag will show:
 ### Using publish.sh (Legacy)
 
 Test publish script help:
+
 ```bash
 ./publish.sh --help
 ```
 
 Test build using publish.sh:
+
 ```bash
 ./publish.sh bucket_name build-test us-east-1
 ```
 
-- If `brew` is not found, add it to PATH: 
+- If `brew` is not found, add it to PATH:
+
 ```bash
 eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
 ```
 
-- If `pyenv` shims don't work, ensure its init lines are in `~/.zshrc` and open a new Terminal.
+- If `pyenv` shims don't work, ensure its init lines are in `~/.zshrc` and open
+  a new Terminal.
 
-- On Apple Silicon, some images/tools may need Rosetta. Install it with `softwareupdate --install-rosetta --agree-to-license`.
+- On Apple Silicon, some images/tools may need Rosetta. Install it with
+  `softwareupdate --install-rosetta --agree-to-license`.
 
-- Docker needs to be running before `docker` commands succeed. Launch Docker.app and wait for the whale icon to be steady.
+- Docker needs to be running before `docker` commands succeed. Launch Docker.app
+  and wait for the whale icon to be steady.
 
 # Troubleshooting Tips
+
 ### Cline
-What it is: An AI coding assistant that runs as a VS Code extension, powered by various LLMs (Claude, GPT, etc.)  
+
+What it is: An AI coding assistant that runs as a VS Code extension, powered by
+various LLMs (Claude, GPT, etc.)
 
 Key capabilities:
-- Autonomous code editing across multiple files  
-- Executes terminal commands and reads file outputs  
-- Can browse the web for documentation/research  
-- Maintains context across entire codebases  
-- Handles complex, multi-step development tasks  
 
-Why it's helpful: Acts like an AI pair programmer that can actually write, test, and debug code independently while you supervise.  
+- Autonomous code editing across multiple files
+- Executes terminal commands and reads file outputs
+- Can browse the web for documentation/research
+- Maintains context across entire codebases
+- Handles complex, multi-step development tasks
+
+Why it's helpful: Acts like an AI pair programmer that can actually write, test,
+and debug code independently while you supervise.
+
 - You can install it from "Extensions" tab on VSCode.
 
 ### Amazon Q Developer
-What it is: AWS's AI coding assistant integrated into IDEs, specifically designed for AWS development
+
+What it is: AWS's AI coding assistant integrated into IDEs, specifically
+designed for AWS development
 
 Key capabilities:
-- Code suggestions and completions optimized for AWS services  
-- Security vulnerability scanning and fixes  
-- AWS best practices recommendations  
-- Infrastructure as Code (CloudFormation, CDK) assistance  
-- Direct integration with AWS documentation and services  
 
-Why it's helpful: Specialized for AWS development with deep knowledge of AWS services, perfect for this GenAI-IDP project since it's 
-built entirely on AWS.
-- You can install it from https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-installing.html
+- Code suggestions and completions optimized for AWS services
+- Security vulnerability scanning and fixes
+- AWS best practices recommendations
+- Infrastructure as Code (CloudFormation, CDK) assistance
+- Direct integration with AWS documentation and services
+
+Why it's helpful: Specialized for AWS development with deep knowledge of AWS
+services, perfect for this GenAI-IDP project since it's built entirely on AWS.
+
+- You can install it from
+  https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-installing.html

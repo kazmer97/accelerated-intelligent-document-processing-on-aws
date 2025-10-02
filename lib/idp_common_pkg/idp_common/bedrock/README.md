@@ -3,7 +3,10 @@ SPDX-License-Identifier: MIT-0
 
 # Bedrock Integration
 
-The GenAIIC IDP Accelerator includes a robust client for Amazon Bedrock that provides resilient model invocation with built-in retry handling, metrics collection, and helpful utilities. This integration supports all document processing patterns that utilize Bedrock models.
+The GenAIIC IDP Accelerator includes a robust client for Amazon Bedrock that
+provides resilient model invocation with built-in retry handling, metrics
+collection, and helpful utilities. This integration supports all document
+processing patterns that utilize Bedrock models.
 
 ## Using the Bedrock Client
 
@@ -75,7 +78,9 @@ embedding = client.generate_embedding(
 
 ## Prompt Caching with CachePoint
 
-Prompt caching is a powerful feature in Amazon Bedrock that significantly reduces response latency for workloads with repetitive contexts. The Bedrock client provides built-in support for this via the `<<CACHEPOINT>>` tag.
+Prompt caching is a powerful feature in Amazon Bedrock that significantly
+reduces response latency for workloads with repetitive contexts. The Bedrock
+client provides built-in support for this via the `<<CACHEPOINT>>` tag.
 
 ### Supported Models
 
@@ -86,11 +91,14 @@ CachePoint functionality is only available for specific Bedrock model IDs:
 - `us.amazon.nova-lite-v1:0`
 - `us.amazon.nova-pro-v1:0`
 
-When using unsupported models, the client will automatically remove `<<CACHEPOINT>>` tags from the content while preserving all text, and log a warning.
+When using unsupported models, the client will automatically remove
+`<<CACHEPOINT>>` tags from the content while preserving all text, and log a
+warning.
 
 ### Using CachePoint in Your Prompts
 
-To implement prompt caching, insert the `<<CACHEPOINT>>` tag in your text content to indicate where caching boundaries should occur:
+To implement prompt caching, insert the `<<CACHEPOINT>>` tag in your text
+content to indicate where caching boundaries should occur:
 
 ```python
 from idp_common.bedrock.client import BedrockClient
@@ -100,7 +108,7 @@ client = BedrockClient()
 # Content with cachepoint tags
 content = [
     {
-        "text": """This is static context that doesn't change between requests. 
+        "text": """This is static context that doesn't change between requests.
         It could include model instructions, few shot examples, etc.
         <<CACHEPOINT>>
         This is dynamic content that changes with each request.
@@ -122,12 +130,15 @@ When the `invoke_model` method processes your content:
 
 1. It detects any text elements containing the `<<CACHEPOINT>>` tag
 2. The text is split at each tag location
-3. The client inserts a `{"cachePoint": {"type": "default"}}` element between the split text parts
-4. The resulting message structure enables Bedrock to cache the preceding content
+3. The client inserts a `{"cachePoint": {"type": "default"}}` element between
+   the split text parts
+4. The resulting message structure enables Bedrock to cache the preceding
+   content
 
 ### Multiple CachePoints and Mixed Content
 
-You can use multiple cachepoints in a single prompt and combine them with other content types:
+You can use multiple cachepoints in a single prompt and combine them with other
+content types:
 
 ```python
 content = [
@@ -140,10 +151,14 @@ content = [
 ### Benefits of Prompt Caching
 
 - **Faster Response Times**: Avoid reprocessing the same context repeatedly
-- **Reduced TTFT**: Time-To-First-Token is significantly lower for subsequent requests
-- **Cost Efficiency**: Potentially lower token usage by avoiding redundant processing
+- **Reduced TTFT**: Time-To-First-Token is significantly lower for subsequent
+  requests
+- **Cost Efficiency**: Potentially lower token usage by avoiding redundant
+  processing
 
-> **NOTE**: To effectively use Prompt Caching, there is a [minimum number of tokens](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html#prompt-caching-models) for the cache.
+> **NOTE**: To effectively use Prompt Caching, there is a
+> [minimum number of tokens](https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-caching.html#prompt-caching-models)
+> for the cache.
 
 ### Debugging CachePoint Processing
 
@@ -158,7 +173,9 @@ logging.getLogger('idp_common.bedrock.client').setLevel(logging.DEBUG)
 ```
 
 ### Example CachePoint Processing
-See notebook [Bedrock Client Prompt Cache Testing Notebook](../../../../notebooks/bedrock_client_cachepoint_test.ipynb)
+
+See notebook
+[Bedrock Client Prompt Cache Testing Notebook](../../../../notebooks/bedrock_client_cachepoint_test.ipynb)
 
 ## Helper Methods
 
@@ -199,22 +216,27 @@ text = client.extract_text_from_response(response)
 
 ## Guardrail Support
 
-This module includes built-in support for Amazon Bedrock Guardrails, which help enforce content safety, security, and policy compliance across all Bedrock model interactions.
+This module includes built-in support for Amazon Bedrock Guardrails, which help
+enforce content safety, security, and policy compliance across all Bedrock model
+interactions.
 
 ### Configuring Guardrails
 
 Guardrails are configured via environment variables:
 
-- `GUARDRAIL_ID_AND_VERSION`: Contains the Guardrail ID and Version in format `id:version`
+- `GUARDRAIL_ID_AND_VERSION`: Contains the Guardrail ID and Version in format
+  `id:version`
 
-When properly configured, the `get_guardrail_config()` function will automatically include guardrail parameters in Bedrock API calls.
+When properly configured, the `get_guardrail_config()` function will
+automatically include guardrail parameters in Bedrock API calls.
 
 ### How Guardrail Integration Works
 
 1. The `invoke_model` function checks if `GUARDRAIL_ID_AND_VERSION` is set
 2. If configured, guardrail parameters are parsed from the environment variable
 3. Appropriate guardrail parameters are added to Bedrock API calls:
-   - For `converse` API: Uses `guardrailIdentifier`, `guardrailVersion`, and `trace`
+   - For `converse` API: Uses `guardrailIdentifier`, `guardrailVersion`, and
+     `trace`
 4. Debug logs show when guardrails are being applied
 
 ### Example with Guardrails
@@ -237,39 +259,49 @@ response = invoke_model(
 
 ## Generation Parameter Configuration
 
-The Bedrock client supports key generation parameters that control the output behavior of foundation models. Understanding these parameters is crucial for optimizing model performance for different document processing tasks.
+The Bedrock client supports key generation parameters that control the output
+behavior of foundation models. Understanding these parameters is crucial for
+optimizing model performance for different document processing tasks.
 
 ### Understanding Generation Parameters
 
 #### Temperature
 
-Temperature controls the randomness of model outputs by scaling the probability distribution of next tokens:
+Temperature controls the randomness of model outputs by scaling the probability
+distribution of next tokens:
 
-- **Low temperature (0.0-0.3)**: More deterministic, focused outputs ideal for factual extraction
+- **Low temperature (0.0-0.3)**: More deterministic, focused outputs ideal for
+  factual extraction
 - **Medium temperature (0.4-0.7)**: Balanced outputs with some creativity
 - **High temperature (0.8-1.0)**: More diverse and creative outputs
 
 #### Top-p (Nucleus Sampling)
 
-Top-p (nucleus sampling) computes the cumulative distribution over all token options in decreasing probability order and cuts it off once it reaches the specified probability threshold:
+Top-p (nucleus sampling) computes the cumulative distribution over all token
+options in decreasing probability order and cuts it off once it reaches the
+specified probability threshold:
 
 - Lower values (0.1-0.5): More focused on high-probability tokens
 - Higher values (0.6-1.0): Includes more diversity in possible tokens
 
-**Important**: Anthropic recommends adjusting either temperature OR top-p, but not both simultaneously, as this can lead to unpredictable generation behavior.
+**Important**: Anthropic recommends adjusting either temperature OR top-p, but
+not both simultaneously, as this can lead to unpredictable generation behavior.
 
 #### Top-k
 
-Top-k limits the selection to only the k highest probability tokens before temperature/top-p logic runs:
+Top-k limits the selection to only the k highest probability tokens before
+temperature/top-p logic runs:
 
 - Lower values (5-20): Narrows token selection for more predictable outputs
 - Higher values (50-200): Allows for more diverse language
 
 ### Parameter Implementation by Model Family
 
-Different Bedrock models implement these parameters with varying defaults, naming conventions, and parameter placements:
+Different Bedrock models implement these parameters with varying defaults,
+naming conventions, and parameter placements:
 
 - **Claude models**:
+
   - Default values: temperature=1.0, top_p=0.999, top_k=250 (wide open)
   - Parameters use snake_case: `temperature`, `top_p`, `top_k`
   - Implementation: `top_k` is placed in `additionalModelRequestFields`
@@ -277,9 +309,11 @@ Different Bedrock models implement these parameters with varying defaults, namin
 - **Nova models**:
   - Default values: temperature=0.7, topP=0.9, topK≈50 (moderately constrained)
   - Parameters use camelCase: `temperature`, `topP`, `topK`
-  - Implementation: `topK` is placed in `additionalModelRequestFields.inferenceConfig`
+  - Implementation: `topK` is placed in
+    `additionalModelRequestFields.inferenceConfig`
 
 **Common implementation details**:
+
 - Temperature is always included in the main `inferenceConfig`
 - top_p is added to `inferenceConfig` as "topP"
 
@@ -288,16 +322,20 @@ Different Bedrock models implement these parameters with varying defaults, namin
 For document understanding tasks, we recommend the following parameter settings:
 
 1. **Key Information Extraction**:
+
    - Temperature: 0.0 (deterministic)
    - Top-p: 0.1 (focused on highest probability tokens)
    - Top-k: 5 (restrict to most likely tokens)
-   - Rationale: Maximizes precision and consistency for structured data extraction
+   - Rationale: Maximizes precision and consistency for structured data
+     extraction
 
 2. **Classification**:
+
    - Temperature: 0.0 (deterministic)
    - Top-p: 0.1 (focused)
    - Top-k: 5 (restricted)
-   - Rationale: Ensures consistent classification decisions with minimum variance
+   - Rationale: Ensures consistent classification decisions with minimum
+     variance
 
 3. **Summarization**:
    - Temperature: 0.0 (deterministic)
@@ -305,7 +343,10 @@ For document understanding tasks, we recommend the following parameter settings:
    - Top-k: 5 (moderately restricted)
    - Rationale: Balances factual accuracy with coherent narrative flow
 
-Remember: As Anthropic recommends, adjust either temperature OR top-p, but not both simultaneously. For document processing tasks that require high accuracy and consistency, we've found that using a temperature of 0.0 with a low top-p value (0.1) provides the most reliable results.
+Remember: As Anthropic recommends, adjust either temperature OR top-p, but not
+both simultaneously. For document processing tasks that require high accuracy
+and consistency, we've found that using a temperature of 0.0 with a low top-p
+value (0.1) provides the most reliable results.
 
 ## Resilience Features
 
@@ -326,4 +367,5 @@ When creating a BedrockClient instance, you can customize:
 - `max_backoff`: Maximum backoff time in seconds (default: 300)
 - `metrics_enabled`: Whether to publish CloudWatch metrics (default: True)
 
-This integration provides the foundation for reliable, scalable document processing with Amazon Bedrock models throughout the accelerator.
+This integration provides the foundation for reliable, scalable document
+processing with Amazon Bedrock models throughout the accelerator.

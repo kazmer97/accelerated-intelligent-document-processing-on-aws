@@ -1,0 +1,16 @@
+{
+  "name": "accelerated-intelligent-document-processing-on-aws",
+  "version": "1.0.0",
+  "description": "AWS GenAI IDP Accelerator - Prettier configuration for YAML formatting",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write .",
+    "format:yaml": "prettier --write '**/*.{yaml,yml}'",
+    "format:check": "prettier --check .",
+    "format:check:yaml": "prettier --check '**/*.{yaml,yml}'"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  },
+  "prettier": "./.prettierrc.json"
+}

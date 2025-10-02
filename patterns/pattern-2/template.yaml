@@ -126,15 +126,14 @@ Parameters:
     Description: "Pattern-2 source zipfile object name"
 
 Conditions:
+<<<<<<< HEAD
+  HasGuardrailConfig: !And [!Not [!Equals [!Ref BedrockGuardrailId, ""]], !Not [!Equals [!Ref BedrockGuardrailVersion, ""]]]
+=======
   HasGuardrailConfig:
-    !And [
-      !Not [!Equals [!Ref BedrockGuardrailId, ""]],
-      !Not [!Equals [!Ref BedrockGuardrailVersion, ""]],
-    ]
-  HasCustomClassificationModelARN:
-    !Not [!Equals [!Ref CustomClassificationModelARN, ""]]
-  HasCustomExtractionModelARN:
-    !Not [!Equals [!Ref CustomExtractionModelARN, ""]]
+    !And [!Not [!Equals [!Ref BedrockGuardrailId, ""]], !Not [!Equals [!Ref BedrockGuardrailVersion, ""]]]
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
+  HasCustomClassificationModelARN: !Not [!Equals [!Ref CustomClassificationModelARN, ""]]
+  HasCustomExtractionModelARN: !Not [!Equals [!Ref CustomExtractionModelARN, ""]]
   HasPermissionsBoundary: !Not [!Equals [!Ref PermissionsBoundaryArn, ""]]
   HasAppSyncApi: !Not [!Equals [!Ref AppSyncApiArn, ""]]
 
@@ -588,11 +587,14 @@ Resources:
                         minimum: 0
                         maximum: 1
                         order: 5
-                        dependsOn:
-                          {
-                            field: "evaluation_method",
-                            values: ["SEMANTIC", "FUZZY"],
-                          }
+<<<<<<< HEAD
+                        dependsOn: {
+                          field: "evaluation_method",
+                          values: ["SEMANTIC", "FUZZY"]
+                        }
+=======
+                        dependsOn: { field: "evaluation_method", values: ["SEMANTIC", "FUZZY"] }
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
                       confidence_threshold:
                         type: number
                         description: Confidence threshold for this specific attribute (0.0 to 1.0). If not set, the default confidence threshold from assessment section will be used.
@@ -640,11 +642,14 @@ Resources:
                               minimum: 0
                               maximum: 1
                               order: 4
-                              dependsOn:
-                                {
-                                  field: "evaluation_method",
-                                  values: ["SEMANTIC", "FUZZY"],
-                                }
+<<<<<<< HEAD
+                              dependsOn: {
+                                field: "evaluation_method",
+                                values: ["SEMANTIC", "FUZZY"]
+                              }
+=======
+                              dependsOn: { field: "evaluation_method", values: ["SEMANTIC", "FUZZY"] }
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
                             confidence_threshold:
                               type: number
                               description: Confidence threshold for this specific attribute (0.0 to 1.0). If not set, the default confidence threshold from assessment section will be used.
@@ -703,11 +708,14 @@ Resources:
                                   minimum: 0
                                   maximum: 1
                                   order: 4
-                                  dependsOn:
-                                    {
-                                      field: "evaluation_method",
-                                      values: ["SEMANTIC", "FUZZY"],
-                                    }
+<<<<<<< HEAD
+                                  dependsOn: {
+                                    field: "evaluation_method",
+                                    values: ["SEMANTIC", "FUZZY"]
+                                  }
+=======
+                                  dependsOn: { field: "evaluation_method", values: ["SEMANTIC", "FUZZY"] }
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
                                 confidence_threshold:
                                   type: number
                                   description: Confidence threshold for this specific attribute (0.0 to 1.0). If not set, the default confidence threshold from assessment section will be used.
@@ -1381,19 +1389,20 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/ocr_function/
+      Handler: index.handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:ocr-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:ocr-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 900
       MemorySize: 4096
       Environment:
@@ -1422,9 +1431,58 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref TrackingTable
         - Statement:
+<<<<<<< HEAD
+          - Effect: Allow
+            Action: cloudwatch:PutMetricData
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: !Ref CustomerManagedEncryptionKeyArn
+          # Textract APIs require '*' as they don't support resource-level permissions
+          - Effect: Allow
+            Action: 
+              - textract:DetectDocumentText
+              - textract:AnalyzeDocument
+            Resource: '*'
+          # Bedrock permissions for OCR
+          - Effect: Allow
+            Action: bedrock:InvokeModel
+            Resource: 
+=======
             - Effect: Allow
               Action: cloudwatch:PutMetricData
               Resource: "*"
+            - Effect: Allow
+              Action:
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !Ref CustomerManagedEncryptionKeyArn
+            # Textract APIs require '*' as they don't support resource-level permissions
+            - Effect: Allow
+              Action:
+                - textract:DetectDocumentText
+                - textract:AnalyzeDocument
+              Resource: "*"
+            # Bedrock permissions for OCR
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource:
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
+                - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/*"
+                - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*"
+          # AppSync permissions for updating document status (only if AppSync API is available)
+          - !If
+            - HasAppSyncApi
             - Effect: Allow
               Action:
                 - kms:Encrypt
@@ -1482,19 +1540,20 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/classification_function/
+      Handler: index.handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:classification-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:classification-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 900
       MemorySize: 4096
       Environment:
@@ -1535,6 +1594,15 @@ Resources:
               Resource: "*"
             - Effect: Allow
               Action:
+<<<<<<< HEAD
+                - appsync:GraphQL
+              Resource: 
+                - !Sub "${AppSyncApiArn}/types/Mutation/*"
+            - !Ref AWS::NoValue
+          - Effect: Allow
+            Action: bedrock:InvokeModel
+            Resource: 
+=======
                 - kms:Encrypt
                 - kms:Decrypt
                 - kms:ReEncrypt*
@@ -1555,6 +1623,7 @@ Resources:
                 - bedrock:InvokeModel
                 - bedrock:InvokeModelWithResponseStream
               Resource:
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
                 - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/*"
                 - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*"
                 - !If
@@ -1595,19 +1664,20 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/extraction_function/
+      Handler: index.handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:extraction-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:extraction-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 900
       MemorySize: 512
       Environment:
@@ -1615,12 +1685,12 @@ Resources:
           METRIC_NAMESPACE: !Ref StackName
           CONFIGURATION_BUCKET: !Ref ConfigurationBucket
           CONFIGURATION_TABLE_NAME: !Ref ConfigurationTable
+<<<<<<< HEAD
+          GUARDRAIL_ID_AND_VERSION: !If [HasGuardrailConfig, !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}", ""]
+=======
           GUARDRAIL_ID_AND_VERSION:
-            !If [
-              HasGuardrailConfig,
-              !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}",
-              "",
-            ]
+            !If [HasGuardrailConfig, !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}", ""]
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
           LOG_LEVEL: !Ref LogLevel
           APPSYNC_API_URL: !Ref AppSyncApiUrl
           TRACKING_TABLE: !Ref TrackingTable
@@ -1649,6 +1719,15 @@ Resources:
               Resource: "*"
             - Effect: Allow
               Action:
+<<<<<<< HEAD
+                - appsync:GraphQL
+              Resource: 
+                - !Sub "${AppSyncApiArn}/types/Mutation/*"
+            - !Ref AWS::NoValue
+          - Effect: Allow
+            Action: bedrock:InvokeModel
+            Resource: 
+=======
                 - kms:Encrypt
                 - kms:Decrypt
                 - kms:ReEncrypt*
@@ -1669,6 +1748,7 @@ Resources:
                 - bedrock:InvokeModel
                 - bedrock:InvokeModelWithResponseStream
               Resource:
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
                 - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/*"
                 - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*"
                 - !If
@@ -1714,19 +1794,20 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/assessment_function/
+      Handler: index.handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:assessment-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:assessment-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 900
       MemorySize: 512
       Environment:
@@ -1762,6 +1843,15 @@ Resources:
               Resource: "*"
             - Effect: Allow
               Action:
+<<<<<<< HEAD
+                - appsync:GraphQL
+              Resource: 
+                - !Sub "${AppSyncApiArn}/types/Mutation/*"
+            - !Ref AWS::NoValue
+          - Effect: Allow
+            Action: bedrock:InvokeModel
+            Resource: 
+=======
                 - kms:Encrypt
                 - kms:Decrypt
                 - kms:ReEncrypt*
@@ -1782,6 +1872,7 @@ Resources:
                 - bedrock:InvokeModel
                 - bedrock:InvokeModelWithResponseStream
               Resource:
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
                 - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/*"
                 - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*"
             - !If
@@ -1816,19 +1907,20 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/processresults_function/
+      Handler: index.handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:processresults-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:processresults-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 900
       MemorySize: 4096
       Environment:
@@ -1917,19 +2009,20 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/hitl-wait-function/
+      Handler: index.lambda_handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:hitl-wait-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:hitl-wait-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.lambda_handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 300
       MemorySize: 512
       Environment:
@@ -1990,19 +2083,20 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/hitl-status-update-function/
+      Handler: index.handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:hitl-status-update-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:hitl-status-update-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 60
       LoggingConfig:
         LogGroup: !Ref HITLStatusUpdateFunctionLogGroup
@@ -2070,12 +2164,11 @@ Resources:
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      Handler: index.lambda_handler
+=======
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       LoggingConfig:
         LogGroup: !Ref HITLProcessLambdaLogGroup
       PackageType: Image
@@ -2187,31 +2280,32 @@ Resources:
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     Properties:
-      PermissionsBoundary:
-        !If [
-          HasPermissionsBoundary,
-          !Ref PermissionsBoundaryArn,
-          !Ref AWS::NoValue,
-        ]
+      PermissionsBoundary: !If [HasPermissionsBoundary, !Ref PermissionsBoundaryArn, !Ref AWS::NoValue]
+<<<<<<< HEAD
+      CodeUri: src/summarization_function/
+      Handler: index.handler
+      Runtime: python3.12
+=======
       PackageType: Image
-      ImageUri: !Sub "${Pattern2ECRRepository.RepositoryUri}:summarization-function-${ImageVersion}"
+      ImageUri: !Sub "${ECRRepositoryUri}:summarization-function"
       Architectures:
         - arm64
       ImageConfig:
         Command:
           - "index.handler"
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
       Timeout: 900
       MemorySize: 4096
       Environment:
         Variables:
           METRIC_NAMESPACE: !Ref StackName
           CONFIGURATION_TABLE_NAME: !Ref ConfigurationTable
+<<<<<<< HEAD
+          GUARDRAIL_ID_AND_VERSION: !If [HasGuardrailConfig, !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}", ""]
+=======
           GUARDRAIL_ID_AND_VERSION:
-            !If [
-              HasGuardrailConfig,
-              !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}",
-              "",
-            ]
+            !If [HasGuardrailConfig, !Sub "${BedrockGuardrailId}:${BedrockGuardrailVersion}", ""]
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
           LOG_LEVEL: !Ref LogLevel
           APPSYNC_API_URL: !Ref AppSyncApiUrl
           TRACKING_TABLE: !Ref TrackingTable
@@ -2238,6 +2332,15 @@ Resources:
               Resource: "*"
             - Effect: Allow
               Action:
+<<<<<<< HEAD
+                - appsync:GraphQL
+              Resource: 
+                - !Sub "${AppSyncApiArn}/types/Mutation/*"
+            - !Ref AWS::NoValue
+          - Effect: Allow
+            Action: bedrock:InvokeModel
+            Resource: 
+=======
                 - kms:Encrypt
                 - kms:Decrypt
                 - kms:ReEncrypt*
@@ -2258,6 +2361,7 @@ Resources:
                 - bedrock:InvokeModel
                 - bedrock:InvokeModelWithResponseStream
               Resource:
+>>>>>>> e9314b6b (Unified formatting for YAML, MD, JSON)
                 - !Sub "arn:${AWS::Partition}:bedrock:*::foundation-model/*"
                 - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/*"
             - !If

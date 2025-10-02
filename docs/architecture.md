@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT-0
    - Picks up messages in batches
    - Manages workflow concurrency using DynamoDB counter
    - Starts Step Functions executions
-4. Step Functions workflow runs the steps defined in the selected pattern to process the document and generate output in the Output S3 bucket
+4. Step Functions workflow runs the steps defined in the selected pattern to
+   process the document and generate output in the Output S3 bucket
 5. Workflow completion events update tracking and metrics
 
 ![Architecture Diagram](../images/IDP.drawio.png)
@@ -29,20 +30,26 @@ SPDX-License-Identifier: MIT-0
   - Cognito user authentication
   - GraphQL API for UI-backend interactions
 - **Evaluation**: Document processing accuracy assessment system
-- **Document Knowledge Base**: Optional Bedrock Knowledge Base for document querying
+- **Document Knowledge Base**: Optional Bedrock Knowledge Base for document
+  querying
 
 ## Modular Design Overview
 
-The solution uses a modular architecture with nested CloudFormation stacks to support multiple document processing patterns while maintaining a common infrastructure for queueing, tracking, and monitoring. This design enables:
+The solution uses a modular architecture with nested CloudFormation stacks to
+support multiple document processing patterns while maintaining a common
+infrastructure for queueing, tracking, and monitoring. This design enables:
 
-- Support for multiple processing patterns without duplicating core infrastructure
+- Support for multiple processing patterns without duplicating core
+  infrastructure
 - Easy addition of new processing patterns without modifying existing code
 - Centralized monitoring and management across all patterns
 - Pattern-specific optimizations and configurations
 - Optional features that can be enabled across all patterns:
-  - Document summarization (controlled by configuration `summarization.enabled` property)
+  - Document summarization (controlled by configuration `summarization.enabled`
+    property)
     - This feature also enables the "Chat with Document" functionality
-    - This feature does not use the Bedrock Knowledge Base but stores a full-text text file in S3
+    - This feature does not use the Bedrock Knowledge Base but stores a
+      full-text text file in S3
   - Document Knowledge Base (using Amazon Bedrock)
   - Automated accuracy evaluation against baseline data
 
@@ -73,9 +80,10 @@ The main template handles all pattern-agnostic resources and infrastructure:
   - Identity Pool for secure AWS resource access
 - AppSync GraphQL API for UI-backend communication
 
-### Pattern Stacks (patterns/*)
+### Pattern Stacks (patterns/\*)
 
-Each pattern is implemented as a nested stack that contains pattern-specific resources:
+Each pattern is implemented as a nested stack that contains pattern-specific
+resources:
 
 - Step Functions State Machine
 - Pattern-specific Lambda Functions:
@@ -85,46 +93,58 @@ Each pattern is implemented as a nested stack that contains pattern-specific res
 - Pattern-specific CloudWatch Dashboard
 - Model Endpoints and Configurations
 
-For detailed information about configuration capabilities, see [configuration.md](./configuration.md).
+For detailed information about configuration capabilities, see
+[configuration.md](./configuration.md).
 
 ## Current Patterns
 
 ### Pattern 1: Bedrock Data Automation (BDA)
+
 Packet or Media processing with Bedrock Data Automation (BDA)
 
-![Pattern 1 Architecture](../images/IDP-Pattern1-BDA.drawio.png)
-*Pattern 1 uses AWS Bedrock Data Automation for end-to-end document processing, including OCR, classification, and extraction.*
+![Pattern 1 Architecture](../images/IDP-Pattern1-BDA.drawio.png) _Pattern 1 uses
+AWS Bedrock Data Automation for end-to-end document processing, including OCR,
+classification, and extraction._
 
 For detailed information about Pattern 1, see [pattern-1.md](./pattern-1.md).
 
 ### Pattern 2: Textract + Bedrock
+
 OCR → Bedrock Classification (page-level or holistic) → Bedrock Extraction
 
-![Pattern 2 Architecture](../images/IDP-Pattern2-Bedrock.drawio.png)
-*Pattern 2 combines Amazon Textract for OCR and AWS Bedrock for classification and extraction tasks, supporting both page-level and holistic classification methods.*
+![Pattern 2 Architecture](../images/IDP-Pattern2-Bedrock.drawio.png) _Pattern 2
+combines Amazon Textract for OCR and AWS Bedrock for classification and
+extraction tasks, supporting both page-level and holistic classification
+methods._
 
-For detailed information about Pattern 2, see [pattern-2.md](./pattern-2.md). 
+For detailed information about Pattern 2, see [pattern-2.md](./pattern-2.md).
 
-This pattern also supports few-shot examples for classification and extraction. For details on implementing few-shot examples, see [few-shot-examples.md](./few-shot-examples.md).
+This pattern also supports few-shot examples for classification and extraction.
+For details on implementing few-shot examples, see
+[few-shot-examples.md](./few-shot-examples.md).
 
 ### Pattern 3: Textract + UDOP + Bedrock
+
 OCR → UDOP Classification (SageMaker) → Bedrock Extraction
 
-![Pattern 3 Architecture](../images/IDP-Pattern3-UDOP.drawio.png)
-*Pattern 3 uses Amazon Textract for OCR, a UDOP model deployed on Amazon SageMaker for classification, and AWS Bedrock for extraction tasks.*
+![Pattern 3 Architecture](../images/IDP-Pattern3-UDOP.drawio.png) _Pattern 3
+uses Amazon Textract for OCR, a UDOP model deployed on Amazon SageMaker for
+classification, and AWS Bedrock for extraction tasks._
 
 For detailed information about Pattern 3, see [pattern-3.md](./pattern-3.md).
 
 ## Pattern Selection and Deployment
 
-For detailed information on deploying this solution, see [deployment.md](./deployment.md).
+For detailed information on deploying this solution, see
+[deployment.md](./deployment.md).
 
 The pattern is selected at deployment time using the `IDPPattern` parameter:
 
 ```yaml
 IDPPattern:
   Type: String
-  Default: Pattern1 - Packet or Media processing with Bedrock Data Automation (BDA)
+  Default:
+    Pattern1 - Packet or Media processing with Bedrock Data Automation (BDA)
   AllowedValues:
     - Pattern1 - Packet or Media processing with Bedrock Data Automation (BDA)
     - Pattern2 - Packet processing with Textract and Bedrock
@@ -132,13 +152,14 @@ IDPPattern:
   Description: Choose from built-in IDP workflow patterns
 ```
 
-When deployed, the main stack uses conditions to create the appropriate nested stack:
+When deployed, the main stack uses conditions to create the appropriate nested
+stack:
 
 ```yaml
 Conditions:
-  IsPattern1: !Equals [!Ref IDPPattern, "Pattern1"]
-  IsPattern2: !Equals [!Ref IDPPattern, "Pattern2"]
-  IsPattern3: !Equals [!Ref IDPPattern, "Pattern3"]
+  IsPattern1: !Equals [!Ref IDPPattern, 'Pattern1']
+  IsPattern2: !Equals [!Ref IDPPattern, 'Pattern2']
+  IsPattern3: !Equals [!Ref IDPPattern, 'Pattern3']
 
 Resources:
   PATTERN1STACK:
@@ -152,15 +173,18 @@ Resources:
 
 ## Integrated Monitoring
 
-The solution creates an integrated CloudWatch dashboard that combines metrics from both the main stack and the selected pattern stack:
+The solution creates an integrated CloudWatch dashboard that combines metrics
+from both the main stack and the selected pattern stack:
 
 1. The main stack creates a dashboard with core metrics:
+
    - Queue performance
    - Overall workflow statistics
    - General error tracking
    - Resource utilization
 
 2. Each pattern stack creates its own dashboard with pattern-specific metrics:
+
    - OCR performance
    - Classification accuracy
    - Extraction stats
@@ -168,7 +192,8 @@ The solution creates an integrated CloudWatch dashboard that combines metrics fr
 
 3. The `DashboardMerger` Lambda function combines these dashboards
 
-For detailed information about monitoring capabilities, see [monitoring.md](./monitoring.md).
+For detailed information about monitoring capabilities, see
+[monitoring.md](./monitoring.md).
 
 ## Adding New Patterns
 
@@ -180,27 +205,35 @@ To add a new processing pattern:
 4. Add pattern-specific parameters to the main template
 5. Create a new condition and nested stack resource for the pattern
 
-The new pattern will automatically inherit all the core infrastructure and monitoring capabilities while maintaining its own specific processing logic and metrics.
+The new pattern will automatically inherit all the core infrastructure and
+monitoring capabilities while maintaining its own specific processing logic and
+metrics.
 
 ## Web UI Architecture
 
-The solution includes a React-based web user interface for document management and visualization:
+The solution includes a React-based web user interface for document management
+and visualization:
 
 ![Web UI](../images/WebUI.png)
 
-For detailed information about the Web UI, its features, and usage, see [web-ui.md](./web-ui.md).
+For detailed information about the Web UI, its features, and usage, see
+[web-ui.md](./web-ui.md).
 
-1. **Authentication**: Amazon Cognito provides secure user authentication and authorization
+1. **Authentication**: Amazon Cognito provides secure user authentication and
+   authorization
+
    - Admin users are created during deployment
    - Optional self-signup can be enabled with domain restrictions
    - Identity pools provide secure, temporary AWS credentials
 
 2. **Content Delivery**: CloudFront distribution serves the static web assets
+
    - Global availability and low latency
    - WAF integration for added security (optional)
    - Geographical restrictions can be applied
 
 3. **API Layer**: AppSync GraphQL API connects the UI to backend services
+
    - Real-time data with subscriptions
    - Secure access control through Cognito and IAM
    - Lambda resolvers for complex operations
@@ -215,7 +248,8 @@ For detailed information about the Web UI, its features, and usage, see [web-ui.
 
 ### Document Summarization
 
-When enabled via the configuration `summarization.enabled` property (default: true), the solution provides document summarization across all patterns:
+When enabled via the configuration `summarization.enabled` property (default:
+true), the solution provides document summarization across all patterns:
 
 - All patterns use a dedicated summarization step with Bedrock models
 - Summarization provides a concise overview of the document content
@@ -231,22 +265,25 @@ The solution optionally integrates with Amazon Bedrock Knowledge Base:
 - Supports various Bedrock models (Amazon Nova, Anthropic Claude)
 - GraphQL API integration allows querying from the UI
 
-For detailed information about the Knowledge Base integration, see [knowledge-base.md](./knowledge-base.md).
+For detailed information about the Knowledge Base integration, see
+[knowledge-base.md](./knowledge-base.md).
 
 ### Accuracy Evaluation
 
 The solution includes a comprehensive evaluation system:
 
 1. **Baseline Data**: Ground truth data stored in the evaluation baseline bucket
-2. **Automatic Evaluation**: When enabled, each processed document is automatically evaluated against baseline data if available
-3. **Metrics**: 
+2. **Automatic Evaluation**: When enabled, each processed document is
+   automatically evaluated against baseline data if available
+3. **Metrics**:
    - Extraction accuracy for key-value pairs
    - Classification accuracy across document types
    - Summarization quality assessment
 4. **UI Integration**: Results visualized in the web interface
 5. **CloudWatch Metrics**: Aggregated accuracy metrics for monitoring
 
-For detailed information about the evaluation system, see [evaluation.md](./evaluation.md).
+For detailed information about the evaluation system, see
+[evaluation.md](./evaluation.md).
 
 ### Bedrock Guardrails Integration
 
@@ -257,7 +294,8 @@ The solution supports optional Amazon Bedrock Guardrails integration:
 - Support for both DRAFT and versioned guardrails
 - Configuration parameters:
   - `BedrockGuardrailId` - ID of an existing Bedrock Guardrail
-  - `BedrockGuardrailVersion` - Version of the guardrail to use (e.g., DRAFT, 1, 2)
+  - `BedrockGuardrailVersion` - Version of the guardrail to use (e.g., DRAFT,
+    1, 2)
 - Guardrails can be applied to:
   - Extraction operations
   - Summarization (when enabled)
@@ -267,7 +305,8 @@ The solution supports optional Amazon Bedrock Guardrails integration:
 
 The solution supports an optional post-processing Lambda hook integration:
 
-- Automatically triggered via EventBridge after a document is successfully processed
+- Automatically triggered via EventBridge after a document is successfully
+  processed
 - Configured via the `PostProcessingLambdaHookFunctionArn` parameter
 - Enables custom downstream processing of document extraction results
 - Can be used for integration with other systems such as:
@@ -277,10 +316,13 @@ The solution supports an optional post-processing Lambda hook integration:
   - Custom notification systems
 - Receives the document processing details and output location
 
-For comprehensive implementation guidance, use cases, and code examples, see [post-processing-lambda-hook.md](./post-processing-lambda-hook.md).
+For comprehensive implementation guidance, use cases, and code examples, see
+[post-processing-lambda-hook.md](./post-processing-lambda-hook.md).
 
 ## Additional Documentation
 
-- [classification.md](./classification.md) - Details on document classification capabilities
+- [classification.md](./classification.md) - Details on document classification
+  capabilities
 - [extraction.md](./extraction.md) - Details on data extraction capabilities
-- [troubleshooting.md](./troubleshooting.md) - Troubleshooting guidance and common issues
+- [troubleshooting.md](./troubleshooting.md) - Troubleshooting guidance and
+  common issues
