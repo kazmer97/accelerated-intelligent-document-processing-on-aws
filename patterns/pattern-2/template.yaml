@@ -255,7 +255,7 @@ Resources:
             Value: !Ref ImageVersion
           - Name: AWS_REGION
             Value: !Ref AWS::Region
-      TimeoutInMinutes: 90
+      TimeoutInMinutes: 15
 
   Pattern2CodeBuildExecutionRole:
     Type: AWS::IAM::Role
@@ -329,6 +329,7 @@ Resources:
   Pattern2CodeBuildTrigger:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -2419,7 +2420,8 @@ Resources:
         Level: ALL
         IncludeExecutionData: true
         Destinations:
-          - CloudWatchLogsLogGroup: !GetAtt StateMachineLogGroup.Arn
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt StateMachineLogGroup.Arn
       Tracing:
         Enabled: !Ref EnableXRayTracing
       Policies:

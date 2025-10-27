@@ -31,12 +31,12 @@ developer_tests:
   before_script:
     - python --version
     - apt-get update -y
-    - apt-get install make -y
-    - pip install ruff
-    # Install dependencies needed by publish.py for test imports
-    - pip install typer rich boto3
-    # Install test dependencies
-    - cd lib/idp_common_pkg && pip install -e ".[test]" && cd ../..
+    - apt-get install make curl -y
+    # Install UV
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
+    # Sync all dependencies (includes ruff, pytest, publish deps, etc.)
+    - uv sync --all-extras --group dev
 
   script:
     - make lint-cicd
@@ -65,8 +65,10 @@ deployment_validation:
     - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     - unzip awscliv2.zip
     - ./aws/install
-    # Install PyYAML for template analysis
-    - pip install PyYAML
+    # Install UV and PyYAML for template analysis
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
+    - uv pip install PyYAML
 
   script:
     # Check if service role has sufficient permissions for main stack deployment
@@ -97,13 +99,15 @@ integration_tests:
 
   before_script:
     - apt-get update -y
-    - apt-get install zip unzip curl python3-pip -y
+    - apt-get install zip unzip curl -y
     # Install AWS CLI
     - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     - unzip awscliv2.zip
     - ./aws/install
-    # Install boto3 for Python script
-    - pip install boto3
+    # Install UV and boto3 for Python script
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.local/bin:$PATH"
+    - uv pip install boto3
 
   script:
     - aws --version

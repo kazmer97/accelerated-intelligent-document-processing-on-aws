@@ -92,7 +92,7 @@ Parameters:
     Description: >-
       S3 URI pointing to your custom configuration YAML file. When provided, this configuration overrides the selected pattern preset and applies to all processing patterns. 
       Leave blank to use the selected pattern configuration preset. For example s3://my-bucket/custom-config/config.yaml
-    AllowedPattern: '^(|s3://.*)$'
+    AllowedPattern: "^(|s3://.*)$"
     ConstraintDescription: Must be empty or a valid S3 URI (e.g., s3://my-bucket/custom-config/config.yaml)
 
   # Pattern 1 Parameters
@@ -204,12 +204,11 @@ Parameters:
       Frequency for the Glue Crawler to run and discover new document section tables and partitions.
       Manual requires manual execution, other options run automatically at the specified interval.
 
-
   # X-Ray Tracing
   EnableXRayTracing:
     Type: String
-    Default: 'true'
-    AllowedValues: ['true', 'false']
+    Default: "true"
+    AllowedValues: ["true", "false"]
     Description: Enable X-Ray tracing
 
   # Optional Knowledge Base Configuration
@@ -621,6 +620,7 @@ Resources:
   StacknameCheckFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -640,23 +640,7 @@ Resources:
         ]
       Handler: index.handler
       Runtime: python3.12
-      InlineCode: |
-        import cfnresponse
-        import time
-        import json
-        def handler(event, context):
-            print(json.dumps(event))
-            input = event['ResourceProperties'].get('InputString', '')
-            max_length = int(event['ResourceProperties'].get('MaxLength', 0))
-            status = cfnresponse.SUCCESS
-            reason = f"Stack Name Length under {max_length} - OK"
-            if event['RequestType'] == "Create":
-              if len(input) > max_length:
-                status = cfnresponse.FAILED
-                reason = f"Stack Name ({input}) length ({len(input)}) too long - max length {max_length} - FAILED"
-            else:
-              print(f"Request type is {event['RequestType']} - skipping")
-            cfnresponse.send(event, context, status, {}, reason=reason)
+      CodeUri: src/lambda/stackname_check
       Environment:
         Variables:
           LOG_LEVEL: INFO
@@ -685,6 +669,7 @@ Resources:
   ConfigurationCopyFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -705,77 +690,7 @@ Resources:
       Handler: index.handler
       Runtime: python3.12
       Timeout: 300
-      InlineCode: |
-        import boto3
-        import cfnresponse
-        import json
-        import logging
-
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-
-        def handler(event, context):
-            logger.info(json.dumps(event))
-            
-            try:
-                source_bucket = event['ResourceProperties']['SourceBucket']
-                source_prefix = event['ResourceProperties']['SourcePrefix']
-                target_bucket = event['ResourceProperties']['TargetBucket']
-                target_prefix = event['ResourceProperties'].get('TargetPrefix', '')
-                
-                file_list = event['ResourceProperties'].get('FileList', [])
-                
-                s3_client = boto3.client('s3')
-                
-                if event['RequestType'] == 'Create' or event['RequestType'] == 'Update':
-                    # Copy files explicitly from the provided list
-                    copied_count = 0
-                    
-                    for relative_file_path in file_list:
-                        # Skip empty entries
-                        if not relative_file_path.strip():
-                            continue
-                            
-                        # Construct source key
-                        source_key = f"{source_prefix}/{relative_file_path}"
-                        
-                        # Construct target key with optional target prefix
-                        if target_prefix:
-                            target_key = f"{target_prefix}/{relative_file_path}"
-                        else:
-                            target_key = relative_file_path
-                        
-                        logger.info(f"Copying {source_bucket}/{source_key} to {target_bucket}/{target_key}")
-                        
-                        try:
-                            copy_source = {'Bucket': source_bucket, 'Key': source_key}
-                            s3_client.copy_object(
-                                CopySource=copy_source,
-                                Bucket=target_bucket,
-                                Key=target_key
-                            )
-                            copied_count += 1
-                        except Exception as copy_error:
-                            logger.warning(f"Failed to copy {source_key}: {str(copy_error)}")
-                            # Continue with other files instead of failing the entire operation
-                    
-                    logger.info(f"Successfully copied {copied_count} configuration files")
-                    cfnresponse.send(event, context, cfnresponse.SUCCESS, {
-                        'CopiedFiles': copied_count
-                    }, reason=f"Successfully copied {copied_count} configuration files")
-                    
-                elif event['RequestType'] == 'Delete':
-                    # For delete, we don't need to clean up the configuration files
-                    # as they may be needed by other resources
-                    logger.info("Delete request - no action needed for configuration files")
-                    cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, 
-                                   reason="Delete completed - configuration files retained")
-                    
-            except Exception as e:
-                logger.error(f"Error: {str(e)}")
-                cfnresponse.send(event, context, cfnresponse.FAILED, {}, 
-                               reason=f"Error copying configuration files: {str(e)}")
-
+      CodeUri: src/lambda/configuration_copy
       Environment:
         Variables:
           LOG_LEVEL: INFO
@@ -2081,6 +1996,7 @@ Resources:
   InitializeConcurrencyTableLambda:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -2215,15 +2131,17 @@ Resources:
   UpdateConfigurationFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
+          - id: W58
+            reason: "DLQ not required for Cfn Custom Resource function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for Custom Resource function"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -2317,10 +2235,9 @@ Resources:
       Value: "{}"
 
   UpdateSettingsFunction:
-    DependsOn:
-      - IsStacknameLengthOK
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -2329,7 +2246,8 @@ Resources:
             reason: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for Custom Resource function"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for settings updates as it's invoked synchronously via AppSync and errors are handled by the caller"
+    # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
         !If [
@@ -2473,6 +2391,7 @@ Resources:
   QueueSender:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -2546,6 +2465,7 @@ Resources:
   QueueProcessor:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -2666,6 +2586,7 @@ Resources:
   WorkflowTracker:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W11
@@ -2827,18 +2748,17 @@ Resources:
   SaveReportingDataFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
-          - id: W11
-            reason: "Role requires * resource access for CloudWatch Metrics and Logs"
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for reporting data as errors are logged and handled"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for this functions as it is called sychronously"
     Properties:
       PermissionsBoundary:
         !If [
@@ -2914,6 +2834,7 @@ Resources:
   EvaluationFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W11
@@ -3448,19 +3369,17 @@ Resources:
               - !GetAtt PATTERN1STACK.Outputs.StateMachineLogGroup
 
   DashboardMergerFunction:
-    DependsOn:
-      - IsStacknameLengthOK
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
-          - id: W11
-            reason: "Role requires * resource access for CloudWatch Dashboards"
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for Cfn Custom Resource function"
+          - id: W58
+            reason: "DLQ not required for Cfn Custom Resource function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
@@ -3513,13 +3432,15 @@ Resources:
   LookupFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: ""DLQ not required for Lookup function as it is called only from CLI"
+          - id: W58
+            reason: "DLQ not required for Cfn Custom Resource function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
@@ -3615,13 +3536,15 @@ Resources:
   AgentRequestHandlerFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for analytics request handler as it's invoked synchronously via AppSync and errors are handled by the caller"
+          - id: W58
+            reason: "DLQ not required for Cfn Custom Resource function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
@@ -3669,19 +3592,15 @@ Resources:
   AgentProcessorFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
+          - id: W11
+            reason: "Role requires * resource access for CloudWatch Metrics and Logs"
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W58
-            reason: "DLQ not required for Cfn Custom Resource function"
-          - id: W76
-            reason: "Suppressing W76: SPCM for IAM policy document is higher than 25"
-          - id: W11
-            reason: "Role requires * resource access for CloudWatch Metrics and Logs"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for analytics processor as it's invoked asynchronously by request handler with error handling and job status tracking in DynamoDB"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
@@ -3853,15 +3772,16 @@ Resources:
   ListAvailableAgentsFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
-            reason: "Function does not require VPC access as it only interacts with local agent factory"
+            reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
-    # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with local agent factory"
+    # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for listing agents as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -4231,6 +4151,7 @@ Resources:
       - IsStacknameLengthOK
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -4240,6 +4161,7 @@ Resources:
     # checkov:skip=CKV_AWS_116: "DLQ not required for Cfn Custom Resource function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
         !If [
@@ -4252,19 +4174,9 @@ Resources:
       Runtime: python3.12
       Timeout: 30
       MemorySize: 128
+      CodeUri: src/lambda/get_domain
       LoggingConfig:
         LogGroup: !Ref GetDomainLambdaLogGroup
-      InlineCode: |
-        import cfnresponse
-        import time
-        def handler(event, context):                                                    
-            lowercase = event['ResourceProperties'].get('InputString', '').lower()
-            lowercaseWithTimestamp = f"{lowercase}-{time.time_ns()}" # make unique
-            responseData = {
-              'Lowercase': lowercase, 
-              'OutputString': lowercaseWithTimestamp, # don't change key - avoid UserPool update errors
-            }                                            
-            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
 
   GetDomainLambdaLogGroup:
     Type: AWS::Logs::LogGroup
@@ -4561,6 +4473,7 @@ Resources:
     Type: AWS::Serverless::Function
     Condition: ShouldCreatePrivateWorkteam
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -4777,6 +4690,7 @@ Resources:
     Type: AWS::Serverless::Function
     Condition: IsHITLEnabled
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -4823,6 +4737,7 @@ Resources:
     Type: AWS::Serverless::Function
     Condition: IsHITLEnabled
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -4955,6 +4870,7 @@ Resources:
     Type: AWS::Serverless::Function
     Condition: IsWafEnabled
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -5153,17 +5069,16 @@ Resources:
   CreateDocumentResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for document creation as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -5424,17 +5339,17 @@ Resources:
   GetFileContentsResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for file contents retrieval as it's invoked synchronously via AppSync and errors are handled by the caller"
+    # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
         !If [
@@ -5501,6 +5416,7 @@ Resources:
   GetStepFunctionExecutionResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -5586,17 +5502,16 @@ Resources:
   ConfigurationResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for configuration resolver as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -5677,17 +5592,16 @@ Resources:
   CopyToBaselineResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for baseline copy as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -5773,17 +5687,16 @@ Resources:
   DeleteDocumentResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for document deletion as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -5852,17 +5765,16 @@ Resources:
   ReprocessDocumentResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for document reprocessing as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -5938,17 +5850,16 @@ Resources:
   UploadResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
+    # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for upload resolver as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -6026,17 +5937,16 @@ Resources:
   DiscoveryUploadResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
+    # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for discovery upload as it's invoked synchronously via AppSync and errors are handled by the caller"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
     Properties:
       PermissionsBoundary:
@@ -6194,17 +6104,14 @@ Resources:
   DiscoveryProcessorFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-          - id: W11
-            reason: "Role requires * resource access for CloudWatch Metrics and Logs"
-    # checkov:skip=CKV_AWS_116: "DLQ not required for SQS triggered function"
+    # checkov:skip=CKV_AWS_116: "DLQ not required for this function - failures are logged and retried by EventBridge"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
     # checkov:skip=CKV_AWS_173: "Environment variables do not contain sensitive data - only configuration values like feature flags and non-sensitive settings"
@@ -6283,6 +6190,7 @@ Resources:
   QueryKnowledgeBaseResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
@@ -6397,16 +6305,13 @@ Resources:
   ChatWithDocumentResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
-          - id: W11
-            reason: "Role requires * resource access for CloudWatch Metrics and Logs"
     # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
@@ -6495,14 +6400,13 @@ Resources:
   ProcessChangesResolverFunction:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89
             reason: "Function does not require VPC access as it only interacts with AWS services via APIs"
           - id: W92
             reason: "Function does not require reserved concurrency as it scales based on demand"
-          - id: W12
-            reason: "Lambda requires CloudWatch logs permissions"
     # checkov:skip=CKV_AWS_116: "DLQ not required for AppSync resolver function"
     # checkov:skip=CKV_AWS_117: "Function does not require VPC access as it only interacts with AWS services via APIs"
     # checkov:skip=CKV_AWS_115: "Function does not require reserved concurrency as it scales based on demand"
@@ -6913,6 +6817,7 @@ Resources:
   StartUICodeBuild:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89

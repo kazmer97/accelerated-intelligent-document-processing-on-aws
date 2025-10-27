@@ -756,23 +756,13 @@ STDERR:
         components_to_build = []
         for item in components_needing_rebuild:
             if component_type in item["component"]:
-                if (
-                    self._is_lib_changed
-                    and LIB_DEPENDENCY in item["dependencies"]
-                    and max_workers != 1
-                ):
-                    max_workers = 1
+                # UV handles locking properly, no need to force sequential builds
+                # even when lib changes - parallel builds are safe with UV
                 components_to_build.append(item["component"])
 
         if not components_to_build:
             self.console.print(f"[green]✅ All {component_type} are up to date[/green]")
             return True
-
-        # Force sequential builds if lib changed
-        if self._is_lib_changed and max_workers == 1:
-            self.console.print(
-                f"[yellow]⚠️  lib dependencies detected - using sequential builds for {component_type}[/yellow]"
-            )
 
         if max_workers == 1:
             self.console.print(
@@ -1431,6 +1421,9 @@ except Exception as e:
         # Calculate content hash for versioning
         paths_to_hash = [
             "Dockerfile.optimized",
+            "pyproject.toml",
+            "uv.lock",
+            ".dockerignore",
             "patterns/pattern-2/buildspec.yml",
             "lib/idp_common_pkg",
             "patterns/pattern-2/src",
@@ -1461,6 +1454,11 @@ except Exception as e:
             with zipfile.ZipFile(zipfile_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # Add Dockerfile
                 zipf.write("Dockerfile.optimized", "Dockerfile.optimized")
+
+                # Add root dependency files for UV
+                zipf.write("pyproject.toml", "pyproject.toml")
+                zipf.write("uv.lock", "uv.lock")
+                zipf.write(".dockerignore", ".dockerignore")
 
                 # Add buildspec.yml
                 zipf.write(

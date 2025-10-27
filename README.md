@@ -13,6 +13,12 @@ SPDX-License-Identifier: MIT-0
 - [Quick Start](#quick-start)
   - [Processing Your First Document](#processing-your-first-document)
 - [Updating an Existing Deployment](#updating-an-existing-deployment)
+- [Dependency Management with UV](#dependency-management-with-uv)
+  - [Quick Start with UV](#quick-start-with-uv)
+  - [Working with Dependencies](#working-with-dependencies)
+  - [Lambda Function Dependencies](#lambda-function-dependencies)
+  - [Development Workflows](#development-workflows)
+  - [Publishing and Deployment](#publishing-and-deployment)
 - [Detailed Documentation](#detailed-documentation)
   - [Core Documentation](#core-documentation)
   - [Processing Patterns](#processing-patterns)
@@ -99,7 +105,10 @@ After deployment, choose the processing method that fits your use case:
 For batch processing, automation, or evaluation workflows:
 
 ```bash
-# Install CLI
+# Install CLI (with UV - recommended)
+cd idp_cli && uv sync
+
+# Or with pip
 cd idp_cli && pip install -e .
 
 # Process documents
@@ -149,6 +158,105 @@ For testing, use these sample files:
 
 For detailed deployment and testing instructions, see the [Deployment Guide](./docs/deployment.md).
 
+## Dependency Management with UV
+
+This project uses [UV](https://github.com/astral-sh/uv) for fast, reliable Python dependency management. UV provides deterministic builds, improved caching, and significantly faster installation times compared to traditional pip.
+
+### Quick Start with UV
+
+```bash
+# Install UV (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install all dependencies
+uv sync
+
+# Activate the virtual environment
+source .venv/bin/activate  # On macOS/Linux
+# or
+.venv\Scripts\activate     # On Windows
+```
+
+### Working with Dependencies
+
+The project uses a centralized dependency management system:
+
+- **`pyproject.toml`** - Root project configuration with 20+ dependency groups for different Lambda functions
+- **`uv.lock`** - Lockfile with 234+ resolved packages for reproducible builds
+- **Dependency Groups** - Organized by Lambda function (e.g., `lambda-ocr`, `lambda-extraction`, `lambda-classification`)
+
+#### Common Commands
+
+```bash
+# Add a new dependency to a specific group
+uv add --group lambda-ocr boto3
+
+# Update all dependencies
+uv lock --upgrade
+
+# Install a specific dependency group
+uv sync --group lambda-ocr
+
+# Build for deployment (used by SAM)
+uv pip install --project . --group lambda-extraction --target ./build
+```
+
+### Lambda Function Dependencies
+
+Each Lambda function uses a specific dependency group defined in `pyproject.toml`:
+
+```toml
+[dependency-groups]
+lambda-ocr = ["boto3", "idp-common", "pillow", ...]
+lambda-extraction = ["boto3", "idp-common", "anthropic", ...]
+lambda-classification = ["boto3", "idp-common", "pydantic", ...]
+```
+
+SAM automatically uses UV to build Lambda functions via Makefiles in each function directory. See [Lambda Dependency Groups](./docs/lambda-dependency-groups.md) for the complete dependency mapping.
+
+### Development Workflows
+
+```bash
+# For local development
+uv sync                              # Install all dependencies
+
+# For notebook development  
+uv sync --group notebooks            # Install with Jupyter dependencies
+
+# For CLI development
+cd idp_cli && uv sync                # Install CLI dependencies
+
+# For testing
+uv sync --group dev                  # Install with test dependencies
+pytest
+```
+
+### Publishing and Deployment
+
+The publish script automatically syncs all required dependencies using UV:
+
+```bash
+# One-time setup: sync development dependencies
+uv sync --group dev
+
+# Publish with parallel builds (faster with UV!)
+./publish.sh my-bucket prefix us-east-1 --max-workers 4
+
+# UV enables safe parallel builds with built-in locking
+# Typical speedup: 4x faster than sequential builds
+```
+
+The `publish.sh` script automatically:
+- Validates Python 3.12+, UV, and Node.js are installed
+- Syncs all required Python dependencies (boto3, PyYAML, rich, ruff, etc.)
+- Builds and packages Lambda functions
+- Uploads artifacts to S3
+
+For more details on the UV migration and dependency management, see:
+- [Setup Development Environment (macOS)](./docs/setup-development-env-macos.md)
+- [Setup Development Environment (Linux)](./docs/setup-development-env-linux.md)
+- [Setup Development Environment (WSL)](./docs/setup-development-env-WSL.md)
+- [Lambda Dependency Groups](./docs/lambda-dependency-groups.md)
 
 ## Detailed Documentation
 

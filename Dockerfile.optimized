@@ -1,5 +1,5 @@
-# Optimized Dockerfile for Lambda functions with minimal dependencies
-# This builds each function with ONLY the dependencies it needs
+# Optimized Dockerfile for Lambda functions with UV and pyproject.toml dependency groups
+# This builds each function with ONLY the dependencies it needs from the root pyproject.toml
 
 # checkov:skip=CKV_DOCKER_3: "The Dockerfile uses the official AWS Lambda Python base image (public.ecr.aws/lambda/python:3.12-arm64), which already configures the appropriate non-root user for Lambda execution"
 # checkov:skip=CKV_DOCKER_2: "The Dockerfile.optimized is specifically designed for AWS Lambda container images, which don't use Docker HEALTHCHECK instructions."
@@ -10,25 +10,25 @@ FROM public.ecr.aws/lambda/python:3.12-arm64 AS builder
 # Copy uv from official distroless image
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Build argument for function path
+# Build argument for dependency group from root pyproject.toml
+ARG DEPENDENCY_GROUP
 ARG FUNCTION_PATH
-ARG INSTALL_IDP_COMMON=true
 
 # Create working directory
 WORKDIR /build
 
-# Copy idp_common_pkg and requirements for installation
-COPY lib/idp_common_pkg /tmp/idp_common_pkg
-COPY ${FUNCTION_PATH}/requirements.txt* /build/
+# Copy root pyproject.toml, uv.lock, and idp_common_pkg
+COPY pyproject.toml uv.lock /build/
+COPY lib/idp_common_pkg /build/lib/idp_common_pkg
 
-# Install all dependencies including idp_common_pkg in one step
+# Install dependencies from the specified dependency group
 RUN --mount=type=cache,target=/root/.cache/uv \
-    if [ -f /build/requirements.txt ]; then \
-        sed 's|^\.\./\.\.\(/\.\.\)\?/lib/idp_common_pkg|/tmp/idp_common_pkg|' /build/requirements.txt > /tmp/requirements.txt && \
-        uv pip install --python python3.12 --target /opt/python -r /tmp/requirements.txt && \
-        rm /tmp/requirements.txt; \
-    fi && \
-    rm -rf /tmp/idp_common_pkg
+  if [ -n "$DEPENDENCY_GROUP" ]; then \
+  uv export --frozen --no-dev --no-editable --group "${DEPENDENCY_GROUP}" -o "requirements.txt"; \
+  uv pip install ---target /opt/python --python 3.12 "requirements.txt"; \
+  else \
+  echo "ERROR: DEPENDENCY_GROUP not specified" && exit 1; \
+  fi
 
 # Final stage - minimal runtime
 FROM public.ecr.aws/lambda/python:3.12-arm64

@@ -159,6 +159,10 @@ Resources:
               commands:
                 - n 22 && node --version || { echo "Node setup failed"; exit 1; }
                 - npm install -g aws-cdk || { echo "CDK installation failed"; exit 1; }
+                # Install UV package manager
+                - curl -LsSf https://astral.sh/uv/install.sh | sh || { echo "UV installation failed"; exit 1; }
+                - export PATH="$HOME/.local/bin:$PATH"
+                - uv --version || { echo "UV not in PATH"; exit 1; }
                 # Check which deployment method to use
                 - |
                   if [ -d "./scripts/sdlc/idp-cli" ]; then
@@ -169,8 +173,8 @@ Resources:
                     poetry install || { echo "Poetry dependencies installation failed"; exit 1; }
                     cd ../../..
                   else
-                    echo "Using new idp-cli deployment"
-                    cd idp_cli && pip install -e . && cd .. || { echo "IDP CLI installation failed"; exit 1; }
+                    echo "Using UV-based idp-cli deployment"
+                    cd idp_cli && uv sync --no-dev && cd .. || { echo "IDP CLI installation failed"; exit 1; }
                   fi
             build:
               commands:

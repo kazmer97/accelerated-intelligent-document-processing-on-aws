@@ -86,6 +86,27 @@ check_python_version() {
   exit 1
 }
 
+# Check if UV is available for Lambda dependency management
+check_uv() {
+  print_info "Checking UV (Python package manager)..."
+
+  if ! command -v uv >/dev/null 2>&1; then
+    print_error "UV not found but is required for Lambda dependency management"
+    print_info "Install UV with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    print_info "Or visit: https://github.com/astral-sh/uv"
+    exit 1
+  fi
+
+  # Get UV version
+  uv_version=$(uv --version 2>/dev/null | awk '{print $2}')
+  
+  if [[ -n "$uv_version" ]]; then
+    print_success "Found UV $uv_version at $(which uv)"
+  else
+    print_success "Found UV at $(which uv)"
+  fi
+}
+
 # Check if Node.js and npm are available for UI validation
 check_nodejs_dependencies() {
   print_info "Checking Node.js dependencies for UI validation..."
@@ -117,51 +138,19 @@ check_nodejs_dependencies() {
   fi
 }
 
-# Check if required packages are installed and install them if missing
-check_and_install_packages() {
-  print_info "Checking required Python packages..."
+# Sync dependencies using UV
+sync_dependencies() {
+  print_info "Syncing Python dependencies with UV..."
 
-  # List of required packages (import_name:package_name pairs)
-  required_packages=(
-    "typer:typer"
-    "rich:rich"
-    "boto3:boto3"
-    "yaml:PyYAML"
-    "ruff:ruff"
-  )
-  missing_packages=()
-
-  # Check each package
-  for package_pair in "${required_packages[@]}"; do
-    import_name="${package_pair%%:*}"
-    package_name="${package_pair##*:}"
-    if ! $PYTHON_CMD -c "import $import_name" >/dev/null 2>&1; then
-      missing_packages+=("$package_name")
-    fi
-  done
-
-  # Check ruff separately (command-line tool)
-  if ! command -v ruff >/dev/null 2>&1; then
-    missing_packages+=("ruff")
-  fi
-
-  # Install missing packages if any
-  if [[ ${#missing_packages[@]} -gt 0 ]]; then
-    print_warning "Missing packages: ${missing_packages[*]}"
-    print_info "Installing missing packages..."
-
-    for package in "${missing_packages[@]}"; do
-      print_info "Installing $package..."
-      if $PYTHON_CMD -m pip install "$package" --quiet; then
-        print_success "Installed $package"
-      else
-        print_error "Failed to install $package"
-        print_info "Please install manually: $PYTHON_CMD -m pip install $package"
-        exit 1
-      fi
-    done
+  # Run uv sync and capture output
+  if uv sync --group dev 2>&1 | grep -E "(Resolved|Installed|Audited|already installed)" | while read -r line; do
+    echo -e "${BLUE}  $line${NC}"
+  done; [ "${PIPESTATUS[0]}" -eq 0 ]; then
+    print_success "All dependencies synced successfully"
   else
-    print_success "All required packages are installed"
+    print_error "Failed to sync dependencies with UV"
+    print_info "Please run manually: uv sync --group dev"
+    exit 1
   fi
 }
 
@@ -206,11 +195,14 @@ main() {
   # Check Python version
   check_python_version
 
+  # Check UV for Lambda dependency management
+  check_uv
+
   # Check Node.js dependencies for UI validation
   check_nodejs_dependencies
 
-  # Check and install required packages
-  check_and_install_packages
+  # Sync dependencies using UV
+  sync_dependencies
 
   # Check if publish.py exists
   if [[ ! -f "publish.py" ]]; then
@@ -223,8 +215,9 @@ main() {
   print_info "Launching publish.py..."
   print_info "Arguments: $*"
 
-  # Execute publish.py with all arguments
-  exec $PYTHON_CMD publish.py "$@"
+  # Execute publish.py with all arguments using UV's managed environment
+  # Include dev group to ensure publish dependencies (rich, PyYAML, etc.) are available
+  exec uv run --group dev python publish.py "$@"
 }
 
 # Handle help flag

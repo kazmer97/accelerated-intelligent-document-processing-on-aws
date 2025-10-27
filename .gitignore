@@ -1,26 +1,50 @@
+# Environment
 .env
+.venv/
+venv/
+
+# AWS SAM
 .aws-sam
 build.toml
+
+# Build artifacts
 model.tar.gz
 .checksum
 .checksums/
 .build_checksum
 .lib_checksum
-.vscode/
-.DS_Store
 dist/
+build/
+*.egg-info/
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# UV specific
+.python-version
+
+# Ruff
+.ruff_cache
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+
+# Project specific
 .sav/
 .delete/
 .data/
-*.egg-info/
-build/
-__pycache__
-*.code-workspace
-.ruff_cache
 .kiro
 rvl_cdip_*
 notebooks/examples/data
-.idea/
 .dsr/
 *tmp-dev-assets*
 scratch/

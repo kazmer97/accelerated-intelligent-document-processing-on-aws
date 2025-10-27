@@ -1,0 +1,213 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "idp-accelerator"
+version = "1.0.0"
+description = "AWS GenAI IDP Accelerator - Intelligent Document Processing"
+authors = [{ name = "AWS", email = "noreply@amazon.com" }]
+readme = "README.md"
+requires-python = ">=3.9,<3.14"
+license = { text = "MIT-0" }
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+# Core dependencies shared across all lambdas
+dependencies = ["boto3==1.39.7"]
+
+# Development dependencies
+[project.optional-dependencies]
+dev = [
+  # Testing
+  "pytest>=7.4.0",
+  "pytest-cov>=4.1.0",
+  "pytest-mock>=3.11.0",
+  "pytest-asyncio>=1.1.0",
+  "moto[s3]>=5.1.8",
+  # Linting and formatting
+  "ruff>=0.14.0",
+  # Development tools
+  "python-dotenv>=1.1.0",
+  "ipykernel>=6.29.5",
+  "jupyter>=1.1.1",
+  # Publish script dependencies (publish.py/publish.sh)
+  "rich>=13.0.0",
+  "PyYAML>=6.0.0",
+]
+
+# Build dependencies
+build = ["hatchling", "build"]
+
+[project.urls]
+Homepage = "https://github.com/aws-samples/accelerated-intelligent-document-processing-on-aws"
+Documentation = "https://github.com/aws-samples/accelerated-intelligent-document-processing-on-aws/tree/main/docs"
+Issues = "https://github.com/aws-samples/accelerated-intelligent-document-processing-on-aws/issues"
+
+# Hatchling configuration
+[tool.hatch.build]
+exclude = [
+  "/.github",
+  "/.aws-sam",
+  "/tests",
+  "**/__pycache__",
+  "**/*.pyc",
+  "**/*.pyo",
+  "**/.pytest_cache",
+  "**/.ruff_cache",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [] # Root project is not a package, just dependency management
+
+# UV workspace configuration
+[tool.uv.workspace]
+members = ["lib/idp_common_pkg", "idp_cli"]
+
+# UV-specific configuration
+[tool.uv]
+package = false
+
+# Dependency resolution preferences
+[tool.uv.sources]
+idp-common = { workspace = true }
+
+# Modern PEP 735 dependency groups for Lambda functions
+[dependency-groups]
+# ============================================================================
+# DEVELOPMENT DEPENDENCIES
+# ============================================================================
+# Includes testing, linting, notebooks, and publish script dependencies
+dev = [
+  # Testing
+  "pytest>=7.4.0",
+  "pytest-cov>=4.1.0",
+  "pytest-mock>=3.11.0",
+  "pytest-asyncio>=1.1.0",
+  "moto[s3]>=5.1.8",
+  # Linting and formatting
+  "ruff>=0.14.0",
+  # Development tools
+  "python-dotenv>=1.1.0",
+  "ipykernel>=6.29.5",
+  "jupyter>=1.1.1",
+  # Publish script dependencies (publish.py/publish.sh)
+  "rich>=13.0.0",
+  "PyYAML>=6.0.0",
+]
+
+# Common/shared groups
+common-idp = ["jsonschema>=4.25.1", "pydantic>=2.12.0"]
+
+# ============================================================================
+# PATTERN 1: BEDROCK DATA AUTOMATION (BDA)
+# ============================================================================
+# Uses AWS Bedrock Data Automation for document processing
+# Located in: patterns/pattern-1/
+
+lambda-bda-discovery = ["idp-common[docs_service]"]
+lambda-bda-invoke = ["idp-common[docs_service]"]
+lambda-bda-completion = ["idp-common[docs_service]"]
+
+# ============================================================================
+# PATTERN 2 & 3: BEDROCK FOUNDATION MODELS / UDOP
+# ============================================================================
+# Pattern 2: Uses Bedrock Foundation Models for classification/extraction
+# Pattern 3: Uses UDOP (SageMaker) for classification, Bedrock for extraction
+# Located in: patterns/pattern-2/ and patterns/pattern-3/
+
+lambda-ocr = [
+  "idp-common[ocr,docs_service]",
+  "numpy>=1.24.0,<2.0.0",
+  "pandas>=1.5.0,<3.0.0",
+]
+lambda-classification = ["idp-common[classification,docs_service]"]
+lambda-extraction = ["idp-common[extraction,docs_service,agentic-extraction]"]
+lambda-assessment = ["idp-common[assessment,docs_service]"]
+
+# ============================================================================
+# SHARED ACROSS ALL PATTERNS
+# ============================================================================
+# These Lambda functions are used by all patterns (1, 2, and 3)
+
+lambda-summarization = ["idp-common[docs_service]"]
+lambda-process-results = ["idp-common[reporting,docs_service]"]
+lambda-hitl = ["idp-common[docs_service]"]
+
+# ============================================================================
+# MAIN STACK LAMBDAS (template.yaml root)
+# ============================================================================
+# Core infrastructure Lambda functions in src/lambda/
+
+# Workflow and processing
+lambda-evaluation = ["idp-common[evaluation,docs_service]"]
+lambda-queue = ["idp-common[docs_service]"]
+lambda-save-reporting = ["idp-common[reporting]"]
+
+# Agent and AI capabilities
+lambda-agent-processor = [
+  "aws-requests-auth==0.4.3",
+  "requests==2.32.4",
+  "idp-common[agents]",
+]
+lambda-agent-request = ["idp-common[docs_service]"]
+lambda-chat-document = ["idp-common[docs_service]"]
+
+# Discovery and document upload
+lambda-discovery-processor = [
+  "requests==2.32.4",
+  "aws-requests-auth==0.4.3",
+  "idp-common[image]",
+]
+
+# GraphQL resolvers (AppSync)
+lambda-document-resolver = ["idp-common[docs_service]"]
+
+# Infrastructure and configuration
+lambda-cognito = ["cfnresponse"]
+lambda-counter = ["cfnresponse"]
+lambda-workforce = ["cfnresponse"]
+lambda-dashboard = ["PyYAML>=6.0.0", "cfnresponse"]
+lambda-ipset = ["cfnresponse", "urllib3>=1.26.0"]
+lambda-minimal = ["cfnresponse"]
+lambda-start-codebuild = ["crhelper~=2.0.10"]
+lambda-update-configuration = ["cfnresponse", "PyYAML", "idp-common"]
+lambda-update-settings = ["cfnresponse"]
+
+# ============================================================================
+# OPTIONAL COMPONENTS (options/)
+# ============================================================================
+# Additional features that can be enabled
+
+# Bedrock Knowledge Base (options/bedrockkb)
+lambda-kb-opensearch = [
+    "opensearch-py==2.8.0",
+    "requests==2.32.4",
+    "requests-aws4auth==1.3.1",
+    "aws-lambda-powertools>=3.2.0",
+    "cfnresponse",
+]
+lambda-kb-s3-vectors = ["cfnresponse"]  # boto3 already available in Lambda runtime
+lambda-kb-ingestion = ["cfnresponse"]
+
+# BDA Lending Project (options/bda-lending-project)
+lambda-bda-project = ["cfnresponse"]  # boto3 already available in Lambda runtime
+
+# ============================================================================
+# LOCAL DEVELOPMENT TOOLS
+# ============================================================================
+# UDOP Fine-Tuning (patterns/pattern-3/fine-tune-sm-udop-classification)
+# For running generate_demo_data.py, sagemaker_train.py, etc. locally
+udop-finetuning-dev = ["pillow", "datasets"]

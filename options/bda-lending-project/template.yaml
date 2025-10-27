@@ -86,6 +86,7 @@ Resources:
   BDAProjectLambda:
     Type: AWS::Serverless::Function
     Metadata:
+      BuildMethod: makefile
       cfn_nag:
         rules_to_suppress:
           - id: W89

@@ -60,8 +60,14 @@ if ! pyenv versions --bare | grep -q "^${PYVER}$"; then
   pyenv install -s "${PYVER}"
 fi
 pyenv global "${PYVER}"
-python -m pip install --upgrade pip
-python -m pip install virtualenv
+
+echo "==> Installing UV (if needed)..."
+if ! command -v uv >/dev/null 2>&1; then
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  echo "UV installed!"
+else
+  echo "UV already installed."
+fi
 
 echo "==> Installing AWS CLI v2 (if needed)..."
 if ! command -v aws >/dev/null 2>&1; then
@@ -100,8 +106,9 @@ else
 fi
 
 echo "==> Installing Open Interpreter (if needed)..."
-if ! python -m pip show open-interpreter >/dev/null 2>&1; then
-  python -m pip install --upgrade open-interpreter || true
+if ! command -v uv >/dev/null 2>&1 || ! uv pip list | grep -q open-interpreter; then
+  uv pip install --system open-interpreter || true
+  echo "open-interpreter installed!"
 else
   echo "open-interpreter already installed."
 fi
@@ -131,7 +138,9 @@ PROMPT='%F{green}%n@%m%f:%F{blue}%~%f$(git_prompt_info) $ '
 
 # Aliases
 alias python=python3
-alias pip=pip3
+
+# UV path
+export PATH="$HOME/.local/bin:$PATH"
 
 # nvm autoload
 export NVM_DIR="$HOME/.nvm"

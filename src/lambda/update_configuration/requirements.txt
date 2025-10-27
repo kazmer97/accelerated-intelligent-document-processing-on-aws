@@ -1,3 +1,0 @@
-cfnresponse
-PyYAML
-./lib/idp_common_pkg  # idp_common package for ConfigurationManager

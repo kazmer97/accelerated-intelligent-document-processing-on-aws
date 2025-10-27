@@ -1,3 +1,11 @@
+# SageMaker Training Job Dependencies
+# =====================================
+# This file is used by SageMaker training jobs (not Lambda).
+# SageMaker automatically installs these dependencies in the training container.
+# See: sagemaker_train.py (uses source_dir="./code")
+#
+# DO NOT convert to dependency groups - SageMaker requires requirements.txt
+
 transformers>=4.53.0
 lightning
 sentencepiece

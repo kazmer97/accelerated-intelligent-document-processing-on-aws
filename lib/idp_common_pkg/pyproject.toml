@@ -1,18 +1,6 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools.packages.find]
-where = ["."]
-exclude = [
-  "build",
-  "build.*",
-  "*build",
-  "*build.*",
-  "*.build",
-  "*.build.*",
-  "**build**",
-]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "idp_common"
@@ -36,13 +24,6 @@ classifiers = [
 [project.optional-dependencies]
 # Core utilities only - minimal dependencies
 core = []
-
-# Development only dependencies
-dev = [
-  "python-dotenv (>=1.1.0,<2.0.0)",
-  "ipykernel (>=6.29.5,<7.0.0)",
-  "jupyter (>=1.1.1,<2.0.0)",
-]
 
 # Image handling dependencies
 image = ["Pillow==11.2.1"]
@@ -103,49 +84,25 @@ agents = [
 # Document service factory dependencies (includes both appsync and dynamodb support)
 # This includes all dependencies needed for both backends
 docs_service = [
-  "requests==2.32.4", # Required for appsync module (dynamodb only needs boto3 which is core)
+  "requests==2.32.4",     # Required for appsync module (dynamodb only needs boto3 which is core)
   "aws-xray-sdk>=2.12.0", # Required for X-Ray tracing
 ]
 
-# Testing dependencies
-test = [
-  "pytest>=7.4.0",
-  "pytest-cov>=4.1.0",
-  "pytest-xdist>=3.3.1",            # For parallel test execution
-  "requests (>=2.32.3,<3.0.0)",
-  "pyarrow==20.0.0",
-  "PyYAML==6.0.2",
-  "openpyxl==3.1.5",
-  "python-docx==1.2.0",
-  "moto[s3]==5.1.8",                # For mocking AWS services in tests
-  "Pillow==11.2.1",                 # Required for image processing in assessment tests
-  "rich>=13.0.0",                   # Required for publish tests
-  "idp_common[agentic-extraction]", # Required for agentic_idp tests
-  # "s3fs==2023.12.2",  # Required for criteria validation tests - disabled till we fix package dependencies
-  "moto>=5.1.8",
-  "pytest-asyncio>=1.1.0",
-  "typer>=0.19.2",
-  "ruff>=0.14.0",
-  "deepdiff>=6.0.0",                    # Required for BDA blueprint service tests
-  "datamodel-code-generator>=0.25.0",   # Required for schema/pydantic generator tests
-]
-
-# Full package with all dependencies
+# Full package with all dependencies - references all other extras
 all = [
-  "Pillow==11.2.1",
-  "PyMuPDF==1.25.5",
-  "amazon-textract-textractor[pandas]==1.9.2",
-  "munkres>=1.1.4",
-  "numpy==1.26.4",
-  "pandas==2.2.3",
-  "requests==2.32.4",
-  "pyarrow==20.0.0",
-  "openpyxl==3.1.5",
-  "python-docx==1.2.0",
-  "strands-agents>=1.0.0; python_version>='3.10'",
-  "strands-agents-tools>=0.2.2; python_version>='3.10'",
-  "bedrock-agentcore>=0.1.1; python_version>='3.10'",
-  # "s3fs==2023.12.2" - - disabled till we fix package dependencies
+  "idp_common[core]",
+  "idp_common[image]",
+  "idp_common[ocr]",
+  "idp_common[classification]",
+  "idp_common[extraction]",
+  "idp_common[assessment]",
+  "idp_common[evaluation]",
+  "idp_common[criteria_validation]",
+  "idp_common[reporting]",
+  "idp_common[appsync]",
+  "idp_common[agents]",
+  "idp_common[docs_service]",
+  "idp_common[agentic-extraction]",
 ]
 agentic-extraction = [
   "jsonpatch==1.33",
@@ -159,6 +116,37 @@ agentic-extraction = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/aws-samples/sample-genai-idp"
+Homepage = "https://github.com/aws-samples/accelerated-intelligent-document-processing-on-aws"
 
+# Hatchling build configuration
+[tool.hatch.build.targets.sdist]
+include = ["/idp_common", "/tests", "/README.md"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["idp_common"]
+
+# UV configuration for this package
+[tool.uv]
+package = true
+
+# Modern PEP 735 dependency groups
 [dependency-groups]
+# Development dependencies (testing + linting + dev tools)
+# Use with: uv sync --all-extras --group dev
+# This installs all optional features for comprehensive testing
+dev = [
+  # Testing
+  "pytest>=7.4.0",
+  "pytest-cov>=4.1.0",
+  "pytest-xdist>=3.3.1",
+  "pytest-mock>=3.11.0",
+  "pytest-asyncio>=1.1.0",
+  "moto[s3]>=5.1.8",
+  # Linting
+  "ruff>=0.14.0",
+  # Development tools
+  "python-dotenv>=1.1.0",
+  # Notebook development
+  "ipykernel>=6.29.5",
+  "jupyter>=1.1.1",
+]

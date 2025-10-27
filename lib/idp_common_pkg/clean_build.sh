@@ -8,7 +8,7 @@ rm -rf *.egg-info/
 find . -name "__pycache__" -type d -exec rm -rf {} +
 find . -name "*.pyc" -delete
 
-echo "Building package..."
-pip install -e .
+echo "Syncing package with UV..."
+cd ../.. && uv sync --all-extras --group dev
 
 echo "Done!"

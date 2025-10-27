@@ -1,18 +1,21 @@
-.PHONY: test test-cicd clean
+.PHONY: test test-cicd clean dev
+
+# Use UV for all operations
+UV := $(shell command -v uv 2> /dev/null)
 
 test: test-unit
 
 test-unit:
-	pytest -m "unit"
+	$(UV) run --all-extras --group dev pytest -m "unit"
 
 test-integration:
-	pytest -m "integration"
+	$(UV) run --all-extras --group dev pytest -m "integration"
 
 test-cicd: test-unit-cicd
 
 test-unit-cicd:
-	pip install -e ".[test]"
-	pytest -m "unit" --cov=idp_common --cov-report=xml:test-reports/coverage.xml --cov-report=term --junitxml=test-reports/test-results.xml tests/
+	$(UV) sync --all-extras --group dev
+	$(UV) run --all-extras --group dev pytest -m "unit" --cov=idp_common --cov-report=xml:test-reports/coverage.xml --cov-report=term --junitxml=test-reports/test-results.xml tests/
 
 clean:
 	rm -rf .pytest_cache
@@ -25,6 +28,6 @@ clean:
 	rm -rf build
 	rm -rf *.egg-info
 	
-# A convenience target to install the idp_common library with all, dev dependencies in edit mode
+# A convenience target to sync all features and dev dependencies
 dev:
-	pip install -e ".[all, dev]"
+	$(UV) sync --all-extras --group dev

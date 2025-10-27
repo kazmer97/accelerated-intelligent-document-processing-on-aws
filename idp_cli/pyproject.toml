@@ -2,14 +2,15 @@
 # SPDX-License-Identifier: MIT-0
 
 [build-system]
-requires = ["setuptools>=64", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "idp-cli"
 version = "1.0.0"
 description = "Command-line interface for IDP Accelerator batch document processing"
-authors = [{name = "AWS"}]
+authors = [{name = "AWS", email = "noreply@amazon.com"}]
+readme = "README.md"
 license = {text = "MIT-0"}
 requires-python = ">=3.9"
 classifiers = [
@@ -29,18 +30,31 @@ dependencies = [
     "botocore>=1.31.0",
 ]
 
-[project.optional-dependencies]
-test = [
-    "pytest>=7.4.0",
-    "pytest-mock>=3.11.0",
-    "moto>=4.2.0",
-]
-
 [project.scripts]
 idp-cli = "idp_cli.cli:main"
 
-[tool.setuptools]
+[project.urls]
+Homepage = "https://github.com/aws-samples/accelerated-intelligent-document-processing-on-aws"
+
+# Hatchling configuration
+[tool.hatch.build.targets.wheel]
 packages = ["idp_cli"]
 
-[tool.setuptools.package-dir]
-idp_cli = "idp_cli"
+# UV configuration
+[tool.uv]
+package = true
+
+# Modern PEP 735 dependency groups
+[dependency-groups]
+# Development dependencies (testing + linting + dev tools)
+# Note: CI/CD uses this same group since it runs both tests and linting
+dev = [
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-mock>=3.11.0",
+    "moto>=4.2.0",
+    # Linting
+    "ruff>=0.14.0",
+    # Development tools
+    "python-dotenv>=1.1.0",
+]

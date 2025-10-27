@@ -10,6 +10,7 @@ from decimal import Decimal
 from typing import Any, Dict, Union
 
 import boto3
+from botocore.exceptions import ClientError
 import cfnresponse
 import yaml
 

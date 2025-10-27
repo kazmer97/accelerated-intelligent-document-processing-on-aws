@@ -97,3 +97,5 @@ memory-bank/
 !patterns/*/src/**
 !lib/idp_common_pkg/**
 !src/lambda/**
+!pyproject.toml
+!uv.lock

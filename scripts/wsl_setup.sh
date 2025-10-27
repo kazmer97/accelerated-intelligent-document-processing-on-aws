@@ -50,10 +50,26 @@ rm -rf sam-installation aws-sam-cli-linux-x86_64.zip
 # Verify SAM installation
 sam --version
 
+echo "==> Installing UV..."
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+
+# Verify UV installation
+if command -v uv >/dev/null 2>&1; then
+  echo "UV installed successfully: $(uv --version)"
+else
+  echo "WARNING: UV installation may require shell restart"
+  echo "Run: export PATH=\"\$HOME/.local/bin:\$PATH\""
+fi
+
+echo ""
 echo "DONE - WSL development environment setup complete."
+echo ""
 echo "Next steps:"
-echo "1. Create Python virtual environment: python3 -m venv venv"
-echo "2. Activate virtual environment: source venv/bin/activate"
-echo "3. Install Python packages: pip install setuptools wheel boto3 rich PyYAML botocore ruff pytest"
-echo "4. Install IDP common package: pip install -e lib/idp_common_pkg/"
-echo "5. Configure AWS CLI: aws configure"
+echo "1. Navigate to project root: cd /path/to/aws-idp"
+echo "2. Initialize workspace: make init"
+echo "   (This creates .venv and installs all dependencies with UV)"
+echo "3. Configure AWS CLI: aws configure"
+echo ""
+echo "To use UV in new shells, add to ~/.bashrc:"
+echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""

@@ -1,2 +1,13 @@
+# Local Development Dependencies for UDOP Fine-Tuning Scripts
+# ==============================================================
+# This file is for LOCAL development (generate_demo_data.py, sagemaker_train.py, etc.)
+# Not used by SageMaker - see code/requirements.txt for training job dependencies
+#
+# Installation:
+#   uv sync --group udop-finetuning-dev
+#
+# Or install from this file:
+#   uv pip install -r requirements.txt
+
 pillow
-dataset
+datasets

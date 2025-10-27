@@ -32,8 +32,11 @@ sudo dnf install python3.12 -y
 sudo alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
 sudo alternatives --install /usr/bin/python python /usr/bin/python3.12 1
 python3.12 -m ensurepip --upgrade
-pip3 install --upgrade pip
-pip3 install virtualenv
+
+# Install UV for dependency management
+curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+
 curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda || bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda -u
 
@@ -89,8 +92,10 @@ if [ "\$PS1" != "" ]; then
     PS1='\[\033[01;32m\]\$(_prompt_user)\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$(__git_ps1 " (%s)" 2>/dev/null) \$ '
  
     alias python=python3
-    alias pip=pip3
     alias interpreter="interpreter --model bedrock/us.anthropic.claude-3-haiku-20240307-v1:0"
+    
+    # Add UV to PATH
+    export PATH="\$HOME/.local/bin:\$PATH"
 fi
 _EOF
 
