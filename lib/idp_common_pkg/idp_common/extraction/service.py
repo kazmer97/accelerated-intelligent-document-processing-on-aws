@@ -1343,6 +1343,25 @@ class ExtractionService:
                 and agentic_review_agent_enabled
             )
 
+            # Get agentic configuration for retry and timeout settings
+            agentic_config = self.config.get("extraction", {}).get("agentic", {})
+
+            # More forgiving defaults for high-volume/bursty environments
+            agentic_max_retries = int(agentic_config.get("max_retries", 7))
+
+            # Increased timeouts to handle large documents and network variability
+            agentic_connect_timeout = float(
+                agentic_config.get("connect_timeout", 30.0)
+            )  # Increased from 10s
+            agentic_read_timeout = float(
+                agentic_config.get("read_timeout", 600.0)
+            )  # Increased from 300s to 10 minutes
+
+            logger.info(
+                f"Agentic extraction config: max_retries={agentic_max_retries}, "
+                f"connect_timeout={agentic_connect_timeout}s, read_timeout={agentic_read_timeout}s"
+            )
+
             if agentic_enabled:
                 if not AGENTIC_AVAILABLE:
                     raise ImportError(
@@ -1375,6 +1394,9 @@ class ExtractionService:
                     custom_instruction=system_prompt,
                     review_agent=agentic_review_agent_enabled,
                     context="Extraction",
+                    max_retries=agentic_max_retries,
+                    connect_timeout=agentic_connect_timeout,
+                    read_timeout=agentic_read_timeout,
                 )
 
                 # Extract the structured data as dict for compatibility with existing code

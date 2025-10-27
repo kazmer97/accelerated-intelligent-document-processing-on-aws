@@ -312,8 +312,8 @@ async def structured_output_async(
     review_agent: bool = False,
     context: str = "Extraction",
     max_retries: int = 7,
-    connect_timeout: float = 10.0,
-    read_timeout: float = 300.0,
+    connect_timeout: float = 30.0,
+    read_timeout: float = 600.0,
     max_tokens: Optional[int] = None,
 ) -> Tuple[TargetModel, BedrockInvokeModelResponse]:
     """
@@ -423,6 +423,7 @@ async def structured_output_async(
         },
         connect_timeout=connect_timeout,
         read_timeout=read_timeout,
+        max_pool_connections=50,  # Increase from default 10 to handle concurrent requests
     )
 
     model_config = dict(model_id=model_id, boto_client_config=boto_config)
@@ -771,8 +772,8 @@ def structured_output(
     review_agent: bool = False,
     context: str = "Extraction",
     max_retries: int = 7,
-    connect_timeout: float = 10.0,
-    read_timeout: float = 300.0,
+    connect_timeout: float = 30.0,
+    read_timeout: float = 600.0,
 ) -> Tuple[BaseModel, BedrockInvokeModelResponse]:
     """
     Synchronous version of structured_output_async.
